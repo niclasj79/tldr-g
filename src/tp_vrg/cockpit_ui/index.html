@@ -1,0 +1,3804 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TP-VRG Cockpit</title>
+  <style>
+    /* ── Reset & base ── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      /* Product visual doctrine v1 tokens — single source:
+         docs/design/visuals/mockups/design-tokens.css
+         (docs/design/visuals/product-visual-doctrine.md §3 + §11 step 1).
+         Legacy names kept as aliases; new code prefers the doctrine names. */
+      --void:       #0A0D13;
+      --bg:         var(--void);
+      --surface:    #11151E;
+      --surface2:   #161B27;
+      --border:     #232B3D;
+      --render:     #2EE6D0;   /* the render light: selection, focus, accents */
+      --render-deep:#0E8A7D;   /* filled controls (keeps light-text contrast) */
+      --accent:     var(--render);
+      --accent-dim: var(--render-deep);
+      --evidence:   #E8C268;   /* provenance, receipts, signatures */
+      --curiosity:  #A78BFA;   /* questions, gaps, suggestions */
+      --text:       #E8EBF4;
+      --text-dim:   #8A93AB;
+      --green:      #4ADE80;
+      --red:        #F06A6A;
+      --yellow:     #F5B14C;
+      --radius:     8px;
+      --font:       "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI",
+                    Roboto, "Helvetica Neue", Arial, sans-serif;
+      --font-mono:  "JetBrains Mono", ui-monospace, "SF Mono", "Cascadia Mono",
+                    Consolas, monospace;  /* every number the engine emits */
+    }
+
+    html, body {
+      height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font);
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    /* ── Layout ── */
+    #app {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    /* ── Header ── */
+    header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 16px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+
+    .logo {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--accent);
+      letter-spacing: 0.04em;
+    }
+
+    .logo span {
+      color: var(--text-dim);
+      font-weight: 400;
+    }
+
+    .conn-dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: var(--red);
+      margin-left: auto;
+      transition: background 0.3s;
+      flex-shrink: 0;
+    }
+    .conn-dot.online { background: var(--green); }
+
+    .conn-label {
+      font-size: 12px;
+      color: var(--text-dim);
+    }
+
+    /* U12 (2026-05-21): pulse indicator — animates on activity, still on idle.
+       Subscribed via JS to /diagnostics/speculative_cache_hit_rate + /janitor/status
+       polling at 5s. Heartbeat animation is the "tamagotchi-level" emotional register
+       per [[../../prd-cockpit-ux-sprint-2026-04-12.md]] §U12 spec. */
+    .pulse-indicator {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--text-dim);
+      margin-left: auto;
+      margin-right: 8px;
+      opacity: 0.4;
+      transition: background 0.3s, opacity 0.3s;
+      flex-shrink: 0;
+    }
+    .pulse-indicator.active {
+      background: var(--accent);
+      opacity: 1.0;
+      animation: pulse-heartbeat 1.4s ease-in-out infinite;
+    }
+    @keyframes pulse-heartbeat {
+      0%, 100% { transform: scale(1.0); opacity: 1.0; }
+      50% { transform: scale(1.4); opacity: 0.7; }
+    }
+
+    /* ── Main content area ── */
+    main {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      overflow: hidden;
+      padding: 14px 16px;
+      gap: 8px;
+    }
+
+    /* ── Tab bar ── */
+    .tab-bar {
+      display: flex;
+      gap: 2px;
+      flex-shrink: 0;
+    }
+
+    .tab {
+      background: none;
+      border: none;
+      border-bottom: 2px solid transparent;
+      color: var(--text-dim);
+      font-family: var(--font);
+      font-size: 13px;
+      font-weight: 600;
+      padding: 4px 14px 8px;
+      cursor: pointer;
+      transition: color 0.15s, border-color 0.15s;
+      letter-spacing: 0.02em;
+    }
+    .tab:hover { color: var(--text); }
+    .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+    /* ── Panels ── */
+    .panel {
+      display: none;
+      flex-direction: column;
+      flex: 1 1 0;
+      overflow: hidden;
+      gap: 10px;
+    }
+    .panel.active { display: flex; }
+
+    /* ── Search panel ── */
+    #search-panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px;
+      gap: 10px;
+      min-height: 120px;
+    }
+
+    /* ── Model selector row ── */
+    .model-row {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .model-label {
+      font-size: 12px;
+      color: var(--text-dim);
+      white-space: nowrap;
+    }
+
+    #provider-select, #model-select, #openai-model-input {
+      flex: 1;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text);
+      font-family: var(--font);
+      font-size: 13px;
+      padding: 6px 10px;
+      outline: none;
+      cursor: pointer;
+      transition: border-color 0.2s;
+    }
+    #provider-select { flex: 0 0 auto; min-width: 120px; }
+    #openai-model-input { cursor: text; }
+    #provider-select:focus, #model-select:focus, #openai-model-input:focus { border-color: var(--accent); }
+    #model-select option { background: var(--surface2); }
+
+    .btn-small {
+      background: var(--surface2);
+      color: var(--text-dim);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 6px 10px;
+      font-size: 12px;
+      font-family: var(--font);
+      cursor: pointer;
+      transition: border-color 0.15s, color 0.15s;
+      flex-shrink: 0;
+    }
+    .btn-small:hover { border-color: var(--accent); color: var(--text); }
+
+    /* ── Search input row ── */
+    .search-row {
+      display: flex;
+      gap: 8px;
+    }
+
+    #query-input {
+      flex: 1;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text);
+      font-family: var(--font);
+      font-size: 14px;
+      padding: 9px 12px;
+      outline: none;
+      transition: border-color 0.2s;
+      user-select: text;
+    }
+    #query-input:focus { border-color: var(--accent); }
+    #query-input::placeholder { color: var(--text-dim); }
+    #query-input:disabled {
+      color: var(--text-dim);
+      cursor: default;
+      opacity: 0.7;
+    }
+
+    .btn {
+      background: var(--render-deep);  /* filled control — doctrine §3 */
+      color: #fff;
+      border: none;
+      border-radius: var(--radius);
+      padding: 9px 18px;
+      font-size: 14px;
+      font-family: var(--font);
+      cursor: pointer;
+      font-weight: 600;
+      transition: background 0.15s;
+      flex-shrink: 0;
+    }
+    .btn:hover   { background: var(--render); color: #06302B; }
+    .btn:active  { background: var(--render-deep); }
+    .btn:disabled { background: var(--border); cursor: default; color: var(--text-dim); }
+
+    /* ── Results area — scrollable, text selectable ── */
+    #results-area {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      flex: 1 1 0;
+      overflow-y: auto;
+      user-select: text;
+      cursor: text;
+    }
+
+    .result-meta {
+      font-size: 12px;
+      color: var(--text-dim);
+      user-select: text;
+    }
+
+    /* ── Savings banner ─────────────────────────────────────────────
+       Demo headline: how many tokens the Token Governor saved on this
+       query vs. the counterfactual of rendering all scored passages at
+       LOD_0 (flat passage rendering, no LOD compression).
+       Shown for both context-only and LLM-answer paths. */
+    .savings-banner {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 12px 16px;
+      background: linear-gradient(90deg, var(--accent-dim), transparent);
+      border-left: 3px solid var(--accent);
+      border-radius: var(--radius);
+      margin-bottom: 8px;
+      user-select: text;
+    }
+    .savings-pct {
+      font-size: 26px;
+      font-weight: 600;
+      color: var(--accent);
+      line-height: 1;
+      white-space: nowrap;
+    }
+    .savings-detail {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      min-width: 0;
+    }
+    .savings-main {
+      font-size: 13px;
+      color: var(--text);
+    }
+    .savings-caption {
+      font-size: 11px;
+      color: var(--text-dim);
+    }
+
+    .intent-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+      margin: 6px 0;
+      align-items: center;
+    }
+    .intent-label {
+      font-size: 11px;
+      color: var(--text-dim);
+      margin-right: 2px;
+    }
+    .intent-badge {
+      font-size: 11px;
+      padding: 2px 7px;
+      border-radius: 10px;
+      background: var(--accent-dim);
+      color: var(--accent);
+      white-space: nowrap;
+    }
+    .intent-badge.primary {
+      background: var(--render-deep);  /* filled control — doctrine §3 */
+      color: #fff;
+    }
+
+    /* ── Answer card ── */
+    .answer-card {
+      background: var(--surface2);
+      border: 1px solid var(--accent-dim);
+      border-radius: var(--radius);
+      padding: 12px 14px;
+      font-size: 14px;
+      line-height: 1.6;
+      user-select: text;
+      cursor: text;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    /* ── Context (raw) — collapsible ── */
+    .context-toggle {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      color: var(--text-dim);
+      cursor: pointer;
+      user-select: none;
+      width: fit-content;
+    }
+    .context-toggle:hover { color: var(--text); }
+    .toggle-arrow { font-size: 10px; transition: transform 0.2s; }
+    .toggle-arrow.open { transform: rotate(90deg); }
+
+    .context-card {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 10px 12px;
+      font-size: 12px;
+      display: none;
+    }
+    .context-card.visible { display: block; }
+    .context-card pre {
+      white-space: pre-wrap;
+      word-break: break-word;
+      margin: 0;
+      font-family: "Consolas", "Fira Code", monospace;
+      user-select: text;
+      cursor: text;
+      color: var(--text-dim);
+    }
+
+    /* ── Raw context card (no Ollama mode) ── */
+    .result-card {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 10px 12px;
+      font-size: 13px;
+    }
+    .result-card pre {
+      white-space: pre-wrap;
+      word-break: break-word;
+      margin: 0;
+      font-family: var(--font);
+      user-select: text;
+      cursor: text;
+    }
+
+    .placeholder-text {
+      color: var(--text-dim);
+      font-style: italic;
+      font-size: 13px;
+    }
+    .hint {
+      color: var(--text-dim);
+      font-style: italic;
+      font-size: 13px;
+    }
+
+    .error-card {
+      background: var(--surface2);
+      border: 1px solid var(--red);
+      border-radius: var(--radius);
+      padding: 10px 12px;
+      font-size: 13px;
+      color: var(--red);
+      user-select: text;
+      cursor: text;
+    }
+
+    /* ── Ingest panel styles ── */
+    .ingest-section {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      flex: 1 1 0;
+      min-height: 0;
+      overflow-y: auto;
+    }
+
+    .ingest-sublabel {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+      color: var(--text-dim);
+    }
+
+    .ingest-textarea {
+      width: 100%;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text);
+      font-family: var(--font);
+      font-size: 13px;
+      padding: 9px 12px;
+      outline: none;
+      resize: vertical;
+      min-height: 90px;
+      transition: border-color 0.2s;
+    }
+    .ingest-textarea:focus { border-color: var(--accent); }
+    .ingest-textarea::placeholder { color: var(--text-dim); }
+
+    .ingest-row {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .ingest-source {
+      flex: 1;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text);
+      font-family: var(--font);
+      font-size: 13px;
+      padding: 9px 12px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .ingest-source:focus { border-color: var(--accent); }
+    .ingest-source::placeholder { color: var(--text-dim); }
+
+    .ingest-divider {
+      border: none;
+      border-top: 1px solid var(--border);
+      margin: 4px 0;
+    }
+
+    .drop-zone {
+      border: 2px dashed var(--border);
+      border-radius: var(--radius);
+      padding: 18px;
+      text-align: center;
+      cursor: pointer;
+      color: var(--text-dim);
+      font-size: 13px;
+      transition: border-color 0.2s, color 0.2s;
+      position: relative;
+    }
+    .drop-zone:hover, .drop-zone.drag-over {
+      border-color: var(--accent);
+      color: var(--text);
+    }
+    .drop-zone input[type="file"] {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      cursor: pointer;
+      width: 100%;
+      height: 100%;
+    }
+    .drop-zone-label { pointer-events: none; }
+
+    .ingest-status {
+      font-size: 13px;
+      padding: 8px 10px;
+      border-radius: var(--radius);
+      display: none;
+    }
+    .ingest-status.success {
+      display: block;
+      background: #0d2a1f;
+      border: 1px solid #16653a;
+      color: var(--green);
+    }
+    .ingest-status.error {
+      display: block;
+      background: #2a0d0d;
+      border: 1px solid #7a1515;
+      color: var(--red);
+    }
+    .ingest-status.info {
+      display: block;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      color: var(--text-dim);
+    }
+
+    /* ── ChatGPT import progress ── */
+    .import-progress {
+      display: none;
+      margin-top: 6px;
+    }
+    .import-progress.active { display: block; }
+    .progress-bar-track {
+      background: var(--surface2);
+      border-radius: 4px;
+      height: 6px;
+      overflow: hidden;
+      margin-bottom: 4px;
+    }
+    .progress-bar-fill {
+      background: var(--accent);
+      height: 100%;
+      width: 0%;
+      transition: width 0.15s ease;
+      border-radius: 4px;
+    }
+    .progress-label {
+      font-size: 12px;
+      color: var(--text-dim);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .queue-panel {
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface2);
+      padding: 10px;
+      display: grid;
+      gap: 8px;
+    }
+    .queue-row {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      color: var(--text-dim);
+      font-size: 12px;
+    }
+    .queue-list {
+      font-size: 12px;
+      color: var(--text);
+      max-height: 110px;
+      overflow-y: auto;
+    }
+    .queue-list li { margin-left: 16px; }
+
+    /* ── Clear graph danger zone ── */
+    .danger-zone {
+      border: 1px solid #7a1515;
+      border-radius: var(--radius);
+      padding: 10px 14px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .danger-label {
+      font-size: 12px;
+      color: var(--text-dim);
+      flex: 1;
+      min-width: 120px;
+    }
+    .btn-danger {
+      background: #7a1515;
+      color: #fff;
+      border: none;
+      border-radius: var(--radius);
+      padding: 7px 14px;
+      font-size: 13px;
+      font-family: var(--font);
+      cursor: pointer;
+      font-weight: 600;
+      transition: background 0.15s;
+      flex-shrink: 0;
+    }
+    .btn-danger:hover { background: var(--red); }
+    .btn-danger:disabled { background: var(--border); cursor: default; color: var(--text-dim); }
+
+    /* ── Dashboard panel ── */
+    #dashboard-panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px;
+      overflow-y: auto;
+    }
+
+    .dash-title {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-dim);
+      margin-bottom: 12px;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    .stat-card {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 8px 12px;
+    }
+
+    .stat-label {
+      font-size: 11px;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 2px;
+    }
+
+    .stat-value {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--accent);
+      line-height: 1.1;
+    }
+
+    .stat-value.small { font-size: 13px; }
+
+    .backbone-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      color: var(--text-dim);
+      margin-top: 6px;
+    }
+
+    .badge {
+      font-size: 11px;
+      font-weight: 600;
+      padding: 2px 7px;
+      border-radius: 20px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+    }
+    .badge.cached  { color: var(--green); border-color: #16653a; }
+    .badge.missing { color: var(--yellow); border-color: #7a5108; }
+
+    /* ── HUD instrument cluster (product visual doctrine §2/§5, adoption
+       step 2). Always-on, truthful, monospaced: every number here comes
+       from /health or the last query's stats — never decorative. ── */
+    #hud {
+      position: fixed; bottom: 0; left: 0; right: 0; height: 32px;
+      display: flex; align-items: center; gap: 18px; padding: 0 14px;
+      background: var(--surface); border-top: 1px solid var(--border);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.04);
+      font-family: var(--font-mono); font-size: 11px; color: var(--text-dim);
+      z-index: 40; white-space: nowrap; overflow: hidden;
+    }
+    #hud b { color: var(--text); font-weight: 500; }
+    #hud .hud-dot {
+      width: 7px; height: 7px; border-radius: 50%;
+      background: var(--red); display: inline-block; margin-right: 6px;
+      vertical-align: -1px;
+    }
+    #hud .hud-dot.ok { background: var(--green); }
+    #hud .hud-save { color: var(--evidence); margin-left: auto; }
+    /* When the progress bar (bottom:0, 28px) is visible, lift the HUD above it
+       so the three bottom strips (progress / HUD / ticker) stack without overlap. */
+    #hud.with-progress { bottom: 28px; }
+    body { padding-bottom: 60px; }  /* clear the stacked HUD (32px) + activity ticker (26px) */
+
+    .dash-footer {
+      font-size: 11px;
+      color: var(--text-dim);
+      margin-top: 8px;
+    }
+
+    /* ── Glance section — "what's in your graph" ── */
+    .glance-section {
+      margin-bottom: 10px;
+    }
+
+    .glance-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      min-height: 24px;
+      max-height: 72px;   /* ~2.5 rows of pills before scrolling */
+      overflow-y: auto;
+    }
+
+    .source-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 3px 10px;
+      font-size: 12px;
+      color: var(--text);
+      max-width: 260px;
+    }
+
+    .source-name {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .source-count {
+      color: var(--text-dim);
+      font-size: 11px;
+      flex-shrink: 0;
+    }
+
+    .glance-empty {
+      font-size: 13px;
+      color: var(--text-dim);
+      font-style: italic;
+    }
+
+    /* ── Health collapsible ── */
+    details.health-details {
+      margin-top: 2px;
+    }
+
+    details.health-details > summary {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-dim);
+      cursor: pointer;
+      list-style: none;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      padding: 6px 0 8px;
+      user-select: none;
+    }
+    details.health-details > summary::-webkit-details-marker { display: none; }
+    details.health-details > summary::before {
+      content: "▶";
+      font-size: 9px;
+      transition: transform 0.18s;
+      display: inline-block;
+    }
+    details.health-details[open] > summary::before {
+      transform: rotate(90deg);
+    }
+
+    /* ── Ollama status pill ── */
+    .ollama-status {
+      font-size: 11px;
+      color: var(--text-dim);
+      margin-left: auto;
+    }
+    .ollama-status.ok   { color: var(--green); }
+    .ollama-status.fail { color: var(--red); }
+
+    /* ── Scrollbar styling ── */
+    ::-webkit-scrollbar { width: 5px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+    /* ── Startup warmup overlay ── */
+    #startup-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      background: var(--bg);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 20px;
+      transition: opacity 0.4s ease;
+    }
+    #startup-overlay.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+    .warmup-spinner {
+      width: 36px;
+      height: 36px;
+      border: 3px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.9s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .warmup-logo {
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--text);
+      letter-spacing: 0.04em;
+    }
+    .warmup-logo span { color: var(--accent); }
+    .warmup-msg {
+      font-size: 13px;
+      color: var(--text-dim);
+    }
+    .warmup-stages {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      max-width: 520px;
+      padding: 0 24px;
+      text-align: center;
+    }
+    .warmup-gliner {
+      font-size: 12px;
+      color: var(--text-dim);
+      opacity: 0.9;
+    }
+    .warmup-memory {
+      color: #888;
+      font-size: 0.9em;
+      margin-top: 0.5em;
+    }
+    /* Escape-hatch buttons (2026-04-21 sprint): surfaced at 60s / 180s
+       so the user is never stranded on an infinite spinner even when
+       the backend is in an unexpected state. */
+    .warmup-escape {
+      display: none;        /* JS flips to inline-block at the thresholds */
+      margin-top: 16px;
+      padding: 8px 16px;
+      background: var(--panel);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 12px;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .warmup-escape:hover {
+      background: var(--panel-hover, var(--border));
+    }
+    .warmup-hint {
+      font-size: 11px;
+      color: var(--text-dim);
+      opacity: 0.7;
+      margin-top: 4px;
+      max-width: 320px;
+      text-align: center;
+      display: none;
+    }
+
+    /* UX-1: Progress bar (WebSocket-driven) */
+    #progress-bar {
+      display: none;
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 28px;
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      z-index: 1000;
+      padding: 0 12px;
+    }
+    #progress-bar .fill {
+      height: 100%;
+      background: var(--accent);
+      transition: width 0.3s ease;
+      position: absolute;
+      top: 0;
+      left: 0;
+      opacity: 0.3;
+    }
+    #progress-bar .label {
+      position: relative;
+      z-index: 1;
+      font-size: 12px;
+      color: var(--text);
+      line-height: 28px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    #progress-bar .pct {
+      position: absolute;
+      right: 12px;
+      top: 0;
+      z-index: 1;
+      font-size: 11px;
+      color: var(--text-dim);
+      line-height: 28px;
+    }
+
+    /* UX-9a: Activity ticker strip */
+    #activity-strip {
+      position: fixed;
+      bottom: 32px;  /* sit above the HUD instrument strip (32px tall) */
+      left: 0;
+      right: 0;
+      height: 26px;
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      z-index: 999;
+      display: flex;
+      align-items: center;
+      padding: 0 12px;
+      gap: 8px;
+      transition: opacity 0.3s;
+    }
+    /* When progress-bar (28px) + HUD (32px) are both visible, stack the ticker above both */
+    #activity-strip.with-progress { bottom: 60px; }
+
+    .pulse-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--text-dim);
+      flex-shrink: 0;
+      transition: background 0.3s;
+    }
+    .pulse-dot.active {
+      background: var(--green);
+      animation: pulse-glow 2s ease-in-out infinite;
+    }
+    @keyframes pulse-glow {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50%      { transform: scale(1.4); opacity: 0.7; }
+    }
+
+    .ticker {
+      flex: 1;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+    .ticker-msg {
+      font-size: 11px;
+      color: var(--text-dim);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      line-height: 26px;
+      transition: opacity 0.5s;
+    }
+    .ticker-msg.fading { opacity: 0.4; }
+    .ticker-msg.tail-event { color: var(--text-dim); }
+
+    /* UX-5: Source overview table */
+    .sources-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 8px;
+    }
+    .sources-table th {
+      text-align: left;
+      font-size: 11px;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      padding: 6px 10px;
+      border-bottom: 1px solid var(--border);
+    }
+    .sources-table td {
+      padding: 7px 10px;
+      font-size: 13px;
+      color: var(--text);
+      border-bottom: 1px solid var(--border);
+    }
+    .sources-table tr:nth-child(even) td { background: var(--surface); }
+    .sources-table tr:nth-child(odd) td  { background: var(--surface2); }
+    .sources-table .src-name {
+      max-width: 280px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .sources-table .num { text-align: right; font-variant-numeric: tabular-nums; }
+    .sources-table tfoot td {
+      font-weight: 600;
+      color: var(--accent);
+      border-top: 2px solid var(--border);
+      background: var(--surface) !important;
+    }
+
+    /* UX-10: Typing indicator + answer streaming */
+    .typing-indicator {
+      display: inline-block;
+      color: var(--text-dim);
+      font-style: italic;
+    }
+    .typing-indicator::after {
+      content: '...';
+      animation: typing-dots 1.2s steps(4, end) infinite;
+    }
+    @keyframes typing-dots {
+      0%   { content: ''; }
+      25%  { content: '.'; }
+      50%  { content: '..'; }
+      75%  { content: '...'; }
+    }
+    .answer-card { white-space: pre-wrap; }
+
+    #inspect-panel {
+      overflow-y: auto;
+      padding-right: 4px;
+    }
+
+    .delta-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 10px;
+    }
+    .delta-pill {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text-dim);
+      font-size: 11px;
+      padding: 5px 8px;
+      font-variant-numeric: tabular-nums;
+    }
+    .delta-pill strong {
+      color: var(--accent);
+      margin-left: 4px;
+    }
+
+    .ticker-expand {
+      background: var(--surface2);
+      color: var(--text-dim);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      font-size: 11px;
+      padding: 3px 8px;
+      cursor: pointer;
+    }
+    .ticker-expand:hover { color: var(--text); border-color: var(--accent); }
+    #activity-log-panel {
+      position: fixed;
+      right: 12px;
+      bottom: 60px;  /* open above the activity ticker (bottom:32px + 26px height) */
+      width: min(520px, calc(100vw - 24px));
+      max-height: 220px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: 0 12px 32px rgba(0,0,0,0.35);
+      z-index: 1000;
+      display: none;
+      overflow: hidden;
+    }
+    #activity-log-panel.open { display: block; }
+    /* Keep the log panel above the ticker when the progress bar lifts the stack. */
+    #activity-log-panel.with-progress { bottom: 88px; }
+    .activity-log-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 10px;
+      border-bottom: 1px solid var(--border);
+      color: var(--text-dim);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+    .activity-log-list {
+      max-height: 170px;
+      overflow-y: auto;
+      padding: 6px 10px;
+      font-size: 12px;
+      color: var(--text);
+    }
+    .activity-log-item {
+      display: grid;
+      grid-template-columns: 56px 82px 1fr;
+      gap: 8px;
+      padding: 4px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+    }
+    .activity-log-item:last-child { border-bottom: 0; }
+    .activity-log-time,
+    .activity-log-stage { color: var(--text-dim); }
+
+    .graph-toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      gap: 8px;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+    .graph-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    .graph-toggle.active {
+      color: var(--accent);
+      border-color: var(--accent);
+    }
+    .graph-breadcrumb {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      align-items: center;
+      color: var(--text-dim);
+      font-size: 12px;
+      margin-bottom: 8px;
+    }
+    .graph-crumb {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text-dim);
+      cursor: pointer;
+      padding: 4px 7px;
+    }
+    .graph-crumb:hover { color: var(--text); border-color: var(--accent); }
+    .graph-browser {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 260px;
+      gap: 10px;
+      min-height: 420px;
+    }
+    .graph-canvas-wrap {
+      position: relative;
+      min-height: 420px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+    #graph-canvas-svg {
+      width: 100%;
+      height: 420px;
+      display: block;
+      touch-action: none;
+      cursor: grab;
+    }
+    #graph-canvas-svg.dragging { cursor: grabbing; }
+    .graph-edge {
+      stroke: rgba(126, 231, 220, 0.34);
+      stroke-linecap: round;
+    }
+    .graph-node circle {
+      stroke: rgba(255,255,255,0.55);
+      stroke-width: 1;
+      cursor: pointer;
+    }
+    .graph-node text {
+      fill: var(--text);
+      font-size: 11px;
+      pointer-events: none;
+      paint-order: stroke;
+      stroke: rgba(0,0,0,0.7);
+      stroke-width: 3px;
+    }
+    .graph-node.selected circle {
+      stroke: var(--accent);
+      stroke-width: 3;
+    }
+    .graph-empty {
+      position: absolute;
+      inset: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-dim);
+      font-size: 13px;
+      padding: 20px;
+      text-align: center;
+    }
+    .graph-empty.visible { display: flex; }
+    .graph-stats-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 14px;
+      align-items: center;
+      margin-top: 10px;
+      padding: 8px 12px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text-dim);
+      font-size: 12px;
+    }
+    .graph-stats-bar .stat .accent { color: var(--accent); font-weight: 600; }
+    .graph-stats-bar .stat-sep { color: var(--border); }
+    .graph-node.cluster text {
+      font-size: 13px;
+      font-weight: 600;
+      fill: var(--text);
+    }
+    .graph-side {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 10px;
+      overflow-y: auto;
+      min-height: 420px;
+    }
+    .graph-side h3 {
+      margin: 0 0 6px;
+      font-size: 15px;
+      color: var(--text);
+    }
+    .graph-side-meta {
+      color: var(--text-dim);
+      font-size: 12px;
+      line-height: 1.5;
+      margin-bottom: 10px;
+    }
+    .graph-side-list {
+      margin: 8px 0 0;
+      padding-left: 16px;
+      color: var(--text-dim);
+      font-size: 12px;
+      line-height: 1.45;
+    }
+    .graph-side-list li { margin-bottom: 4px; }
+
+    @media (max-width: 900px) {
+      .graph-browser { grid-template-columns: 1fr; }
+      .graph-side { min-height: 180px; }
+    }
+  </style>
+</head>
+<body>
+<!-- UX-9a: Activity ticker strip — always visible at bottom -->
+<div id="activity-strip">
+  <span class="pulse-dot" id="pulse-dot"></span>
+  <div class="ticker" id="activity-ticker">
+    <div class="ticker-msg" id="ticker-latest">Idle</div>
+  </div>
+  <button class="ticker-expand" type="button" onclick="toggleActivityLog()">Log</button>
+</div>
+<div id="activity-log-panel">
+  <div class="activity-log-head">
+    <span>Activity</span>
+    <button class="ticker-expand" type="button" onclick="toggleActivityLog()">Close</button>
+  </div>
+  <div class="activity-log-list" id="activity-log-list">
+    <div class="activity-log-item">
+      <span class="activity-log-time">--:--</span>
+      <span class="activity-log-stage">idle</span>
+      <span>No events yet.</span>
+    </div>
+  </div>
+</div>
+
+<!-- UX-1: Fixed progress bar at bottom — driven by WebSocket /ws/progress -->
+<div id="progress-bar">
+  <div class="fill" style="width: 0%"></div>
+  <span class="label">Idle</span>
+  <span class="pct"></span>
+</div>
+
+<!-- Startup warmup overlay — shown until /health responds, then fades out -->
+<div id="startup-overlay">
+  <div class="warmup-logo">TP-VRG <span>Cockpit</span></div>
+  <div class="warmup-spinner"></div>
+  <div class="warmup-stages">
+    <div class="warmup-msg" id="warmup-main-line">Starting…</div>
+    <div class="warmup-gliner" id="warmup-gliner-line" style="display: none;"></div>
+    <div class="warmup-memory" id="warmup-memory">Memory: — MB</div>
+  </div>
+  <!-- Escape hatch 1 (60s): skip into the UI even though backend may not be ready -->
+  <button id="warmup-skip" class="warmup-escape" type="button">
+    Skip intro — enter anyway
+  </button>
+  <div id="warmup-skip-hint" class="warmup-hint">
+    Backend may still be loading. Queries may fail until it finishes.
+  </div>
+  <!-- Escape hatch 2 (180s): page reload — backend may actually be ready -->
+  <button id="warmup-reload" class="warmup-escape" type="button">
+    Reload — backend may already be ready
+  </button>
+</div>
+
+<div id="app">
+
+  <!-- Header -->
+  <header>
+    <div class="logo">TP-VRG <span>Cockpit</span></div>
+    <!-- U12 (2026-05-21): pulse indicator subscribed to /diagnostics/speculative_cache_hit_rate
+         + /janitor/status. Animates when activity detected; goes still when idle. Default
+         still until the first poll resolves. Full U4 event-subscription deferred. -->
+    <span class="pulse-indicator" id="pulse-indicator" title="System activity pulse"></span>
+    <span class="conn-label" id="conn-label">connecting…</span>
+    <div class="conn-dot" id="conn-dot"></div>
+  </header>
+
+  <!-- Main -->
+  <main>
+
+    <!-- Tab bar -->
+    <div class="tab-bar">
+      <button class="tab active" id="tab-search"     onclick="switchTab('search')">Search</button>
+      <button class="tab"        id="tab-ingest"     onclick="switchTab('ingest')">Ingest</button>
+      <!-- U12 (2026-05-21): Inspect tab — primary surface for vital-signs monitoring
+           (cache stats, integrity, partition state). Replaces the previous Dashboard-as-Health
+           pattern; Dashboard now houses the source overview + Debug mode + dev details. -->
+      <button class="tab"        id="tab-inspect"    onclick="switchTab('inspect')">Inspect</button>
+      <button class="tab"        id="tab-dashboard"  onclick="switchTab('dashboard')">Dashboard</button>
+    </div>
+
+    <!-- Search panel -->
+    <section id="search-panel" class="panel active">
+
+      <!-- Provider + model selector row -->
+      <div class="model-row">
+        <select id="provider-select" onchange="onProviderChange()">
+          <option value="openai">OpenAI</option>
+          <option value="ollama">Ollama</option>
+          <option value="context">Context only</option>
+        </select>
+        <select id="model-select" style="display:none">
+          <option value="">— loading models… —</option>
+        </select>
+        <input id="openai-model-input" type="text" value="gpt-4o-mini"
+               placeholder="Model name (e.g. gpt-4o-mini)" style="display:none" />
+        <button class="btn-small" id="refresh-btn" onclick="refreshModels()" title="Refresh model list" style="display:none">↺</button>
+        <span class="ollama-status" id="provider-status"></span>
+      </div>
+
+      <!-- Query input row -->
+      <div class="search-row">
+        <input id="query-input" type="text"
+               placeholder="Ask your knowledge graph…"
+               autocomplete="off" spellcheck="false" />
+        <button class="btn" id="search-btn" onclick="handleSearch()">Search</button>
+        <label style="font-size:11.5px;color:var(--text-dim);display:flex;align-items:center;gap:5px;white-space:nowrap;cursor:pointer">
+          <input type="checkbox" id="shade-toggle" style="accent-color:var(--render-deep)"> Highlight relevance
+        </label>
+      </div>
+
+      <!-- Results -->
+      <div id="results-area">
+        <span class="placeholder-text">Results will appear here.</span>
+      </div>
+
+    </section>
+
+    <!-- Ingest panel -->
+    <section id="ingest-panel" class="panel">
+      <div class="ingest-section">
+
+        <!-- Text ingestion -->
+        <div class="ingest-sublabel">Ingest Text</div>
+        <textarea id="ingest-text" class="ingest-textarea"
+                  placeholder="Paste text to ingest…" rows="6"></textarea>
+        <div class="ingest-row">
+          <input id="ingest-source-text" type="text" class="ingest-source"
+                 placeholder="Source name, e.g. 'paul_graham_essays'" />
+          <button class="btn" id="ingest-text-btn" onclick="handleIngestText()">Ingest Text</button>
+        </div>
+        <div id="ingest-text-status" class="ingest-status"></div>
+
+        <hr class="ingest-divider" />
+
+        <!-- File ingestion -->
+        <div class="ingest-sublabel">Ingest Files</div>
+        <div class="drop-zone" id="drop-zone">
+          <input type="file" id="file-input" accept=".txt,.md" multiple />
+          <span class="drop-zone-label" id="drop-zone-label">Drop .txt or .md files here, or click to select</span>
+        </div>
+        <div class="ingest-row">
+          <input id="ingest-source-file" type="text" class="ingest-source"
+                 placeholder="Source prefix (optional — defaults to filename)" />
+          <button class="btn" id="ingest-file-btn" onclick="handleIngestFiles()" disabled>
+            Ingest Files
+          </button>
+        </div>
+        <div id="ingest-file-status" class="ingest-status"></div>
+
+        <hr class="ingest-divider" />
+
+        <!-- ChatGPT history import -->
+        <div class="ingest-sublabel">Import ChatGPT History</div>
+        <div class="drop-zone" id="chatgpt-drop-zone">
+          <input type="file" id="chatgpt-file-input" accept=".json" />
+          <span class="drop-zone-label" id="chatgpt-drop-label">Drop conversations.json here, or click to select</span>
+        </div>
+        <div class="ingest-row">
+          <button class="btn" id="chatgpt-import-btn" onclick="handleImportChatGPT()" disabled>
+            Import History
+          </button>
+        </div>
+        <div class="import-progress" id="chatgpt-progress">
+          <div class="progress-bar-track">
+            <div class="progress-bar-fill" id="chatgpt-progress-fill"></div>
+          </div>
+          <div class="progress-label" id="chatgpt-progress-label"></div>
+        </div>
+        <div id="chatgpt-status" class="ingest-status"></div>
+
+        <hr class="ingest-divider" />
+
+        <div class="ingest-sublabel">Queue</div>
+        <div class="queue-panel">
+          <div class="queue-row">
+            <span id="queue-folder-path">Inbox: ~/tp-vrg-inbox/</span>
+            <div>
+              <button class="btn-small" id="watch-toggle-btn" onclick="toggleWatchFolder()">Start watching</button>
+              <button class="btn-small" onclick="openInboxFolder()">Open inbox</button>
+            </div>
+          </div>
+          <div class="queue-row">
+            <span id="queue-current">Current: —</span>
+            <span id="queue-counts">Processed: 0 | Failed: 0</span>
+          </div>
+          <div>
+            <div class="ingest-sublabel">Pending / Active</div>
+            <ul class="queue-list" id="queue-pending"></ul>
+          </div>
+          <div>
+            <div class="ingest-sublabel">Recent Completed</div>
+            <ul class="queue-list" id="queue-completed"></ul>
+          </div>
+          <div>
+            <div class="ingest-sublabel">Recent Failed</div>
+            <ul class="queue-list" id="queue-failed"></ul>
+          </div>
+        </div>
+
+        <hr class="ingest-divider" />
+
+        <!-- Clear graph -->
+        <div class="danger-zone">
+          <span class="danger-label">Clear all graph data. This cannot be undone.</span>
+          <button class="btn-danger" id="clear-graph-btn" onclick="handleClearGraph()">
+            Clear Graph
+          </button>
+        </div>
+        <div id="clear-status" class="ingest-status"></div>
+
+      </div>
+    </section>
+
+    <!-- U12 (2026-05-21): Inspect panel — primary vital-signs monitor surface.
+         Replaces the previous Dashboard-as-Health pattern. Shows graph counts,
+         backbone cache state, integrity status, partition substrate availability,
+         and speculative pre-render cache hit-rate live. Composes with Multi-Resolution
+         Phase 1 + Active Janitor Pattern 2 telemetry endpoints. Per
+         [[../../prd-cockpit-ux-sprint-2026-04-12.md]] §U12 spec. -->
+    <section id="inspect-panel" class="panel">
+
+      <div class="glance-section">
+        <div class="dash-title">Vital signs</div>
+        <div style="font-size: 12px; color: var(--text-dim); margin-bottom: 12px;">
+          Live state of the graph, Janitor, caches, and event stream. Updates every 5s while this tab is active.
+        </div>
+
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-label">Nodes</div>
+            <div class="stat-value" id="inspect-stat-nodes">—</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Edges</div>
+            <div class="stat-value" id="inspect-stat-edges">—</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Passages</div>
+            <div class="stat-value" id="inspect-stat-passages">—</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Graph file</div>
+            <div class="stat-value small" id="inspect-stat-filesize">—</div>
+          </div>
+        </div>
+
+        <div class="delta-row">
+          <span class="delta-pill">Nodes 24h <strong id="inspect-delta-nodes">+0</strong></span>
+          <span class="delta-pill">Edges 24h <strong id="inspect-delta-edges">+0</strong></span>
+          <span class="delta-pill">Passages 24h <strong id="inspect-delta-passages">+0</strong></span>
+          <span class="delta-pill">Queries 24h <strong id="inspect-delta-queries">+0</strong></span>
+          <span class="delta-pill">Janitor passes 24h <strong id="inspect-delta-janitor">+0</strong></span>
+        </div>
+
+        <div class="backbone-row" style="margin-top: 12px;">
+          Backbone cache:
+          <span class="badge missing" id="inspect-badge-backbone">unknown</span>
+        </div>
+
+        <div class="backbone-row" style="margin-top: 6px;">
+          Merge candidates:
+          <span class="badge missing" id="inspect-badge-merge">—</span>
+        </div>
+        <div class="backbone-row" style="margin-top: 6px;">
+          Janitor:
+          <span class="badge missing" id="inspect-badge-janitor">idle</span>
+          <span id="inspect-janitor-detail">—</span>
+        </div>
+      </div>
+
+      <!-- U12 (2026-05-21): speculative pre-render cache hit-rate telemetry.
+           Subscribes to /diagnostics/speculative_cache_hit_rate (Active Janitor
+           Pattern 2). Shows hits, misses, cache size, and current invalidation
+           token at a glance. -->
+      <div class="glance-section" style="margin-top: 16px;">
+        <div class="dash-title">Speculative pre-render cache</div>
+        <div style="font-size: 12px; color: var(--text-dim); margin-bottom: 8px;">
+          Active Janitor Pattern 2 — predicts query-shape clusters and pre-renders
+          LOW LOD bundles during idle work. Cache hits return immediately.
+        </div>
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-label">Cache size</div>
+            <div class="stat-value" id="inspect-cache-size">—</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Hits</div>
+            <div class="stat-value" id="inspect-cache-hits">—</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Misses</div>
+            <div class="stat-value" id="inspect-cache-misses">—</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Token</div>
+            <div class="stat-value small" id="inspect-cache-token">—</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- U12 (2026-05-21): multi-resolution substrate availability surface.
+           Reads from /graph/view (U9 backend just shipped) substrate_availability
+           probe. Surfaces "Bake graph structure" / "Graph structure stale" /
+           "Substrate ready" states clearly. -->
+      <div class="glance-section" style="margin-top: 16px;">
+        <div class="dash-title">Multi-resolution substrate</div>
+        <div style="font-size: 12px; color: var(--text-dim); margin-bottom: 8px;">
+          Asset / Island / Continent partition + centroid state. Required for the
+          4-rung descent algorithm + the 2D graph browser canvas.
+        </div>
+        <div class="backbone-row">
+          State:
+          <span class="badge missing" id="inspect-substrate-state">unknown</span>
+        </div>
+        <div class="backbone-row" style="margin-top: 6px;">
+          Assets: <span id="inspect-substrate-assets">—</span> ·
+          Islands: <span id="inspect-substrate-islands">—</span> ·
+          Continents: <span id="inspect-substrate-continents">—</span>
+        </div>
+      </div>
+
+      <div class="glance-section" style="margin-top: 16px;">
+        <div class="graph-toolbar">
+          <div>
+            <div class="dash-title" style="margin-bottom: 4px;">Graph browser</div>
+            <div class="graph-side-meta" id="graph-rung-label">Continent view</div>
+          </div>
+          <div class="graph-actions">
+            <button class="btn-small graph-toggle active" id="graph-toggle-semantic" onclick="toggleGraphChannel('semantic')" type="button">Semantic</button>
+            <button class="btn-small graph-toggle active" id="graph-toggle-temporal" onclick="toggleGraphChannel('temporal')" type="button">Temporal</button>
+            <button class="btn-small" onclick="resetGraphView()" type="button">Reset</button>
+            <button class="btn-small" onclick="loadGraphView()" type="button">Refresh</button>
+          </div>
+        </div>
+        <div class="graph-breadcrumb" id="graph-breadcrumb"></div>
+        <div class="graph-browser">
+          <div class="graph-canvas-wrap">
+            <svg id="graph-canvas-svg" role="img" aria-label="Multi-resolution graph browser"></svg>
+            <div class="graph-empty visible" id="graph-empty">Loading graph browser...</div>
+          </div>
+          <aside class="graph-side" id="graph-side-panel">
+            <h3>Selection</h3>
+            <div class="graph-side-meta">Choose a node to inspect its members, sources, and passage previews.</div>
+          </aside>
+        </div>
+        <div class="graph-stats-bar" id="graph-stats-bar" aria-live="polite"></div>
+      </div>
+
+      <!-- Visible intelligence (2026-06-10): the engine's own patterns + questions -->
+      <div class="ingest-sublabel" style="margin-top:18px">Your query patterns <span style="color:var(--text-dim);font-weight:400;font-size:11px">(what the speculative cache adapts to)</span></div>
+      <div id="query-patterns" style="font-size:12.5px;color:var(--text-dim)">Not yet loaded.</div>
+      <div class="ingest-sublabel" style="margin-top:18px">Questions this graph implies <span style="color:var(--curiosity);font-weight:400;font-size:11px">(topology-derived; click to ask)</span></div>
+      <div id="implied-questions" style="font-size:12.5px;color:var(--text-dim)">Not yet loaded.</div>
+
+      <div class="dash-footer" id="inspect-footer" style="margin-top: 16px;">Not yet loaded.</div>
+
+    </section>
+
+    <!-- Dashboard panel -->
+    <section id="dashboard-panel" class="panel">
+
+      <!-- Engine init banner — visible while AI models are loading -->
+      <div id="engine-init-banner" style="display:none;padding:12px 16px;margin:0 0 12px;
+           background:var(--surface2);border:1px solid var(--accent-dim);border-radius:var(--radius);
+           color:var(--accent);font-size:13px;text-align:center;">
+        <span class="warmup-spinner" style="display:inline-block;width:14px;height:14px;
+              border:2px solid var(--accent-dim);border-top-color:var(--accent);
+              border-radius:50%;animation:spin 1s linear infinite;vertical-align:middle;
+              margin-right:8px;"></span>
+        Loading AI models… first query may take a moment.
+      </div>
+
+      <!-- UX-5: Source overview — doc-level view of what's in the graph -->
+      <div class="glance-section">
+        <div class="dash-title">In your graph</div>
+        <div id="glance-list">
+          <span class="glance-empty">Loading…</span>
+        </div>
+      </div>
+
+      <!-- Graph Health — collapsed by default (dev detail) -->
+      <details class="health-details">
+        <summary>Graph Health</summary>
+
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-label">Nodes</div>
+            <div class="stat-value" id="stat-nodes">—</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Edges</div>
+            <div class="stat-value" id="stat-edges">—</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Passages</div>
+            <div class="stat-value" id="stat-passages">—</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Graph file</div>
+            <div class="stat-value small" id="stat-filesize">—</div>
+          </div>
+        </div>
+
+        <div class="backbone-row">
+          Backbone cache:
+          <span class="badge missing" id="badge-backbone">unknown</span>
+        </div>
+
+        <div class="backbone-row" style="margin-top:6px;">
+          Merge candidates:
+          <span class="badge missing" id="badge-merge">—</span>
+          <button class="merge-btn" id="btn-merge" onclick="runMerge()" disabled
+                  style="margin-left:auto;padding:4px 12px;font-size:12px;border:none;border-radius:4px;background:#1e8a6e;color:#fff;cursor:pointer;">
+            Run Merge
+          </button>
+        </div>
+        <div id="merge-result" style="font-size:12px;color:#8a8f98;margin-top:4px;display:none;"></div>
+
+        <div class="dash-footer" id="dash-footer">Not yet loaded.</div>
+      </details>
+
+      <!-- Unified Component Registry (K-B): the engine's component catalog + active
+           mode, read from /health. Read-only shell (L3); per-component toggles +
+           mode selector are the GPU-validated follow-on. Labels are buyer-safe
+           ("Deterministic" / "LLM-augmented"); the internal Fire/Water naming stays
+           code-level only per canonical-vocabulary. -->
+      <details class="health-details" style="margin-top: 12px;">
+        <summary>Components</summary>
+        <div style="padding: 8px 12px;">
+          <div id="registry-mode" style="font-size:12px;color:var(--text-dim);margin-bottom:8px;">Loading…</div>
+          <div id="registry-body"></div>
+        </div>
+      </details>
+
+      <!-- U13 Debug mode (2026-05-21): preference for expanded Evidence by default.
+           Persisted in localStorage under TPVRG_DEBUG_EVIDENCE_EXPANDED. -->
+      <details class="health-details" style="margin-top: 12px;">
+        <summary>Debug mode</summary>
+        <div style="padding: 8px 12px; font-size: 13px; color: var(--text-dim);">
+          <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+            <input type="checkbox" id="debug-evidence-expanded"
+                   onchange="onDebugEvidenceToggle()" />
+            <span>Expand <strong>Evidence</strong> by default in Search results</span>
+          </label>
+          <div style="margin-top: 6px; font-size: 12px; color: var(--text-dim);">
+            When enabled, each query's Evidence panel opens automatically for diagnosis sessions. The default-collapsed Evidence design is the answer-first UX; Debug mode is the diagnostic flip.
+          </div>
+        </div>
+      </details>
+
+    </section>
+
+  </main>
+</div>
+
+<script>
+// ── Config ───────────────────────────────────────────────────────────────
+const API_BASE = "http://127.0.0.1:8321";
+const WS_BASE  = API_BASE.replace(/^http/, "ws");
+const REFRESH_INTERVAL_MS = 30_000;
+// Timeout constants — tuned 2026-04-24 after Cockpit-demo smoke test
+// showed daemon response latency can exceed the previous 3-6s values
+// under normal probe load, causing spurious "offline" badges.
+const TIMEOUT_HEARTBEAT_MS      = 10000;  // /health main heartbeat
+const TIMEOUT_INIT_POLL_MS      = 10000;  // /health poll during warmup loop
+const TIMEOUT_STATUS_PROBE_MS   = 10000;  // /openai/status, /ollama/models, /watch_folder/status
+const TIMEOUT_GRAPH_READ_MS     = 15000;  // /graph/glance, /metrics
+const TIMEOUT_JANITOR_STATUS_MS = 60000;  // /janitor/status
+const TIMEOUT_LONG_OP_MS        = 300000; // /query, /ingest, /answer/stream (unchanged)
+let ENGINE_READY = false;
+
+// ── Utility ──────────────────────────────────────────────────────────────
+function el(id) { return document.getElementById(id); }
+
+function updateEngineReadyUI() {
+  const btn = el("search-btn");
+  const input = el("query-input");
+  if (btn) btn.disabled = !ENGINE_READY;
+  if (input) input.disabled = !ENGINE_READY;
+}
+
+function setEngineReady(ready) {
+  const wasReady = ENGINE_READY;
+  ENGINE_READY = ready === true;
+  updateEngineReadyUI();
+  if (ENGINE_READY && !wasReady) {
+    window.dispatchEvent(new CustomEvent("tpvrg:engine-ready"));
+  }
+}
+
+updateEngineReadyUI();
+
+function setOnline(online, detail) {
+  const dot   = el("conn-dot");
+  const label = el("conn-label");
+  dot.className = "conn-dot" + (online ? " online" : "");
+  if (online && detail) {
+    label.textContent = detail;
+    dot.title = detail;
+  } else {
+    label.textContent = online ? "connected" : "offline";
+    dot.title = online ? "Backend reachable" : "Backend unreachable";
+  }
+}
+
+function fmt(n) {
+  if (n === null || n === undefined) return "—";
+  return Number(n).toLocaleString();
+}
+
+function fmtBytes(b) {
+  if (!b) return "—";
+  if (b < 1024)          return b + " B";
+  if (b < 1024 * 1024)   return (b / 1024).toFixed(1) + " KB";
+  return (b / (1024 * 1024)).toFixed(2) + " MB";
+}
+
+// ── Provider management ───────────────────────────────────────────────────
+
+async function onProviderChange() {
+  const provider = el("provider-select").value;
+  const ollamaSel = el("model-select");
+  const openaiInput = el("openai-model-input");
+  const refreshBtn = el("refresh-btn");
+  const status = el("provider-status");
+
+  ollamaSel.style.display = "none";
+  openaiInput.style.display = "none";
+  refreshBtn.style.display = "none";
+  status.textContent = "";
+  status.className = "ollama-status";
+
+  if (provider === "ollama") {
+    ollamaSel.style.display = "";
+    refreshBtn.style.display = "";
+    await refreshModels();
+  } else if (provider === "openai") {
+    openaiInput.style.display = "";
+    await checkOpenAIStatus();
+  }
+  // "context" → nothing shown
+}
+
+async function checkOpenAIStatus() {
+  const status = el("provider-status");
+  try {
+    const resp = await fetch(API_BASE + "/openai/status", {
+      signal: AbortSignal.timeout(TIMEOUT_STATUS_PROBE_MS),
+    });
+    const data = await resp.json();
+    if (data.has_key) {
+      status.textContent = "API key set";
+      status.className = "ollama-status ok";
+    } else {
+      status.textContent = "OPENAI_API_KEY not set";
+      status.className = "ollama-status fail";
+    }
+  } catch (err) {
+    status.textContent = "API unreachable";
+    status.className = "ollama-status fail";
+  }
+}
+
+async function initProvider() {
+  // Auto-detect best available provider on page load
+  const providerSel = el("provider-select");
+  try {
+    const resp = await fetch(API_BASE + "/openai/status", {
+      signal: AbortSignal.timeout(TIMEOUT_STATUS_PROBE_MS),
+    });
+    const data = await resp.json();
+    if (data.has_key) {
+      providerSel.value = "openai";
+      await onProviderChange();
+      return;
+    }
+  } catch (_) { /* ignore */ }
+
+  // No OpenAI key — try Ollama
+  try {
+    const resp = await fetch(API_BASE + "/ollama/models", {
+      signal: AbortSignal.timeout(TIMEOUT_STATUS_PROBE_MS),
+    });
+    const data = await resp.json();
+    if (data.status === "ok" && data.models.length) {
+      providerSel.value = "ollama";
+      await onProviderChange();
+      return;
+    }
+  } catch (_) { /* ignore */ }
+
+  // Neither available — context only
+  providerSel.value = "context";
+  await onProviderChange();
+}
+
+// ── Ollama model loader ───────────────────────────────────────────────────
+async function refreshModels() {
+  const sel = el("model-select");
+  const status = el("provider-status");
+  sel.innerHTML = '<option value="">— loading… —</option>';
+  status.textContent = "";
+  status.className = "ollama-status";
+
+  try {
+    const resp = await fetch(API_BASE + "/ollama/models", {
+      signal: AbortSignal.timeout(TIMEOUT_STATUS_PROBE_MS),
+    });
+    const data = await resp.json();
+
+    if (data.status !== "ok" || !data.models.length) {
+      sel.innerHTML = '<option value="">— no models found —</option>';
+      status.textContent = "Ollama offline or no models installed";
+      status.className = "ollama-status fail";
+      return;
+    }
+
+    sel.innerHTML = "";
+    const preferred = ["llama3.2", "llama3", "mistral", "phi3", "gemma2"];
+    const sorted = [...data.models].sort((a, b) => {
+      const ia = preferred.findIndex(p => a.startsWith(p));
+      const ib = preferred.findIndex(p => b.startsWith(p));
+      if (ia === -1 && ib === -1) return a.localeCompare(b);
+      if (ia === -1) return 1;
+      if (ib === -1) return -1;
+      return ia - ib;
+    });
+    sorted.forEach(m => {
+      const opt = document.createElement("option");
+      opt.value = m;
+      opt.textContent = m;
+      sel.appendChild(opt);
+    });
+    status.textContent = data.models.length + " model" + (data.models.length !== 1 ? "s" : "");
+    status.className = "ollama-status ok";
+  } catch (err) {
+    sel.innerHTML = '<option value="">— Ollama unreachable —</option>';
+    status.textContent = "Ollama not running";
+    status.className = "ollama-status fail";
+  }
+}
+
+// ── Health fetch ──────────────────────────────────────────────────────────
+async function fetchHealth() {
+  try {
+    const resp = await fetch(API_BASE + "/health", { signal: AbortSignal.timeout(TIMEOUT_HEARTBEAT_MS) });
+    if (!resp.ok) throw new Error("HTTP " + resp.status);
+    const data = await resp.json();
+    if (typeof updateHudFromHealth === "function") updateHudFromHealth(data, true);
+
+    // Engine still loading models in background
+    const banner = el("engine-init-banner");
+    if (data.initializing !== false) {
+      setEngineReady(false);
+      const stage = data.warmup_stage || "Loading models…";
+      setOnline(true, stage);
+      banner.style.display = "";
+      el("dash-footer").textContent = stage;
+      setTimeout(fetchHealth, 2000);  // poll faster while models load
+      return;  // skip stats that aren't available yet
+    }
+    setEngineReady(true);
+    banner.style.display = "none";
+
+    // Build status detail for header
+    const nodeCount = data.node_count ?? 0;
+    const bbStatus = data.backbone_cached ? "backbone cached" : "no backbone";
+    const statusDetail = `ready · ${fmt(nodeCount)} nodes · ${bbStatus}`;
+    setOnline(true, statusDetail);
+
+    el("stat-nodes").textContent    = fmt(data.node_count);
+    el("stat-edges").textContent    = fmt(data.edge_count);
+    el("stat-passages").textContent = fmt(data.passage_count);
+    el("stat-filesize").textContent = fmtBytes(data.graph_file_bytes);
+
+    const bb = el("badge-backbone");
+    const cached = !!data.backbone_cached;
+    bb.textContent = cached ? "cached" : "not cached";
+    bb.className   = "badge " + (cached ? "cached" : "missing");
+
+    el("dash-footer").textContent = "Last refreshed: " + new Date().toLocaleTimeString();
+
+    // Fetch merge candidate count (non-blocking)
+    refreshMergeStatus();
+
+    // Unified Component Registry (K-B): render the component catalog + active mode.
+    renderComponentRegistry(data.component_registry);
+  } catch (err) {
+    setEngineReady(false);
+    setOnline(false);
+    if (typeof updateHudFromHealth === "function") updateHudFromHealth({}, false);
+    el("dash-footer").textContent = "Last attempt: " + new Date().toLocaleTimeString();
+  }
+}
+
+async function refreshMergeStatus() {
+  try {
+    const resp = await fetch(API_BASE + "/janitor/status", {
+      signal: AbortSignal.timeout(TIMEOUT_JANITOR_STATUS_MS),
+    });
+    if (!resp.ok) return;
+    const data = await resp.json();
+    const badge = el("badge-merge");
+    const btn = el("btn-merge");
+    const count = data.merge_candidates || 0;
+    badge.textContent = count.toString();
+    badge.className = "badge " + (count === 0 ? "cached" : "missing");
+    btn.disabled = count === 0;
+  } catch { /* non-critical */ }
+}
+
+// ── Component Registry (K-B) — deterministic + LLM-augmented catalog from /health ──
+// Read-only shell (L3). Per-component toggles + a mode selector that POSTs back are
+// the GPU-validated follow-on. Labels are buyer-safe; internal Fire/Water naming is
+// code-level only (canonical-vocabulary). Defensive: graceful when the field is absent
+// (older daemon) since `component_registry` only appears on /health from 2026-06-05.
+function renderComponentRegistry(reg) {
+  const modeEl = el("registry-mode");
+  const bodyEl = el("registry-body");
+  if (!modeEl || !bodyEl) return;
+  if (!reg || !Array.isArray(reg.components)) {
+    modeEl.textContent = "Component registry not available (update the daemon).";
+    bodyEl.innerHTML = "";
+    return;
+  }
+  modeEl.innerHTML =
+    `Active mode: <strong>${reg.active_mode}</strong> · ` +
+    `${reg.total} components · ${reg.fire} deterministic / ${reg.water} LLM-augmented`;
+
+  const auditBadge = (s) => {
+    const strong = (s === "required" || s === "confirmed_load_bearing");
+    return `<span class="badge ${strong ? "cached" : "missing"}" style="font-size:10px;">` +
+           `${String(s).replace(/_/g, " ")}</span>`;
+  };
+  const row = (c) =>
+    `<div style="display:flex;align-items:center;gap:8px;padding:3px 0;font-size:12px;border-bottom:1px solid var(--surface2);">
+       <span style="flex:1;">${c.name}</span>
+       <span style="color:var(--text-dim);font-size:11px;">${c.stage}</span>
+       ${auditBadge(c.audit_status)}
+       <span style="color:var(--text-dim);font-size:11px;min-width:150px;text-align:right;">${c.toggle || "—"}</span>
+     </div>`;
+  const group = (title, klass) => {
+    const items = reg.components.filter((c) => c["class"] === klass);
+    if (!items.length) return "";
+    return `<div class="dash-title" style="margin-top:10px;">${title} (${items.length})</div>` +
+           items.map(row).join("");
+  };
+  bodyEl.innerHTML =
+    group("Deterministic mechanisms", "fire") +
+    group("LLM-augmented injectors", "water");
+}
+
+// ── Glance fetch — "what's in your graph" ────────────────────────────────
+function truncate(s, n) {
+  return s.length > n ? s.slice(0, n - 1) + "…" : s;
+}
+
+async function fetchGlance() {
+  const list = el("glance-list");
+  try {
+    const resp = await fetch(API_BASE + "/graph/glance", {
+      signal: AbortSignal.timeout(TIMEOUT_GRAPH_READ_MS),
+    });
+    if (!resp.ok) throw new Error("HTTP " + resp.status);
+    const data = await resp.json();
+
+    list.innerHTML = "";
+
+    if (!data.sources || data.sources.length === 0) {
+      list.innerHTML = '<span class="glance-empty">No content yet — ingest some text to get started.</span>';
+      return;
+    }
+
+    // UX-5: Source overview table (replaces glance pills)
+    const table = document.createElement("table");
+    table.className = "sources-table";
+
+    const thead = document.createElement("thead");
+    thead.innerHTML = '<tr><th>Source</th><th class="num">Passages</th><th class="num">Edges</th><th>Last ingested</th></tr>';
+    table.appendChild(thead);
+
+    const tbody = document.createElement("tbody");
+    let totalPassages = 0;
+    let totalEdges = 0;
+    for (const s of data.sources) {
+      const tr = document.createElement("tr");
+      const tdName = document.createElement("td");
+      tdName.className = "src-name";
+      tdName.textContent = truncate(s.source, 50);
+      tdName.title = s.source;
+
+      const tdCount = document.createElement("td");
+      tdCount.className = "num";
+      tdCount.textContent = fmt(s.count);
+
+      const tdEdges = document.createElement("td");
+      tdEdges.className = "num";
+      tdEdges.textContent = fmt(s.edge_count || 0);
+
+      const tdDate = document.createElement("td");
+      if (s.last_at) {
+        const d = new Date(s.last_at * 1000);
+        tdDate.textContent = d.toLocaleDateString() + " " + d.toLocaleTimeString([], {hour:"2-digit", minute:"2-digit"});
+      } else {
+        tdDate.textContent = "—";
+      }
+
+      tr.appendChild(tdName);
+      tr.appendChild(tdCount);
+      tr.appendChild(tdEdges);
+      tr.appendChild(tdDate);
+      tbody.appendChild(tr);
+
+      totalPassages += s.count || 0;
+      totalEdges += s.edge_count || 0;
+    }
+    table.appendChild(tbody);
+
+    // Summary footer
+    const tfoot = document.createElement("tfoot");
+    tfoot.innerHTML = `<tr><td>${data.sources.length} sources</td><td class="num">${fmt(data.total_passages || totalPassages)}</td><td class="num">${fmt(totalEdges)}</td><td></td></tr>`;
+    table.appendChild(tfoot);
+
+    list.appendChild(table);
+  } catch (err) {
+    list.innerHTML = '<span class="glance-empty">Could not load graph contents.</span>';
+  }
+}
+
+function refreshDashboard() {
+  fetchHealth();
+  fetchGlance();
+}
+
+async function runMerge() {
+  const btn = el("btn-merge");
+  const resultDiv = el("merge-result");
+  btn.disabled = true;
+  btn.textContent = "Merging...";
+  resultDiv.style.display = "block";
+  resultDiv.textContent = "Running merge...";
+  try {
+    const resp = await fetch(API_BASE + "/janitor", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({task: "merge", dry_run: false}),
+    });
+    const data = await resp.json();
+    if (data.status === "ok") {
+      resultDiv.textContent = `Merged ${data.nodes_modified} duplicate(s). ${data.errors.length ? "Errors: " + data.errors.join("; ") : ""}`;
+      resultDiv.style.color = data.nodes_modified > 0 ? "#1e8a6e" : "#8a8f98";
+    } else {
+      resultDiv.textContent = "Error: " + (data.message || "unknown");
+      resultDiv.style.color = "#e74c3c";
+    }
+    // Refresh dashboard to reflect changes
+    setTimeout(refreshDashboard, 1000);
+  } catch (err) {
+    resultDiv.textContent = "Error: " + err.message;
+    resultDiv.style.color = "#e74c3c";
+  } finally {
+    btn.textContent = "Run Merge";
+  }
+}
+
+// ── Context toggle helper ─────────────────────────────────────────────────
+// U13 (2026-05-21): Evidence collapsible. Replaces the original "Raw context"
+// label with "Evidence (N nodes, M tokens, L=X.YY)" per [[../../prd-cockpit-ux-sprint-2026-04-12.md]]
+// §U13 footer acceptance. Default-collapsed; one-click expand. Respects the
+// TPVRG_DEBUG_EVIDENCE_EXPANDED localStorage flag (Dashboard → Debug mode
+// checkbox) — when enabled, Evidence is expanded by default for diagnosis.
+function makeContextToggle(contextText, stats) {
+  const wrapper = document.createElement("div");
+
+  // Build label with embedded stats per U13 spec.
+  const nodes = (stats && stats.nodes_used != null) ? stats.nodes_used : "?";
+  const tokens = (stats && stats.tokens_used != null) ? stats.tokens_used : "?";
+  let labelText = `Evidence (${nodes} nodes, ${tokens} tokens`;
+  if (stats && stats.render_confidence != null) {
+    labelText += `, L=${Number(stats.render_confidence).toFixed(2)}`;
+  }
+  labelText += ")";
+
+  const toggle = document.createElement("div");
+  toggle.className = "context-toggle";
+  toggle.innerHTML = `<span class="toggle-arrow">▶</span> <span>${labelText}</span>`;
+
+  const card = document.createElement("div");
+  card.className = "context-card";
+  const pre = document.createElement("pre");
+  if (el("shade-toggle") && el("shade-toggle").checked && /\*\*/.test(contextText)) {
+    // shaded render: escape EVERYTHING first, then re-introduce only the
+    // shading markers as tags (no other HTML can survive the escape)
+    const esc = contextText.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    pre.innerHTML = esc
+      .replace(/\*\*([^*]+)\*\*/g, "<b style=\"color:var(--text)\">$1</b>")
+      .replace(/\*([^*\n]+)\*/g, "<i>$1</i>");
+  } else {
+    pre.textContent = contextText;
+  }
+  card.appendChild(pre);
+
+  // Debug mode default-open: if user has set the preference in Dashboard,
+  // pre-expand the Evidence section.
+  const debugExpanded = localStorage.getItem("TPVRG_DEBUG_EVIDENCE_EXPANDED") === "1";
+  if (debugExpanded) {
+    card.classList.add("visible");
+    toggle.querySelector(".toggle-arrow").classList.add("open");
+  }
+
+  toggle.addEventListener("click", () => {
+    const open = card.classList.toggle("visible");
+    toggle.querySelector(".toggle-arrow").classList.toggle("open", open);
+  });
+
+  wrapper.appendChild(toggle);
+  wrapper.appendChild(card);
+  return wrapper;
+}
+
+// ── Query submit ──────────────────────────────────────────────────────────
+
+// Render savings banner (demo headline) — shown when backend returns
+// savings_pct_this_query. Picks up automatically from /query (context-only)
+// and /answer/stream (LLM answer) since both emit the same stats shape via
+// _compute_query_stats() on the backend.
+function renderIntelLine(area, stats) {
+  // Visible intelligence (2026-06-10): show the reasoning the engine
+  // already did — deterministic decomposition, speculative prediction,
+  // reranking, confidence. Instruments never lie: every item here is a
+  // real field from _compute_query_stats; absent fields render nothing.
+  const bits = [];
+  if (stats.sub_queries && stats.sub_queries.length > 1) {
+    bits.push("decomposed into " + stats.sub_queries.length + " sub-queries (" +
+      (stats.decomposition_strategy || "auto") + "): " +
+      stats.sub_queries.map(q => "\u201C" + q + "\u201D").join(" · "));
+  }
+  if (stats.speculative && stats.speculative.hit) {
+    bits.push("answered from a pre-rendered prediction of this query family ⚡");
+  }
+  if (stats.reranker_active) {
+    bits.push("reranked by cross-encoder" +
+      (stats.reranker_model ? " (" + stats.reranker_model + ")" : ""));
+  }
+  if (stats.render_confidence != null) {
+    bits.push("render confidence " + stats.render_confidence.toFixed(2));
+  }
+  if (!bits.length) return;
+  const line = document.createElement("div");
+  line.style.cssText = "font-size:11.5px;color:var(--text-dim);margin:6px 0 2px;" +
+    "font-family:var(--font-mono);line-height:1.6";
+  line.textContent = bits.join("  ·  ");
+  area.appendChild(line);
+}
+
+function renderSavingsBanner(area, stats) {
+  if (typeof updateHudFromStats === "function") updateHudFromStats(stats);
+  if (typeof renderIntelLine === "function") renderIntelLine(area, stats);
+  if (stats.savings_pct_this_query == null) return;
+  if (!(stats.counterfactual_all_lod0 > 0)) return;
+
+  const pct = stats.savings_pct_this_query;
+  const used = (stats.tokens_used ?? 0).toLocaleString();
+  const counter = (stats.counterfactual_all_lod0 ?? 0).toLocaleString();
+  const saved = (stats.tokens_saved_this_query ?? 0).toLocaleString();
+
+  const banner = document.createElement("div");
+  banner.className = "savings-banner";
+
+  const pctEl = document.createElement("div");
+  pctEl.className = "savings-pct";
+  pctEl.textContent = `${pct.toFixed(1)}% saved`;
+
+  const detailEl = document.createElement("div");
+  detailEl.className = "savings-detail";
+
+  const mainEl = document.createElement("div");
+  mainEl.className = "savings-main";
+  mainEl.textContent = `${used} tokens rendered vs ${counter} at LOD_0 (flat passages)`;
+
+  const captionEl = document.createElement("div");
+  captionEl.className = "savings-caption";
+  captionEl.textContent = `${saved} tokens below the counterfactual — Token Governor + LOD compression at work`;
+
+  detailEl.appendChild(mainEl);
+  detailEl.appendChild(captionEl);
+  banner.appendChild(pctEl);
+  banner.appendChild(detailEl);
+  area.appendChild(banner);
+}
+
+// Render meta line + intent badges into the results area.
+// U13 (2026-05-21): footer now includes render_confidence (L score) and
+// selected_strategy when available per [[../../prd-cockpit-ux-sprint-2026-04-12.md]]
+// §U13 acceptance criteria.
+function renderMeta(area, stats, intent, elapsed) {
+  // Savings banner first — the demo headline belongs on top.
+  renderSavingsBanner(area, stats);
+
+  const meta = document.createElement("div");
+  meta.className = "result-meta";
+  const tokens = stats.tokens_used ?? "?";
+  const nodes = stats.nodes_used != null ? ` · ${stats.nodes_used} nodes` : "";
+
+  // U13: L score + strategy as additional footer segments when available.
+  let extra = "";
+  if (stats.render_confidence != null) {
+    extra += ` · L=${Number(stats.render_confidence).toFixed(2)}`;
+  }
+  if (stats.selected_strategy) {
+    extra += ` · ${stats.selected_strategy}`;
+  }
+
+  meta.textContent = `${tokens} ctx tokens${nodes}${extra} · ${elapsed}ms`;
+  area.appendChild(meta);
+
+  if (intent && intent.content_axes) {
+    const intentRow = document.createElement("div");
+    intentRow.className = "intent-row";
+    const label = document.createElement("span");
+    label.className = "intent-label";
+    label.textContent = "Intent:";
+    intentRow.appendChild(label);
+    const axes = Object.entries(intent.content_axes)
+      .filter(([_, v]) => v > 0.1)
+      .sort((a, b) => b[1] - a[1]);
+    for (const [axis, weight] of axes) {
+      const badge = document.createElement("span");
+      badge.className = "intent-badge" + (weight > 0.5 ? " primary" : "");
+      badge.textContent = `${axis} (${weight.toFixed(2)})`;
+      intentRow.appendChild(badge);
+    }
+    if (axes.length > 0) area.appendChild(intentRow);
+  }
+}
+
+// UX-10: Streaming search — answer-first with live token display
+async function handleSearchStream(question, provider, providerOpts) {
+  const area = el("results-area");
+  const btn  = el("search-btn");
+  const t0   = Date.now();
+
+  btn.textContent = "Retrieving context…";
+  area.innerHTML = '<span class="placeholder-text">Searching knowledge graph…</span>';
+
+  try {
+    const resp = await fetch(API_BASE + "/answer/stream", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ question, provider, ...providerOpts }),
+      signal: AbortSignal.timeout(TIMEOUT_LONG_OP_MS),
+    });
+    if (!resp.ok) {
+      const txt = await resp.text();
+      throw new Error("HTTP " + resp.status + ": " + txt);
+    }
+
+    const reader = resp.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = "";
+
+    // DOM elements we'll create on first context event
+    let answerCard = null;
+    let typingSpan = null;
+    let contextRendered = false;
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+
+      // Split on newlines — each line is a JSON object
+      const lines = buffer.split("\n");
+      buffer = lines.pop(); // keep incomplete trailing line
+
+      for (const line of lines) {
+        if (!line.trim()) continue;
+        let msg;
+        try { msg = JSON.parse(line); } catch (_) { continue; }
+
+        if (msg.type === "error") {
+          area.innerHTML = "";
+          const card = document.createElement("div");
+          card.className = "error-card";
+          card.textContent = msg.message;
+          area.appendChild(card);
+          return;
+        }
+
+        if (msg.type === "context" && !contextRendered) {
+          contextRendered = true;
+          const elapsed = Date.now() - t0;
+          area.innerHTML = "";
+
+          // Meta + intent
+          renderMeta(area, msg.stats || {}, msg.intent, elapsed);
+
+          // Answer card (will fill with streaming tokens)
+          answerCard = document.createElement("div");
+          answerCard.className = "answer-card";
+          typingSpan = document.createElement("span");
+          typingSpan.className = "typing-indicator";
+          typingSpan.textContent = "Generating answer";
+          answerCard.appendChild(typingSpan);
+          area.appendChild(answerCard);
+
+          btn.textContent = "Streaming…";
+
+          // U13: Collapsible Evidence below (label embeds nodes/tokens/L).
+          if (msg.context) {
+            area.appendChild(makeContextToggle(msg.context, msg.stats || {}));
+          }
+        }
+
+        if (msg.type === "token" && answerCard) {
+          // Remove typing indicator on first token
+          if (typingSpan && typingSpan.parentNode) {
+            typingSpan.remove();
+            typingSpan = null;
+          }
+          answerCard.textContent += msg.text;
+        }
+
+        if (msg.type === "done") {
+          if (typingSpan && typingSpan.parentNode) typingSpan.remove();
+          // Final answer is authoritative — overwrite to avoid any decoding drift
+          if (answerCard && msg.answer) {
+            answerCard.textContent = msg.answer;
+          }
+        }
+      }
+    }
+
+    // If we never got context (empty graph, etc.)
+    if (!contextRendered) {
+      area.innerHTML = '<span class="placeholder-text">No response received.</span>';
+    }
+
+  } catch (err) {
+    area.innerHTML = "";
+    const card = document.createElement("div");
+    card.className = "error-card";
+    card.textContent = "Error: " + err.message;
+    area.appendChild(card);
+  } finally {
+    btn.textContent = "Search";
+    updateEngineReadyUI();
+  }
+}
+
+// Context-only query (no LLM — existing /query endpoint)
+async function handleSearchContextOnly(question) {
+  const area = el("results-area");
+  const btn  = el("search-btn");
+  const t0   = Date.now();
+
+  try {
+    const resp = await fetch(API_BASE + "/query", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ question, shade: !!(el("shade-toggle") && el("shade-toggle").checked) }),
+      signal: AbortSignal.timeout(TIMEOUT_LONG_OP_MS),
+    });
+    if (!resp.ok) {
+      const txt = await resp.text();
+      throw new Error("HTTP " + resp.status + ": " + txt);
+    }
+    const data = await resp.json();
+    const elapsed = Date.now() - t0;
+    area.innerHTML = "";
+
+    if (data.status === "error") {
+      const card = document.createElement("div");
+      card.className = "error-card";
+      card.textContent = data.message;
+      area.appendChild(card);
+      return;
+    }
+
+    renderMeta(area, data.stats || {}, data.intent, elapsed);
+
+    // U13: context-only path also gets the Evidence-style collapsible label
+    // for consistency. The /query response is the full context (no LLM
+    // answer), so the wrapper hosts the context directly without a separate
+    // answer card.
+    if (data.context) {
+      area.appendChild(makeContextToggle(data.context, data.stats || {}));
+    }
+  } catch (err) {
+    area.innerHTML = "";
+    const card = document.createElement("div");
+    card.className = "error-card";
+    card.textContent = "Error: " + err.message;
+    area.appendChild(card);
+  } finally {
+    btn.textContent = "Search";
+    updateEngineReadyUI();
+  }
+}
+
+async function handleSearch() {
+  if (!ENGINE_READY) {
+    const area = el("results-area");
+    area.innerHTML = '<div class="hint">Engine still warming up. The progress bar at the bottom shows current stage. Try again in a few seconds.</div>';
+    updateEngineReadyUI();
+    return;
+  }
+
+  const input = el("query-input");
+  const q = input.value.trim();
+  if (!q) return;
+
+  const provider = el("provider-select").value;
+  const btn = el("search-btn");
+  btn.disabled = true;
+
+  const area = el("results-area");
+
+  if (provider === "openai") {
+    const openaiModel = el("openai-model-input").value.trim() || "gpt-4o-mini";
+    await handleSearchStream(q, "openai", { openai_model: openaiModel });
+  } else if (provider === "ollama") {
+    const selectedModel = el("model-select").value;
+    if (!selectedModel) {
+      // No Ollama model — context only
+      await handleSearchContextOnly(q);
+    } else {
+      await handleSearchStream(q, "ollama", { ollama_model: selectedModel });
+    }
+  } else {
+    // Context only
+    await handleSearchContextOnly(q);
+  }
+}
+
+// ── Enter key ─────────────────────────────────────────────────────────────
+el("query-input").addEventListener("keydown", (e) => {
+  if (e.key === "Enter") handleSearch();
+});
+
+// ── Tab switching ─────────────────────────────────────────────────────────
+function switchTab(name) {
+  // U12 (2026-05-21): "inspect" added to the tab list.
+  ["search", "ingest", "inspect", "dashboard"].forEach(p => {
+    el(p + "-panel").classList.toggle("active", p === name);
+    el("tab-" + p).classList.toggle("active", p === name);
+  });
+  if (name === "ingest") {
+    startQueuePolling();
+  } else {
+    stopQueuePolling();
+  }
+  if (name === "inspect") {
+    refreshInspect();
+    startInspectPolling();
+  } else {
+    stopInspectPolling();
+  }
+}
+
+// U12 (2026-05-21): Inspect tab refresh + polling.
+// Reads /graph/glance (counts), /diagnostics/speculative_cache_hit_rate
+// (Active Janitor Pattern 2 cache state), and /graph/view (Multi-Resolution
+// Phase 1 substrate availability). 5-second polling while the tab is active.
+let _inspectTimer = null;
+let _graphLoaded = false;
+let _graphData = null;
+let _selectedGraphNode = null;
+let _graphPath = [{ rung: "continent", parentId: null, label: "Continents" }];
+let _graphOptions = { semantic: true, temporal: true };
+let _graphViewBox = null;
+let _graphDrag = null;
+
+function fmtCount(value) {
+  return Number.isFinite(Number(value)) ? Number(value).toLocaleString() : "—";
+}
+
+function fmtDelta(value) {
+  const n = Number(value) || 0;
+  return (n >= 0 ? "+" : "") + n.toLocaleString();
+}
+
+function setText(id, value) {
+  const node = el(id);
+  if (node) node.textContent = value;
+}
+
+function setBadge(id, label, ok) {
+  const node = el(id);
+  if (!node) return;
+  node.textContent = label;
+  node.className = ok ? "badge cached" : "badge missing";
+}
+
+function escapeHtml(value) {
+  return String(value ?? "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#39;");
+}
+
+function updateSubstrateCounts(counts) {
+  if (!counts) return;
+  setText("inspect-substrate-assets", counts.asset != null ? fmtCount(counts.asset) : "—");
+  setText("inspect-substrate-islands", counts.island != null ? fmtCount(counts.island) : "—");
+  setText("inspect-substrate-continents", counts.continent != null ? fmtCount(counts.continent) : "—");
+}
+
+// UX-6: bottom substrate-stats bar for the graph browser (mockup parity).
+// Additive + defensive — renders only the fields /graph/view actually returns.
+function renderGraphStatsBar(data) {
+  const bar = el("graph-stats-bar");
+  if (!bar) return;
+  const c = (data && data.counts) || {};
+  const stat = (n, label) => `<span class="stat"><span class="accent">${fmtCount(n)}</span> ${label}</span>`;
+  const parts = [];
+  if (c.asset != null) parts.push(stat(c.asset, "Assets"));
+  if (c.island != null) parts.push(stat(c.island, "Islands"));
+  if (c.continent != null) parts.push(stat(c.continent, "Continents"));
+  const edges = c.edge != null ? c.edge
+    : (data && data.total_edges != null ? data.total_edges
+    : (data && data.edges ? data.edges.length : null));
+  if (edges != null) parts.push(stat(edges, "edges"));
+  bar.innerHTML = parts.length ? parts.join('<span class="stat-sep">·</span>') : "";
+}
+
+async function refreshInspect() {
+  try {
+    const resp = await fetch(API_BASE + "/inspect/summary", {
+      signal: AbortSignal.timeout(TIMEOUT_STATUS_PROBE_MS),
+    });
+    if (resp.ok) {
+      const data = await resp.json();
+      setText("inspect-stat-nodes", fmtCount(data.node_count));
+      setText("inspect-stat-edges", fmtCount(data.edge_count));
+      setText("inspect-stat-passages", fmtCount(data.passage_count));
+      setText("inspect-stat-filesize", data.graph_file_mb != null ? `${data.graph_file_mb} MB` : "—");
+      const deltas = data.deltas_24h || {};
+      setText("inspect-delta-nodes", fmtDelta(deltas.node_count));
+      setText("inspect-delta-edges", fmtDelta(deltas.edge_count));
+      setText("inspect-delta-passages", fmtDelta(deltas.passage_count));
+      setText("inspect-delta-queries", fmtDelta(deltas.query_count));
+      setText("inspect-delta-janitor", fmtDelta(deltas.janitor_pass_count));
+      const janitor = data.janitor || {};
+      setBadge("inspect-badge-janitor", janitor.running ? "running" : "idle", !!janitor.running);
+      const mins = Math.max(1, Math.round(Number(janitor.pulse_interval_seconds || 0) / 60));
+      setText("inspect-janitor-detail", `${janitor.last_task || "no recent task"} · every ${mins} min`);
+      if (janitor.running) pulseHeader();
+    }
+  } catch (e) {
+    // Inspect polling is best-effort.
+  }
+
+  try {
+    const resp = await fetch(API_BASE + "/diagnostics/speculative_cache_hit_rate", {
+      signal: AbortSignal.timeout(10000),
+    });
+    if (resp.ok) {
+      const data = await resp.json();
+      if (data.available) {
+        setText("inspect-cache-size", (data.cache_size ?? 0).toString());
+        setText("inspect-cache-hits", (data.hits ?? 0).toString());
+        setText("inspect-cache-misses", (data.misses ?? 0).toString());
+        if (data.current_invalidation_token) {
+          setText("inspect-cache-token", data.current_invalidation_token.substring(0, 8) + "…");
+        }
+      } else {
+        setText("inspect-cache-size", "n/a");
+      }
+    }
+  } catch (e) {
+    // Inspect polling is best-effort.
+  }
+
+  if (!_graphLoaded) {
+    await loadGraphView("continent", null);
+  } else {
+    await loadGraphView();
+  }
+  refreshVisibleIntelligence();
+  setText("inspect-footer", `Last refreshed: ${new Date().toLocaleTimeString()}`);
+}
+
+function startInspectPolling() {
+  if (_inspectTimer) return;
+  _inspectTimer = setInterval(refreshInspect, 5000);
+}
+
+function stopInspectPolling() {
+  if (_inspectTimer) {
+    clearInterval(_inspectTimer);
+    _inspectTimer = null;
+  }
+}
+
+function currentGraphTarget() {
+  return _graphPath[_graphPath.length - 1] || { rung: "continent", parentId: null, label: "Continents" };
+}
+
+function nextGraphRung(rung) {
+  if (rung === "continent") return "island";
+  if (rung === "island") return "asset";
+  if (rung === "asset") return "passage";
+  return null;
+}
+
+function graphColor(rung) {
+  if (rung === "continent") return "#36c5f0";
+  if (rung === "island") return "#7ee7dc";
+  if (rung === "asset") return "#a6e3a1";
+  return "#f7c948";
+}
+
+async function loadGraphView(rung = null, parentId = null, label = null) {
+  const target = rung ? { rung, parentId, label: label || rung } : currentGraphTarget();
+  const params = new URLSearchParams({ rung: target.rung, top_k: "1500" });
+  if (target.parentId) params.set("parent_id", target.parentId);
+  const empty = el("graph-empty");
+  if (empty) {
+    empty.textContent = "Loading graph browser...";
+    empty.classList.add("visible");
+  }
+  try {
+    const resp = await fetch(`${API_BASE}/graph/view?${params.toString()}`, {
+      signal: AbortSignal.timeout(TIMEOUT_LONG_OP_MS),
+    });
+    if (!resp.ok) throw new Error(`graph view ${resp.status}`);
+    const data = await resp.json();
+    _graphLoaded = true;
+    _graphData = data;
+    updateSubstrateCounts(data.counts);
+    renderGraphStatsBar(data);
+    if (data.available) {
+      setBadge("inspect-substrate-state", "ready", true);
+      renderGraph(data);
+    } else {
+      setBadge("inspect-substrate-state", data.reason || "missing", false);
+      renderGraphEmpty(data.detail || data.reason || "Graph substrate unavailable.");
+    }
+  } catch (e) {
+    renderGraphEmpty("Graph browser failed to load.");
+  }
+}
+
+function renderGraphEmpty(message) {
+  const svg = el("graph-canvas-svg");
+  if (svg) svg.innerHTML = "";
+  const empty = el("graph-empty");
+  if (empty) {
+    empty.textContent = message;
+    empty.classList.add("visible");
+  }
+  setText("graph-rung-label", "No graph view available");
+}
+
+function graphPoint(node, width, height) {
+  const span = Math.max(80, Math.min(width, height) * 0.38);
+  return {
+    x: width / 2 + Number(node.x || 0) * span,
+    y: height / 2 + Number(node.y || 0) * span,
+  };
+}
+
+function ensureGraphViewBox(svg, width, height) {
+  if (!_graphViewBox) _graphViewBox = { x: 0, y: 0, w: width, h: height };
+  svg.setAttribute("viewBox", `${_graphViewBox.x} ${_graphViewBox.y} ${_graphViewBox.w} ${_graphViewBox.h}`);
+}
+
+function renderGraph(data) {
+  const svg = el("graph-canvas-svg");
+  if (!svg || !data) return;
+  const width = Math.max(600, svg.clientWidth || svg.parentElement?.clientWidth || 800);
+  const height = 420;
+  svg.setAttribute("width", width);
+  svg.setAttribute("height", height);
+  ensureGraphViewBox(svg, width, height);
+  svg.innerHTML = "";
+  const empty = el("graph-empty");
+  if (empty) empty.classList.toggle("visible", !data.nodes?.length);
+  setText("graph-rung-label", `${data.rung || "graph"} view · ${fmtCount(data.nodes?.length || 0)} of ${fmtCount(data.total_nodes || 0)} nodes`);
+  renderGraphBreadcrumb();
+
+  const points = new Map();
+  (data.nodes || []).forEach(node => points.set(node.id, graphPoint(node, width, height)));
+  const showEdges = _graphOptions.semantic || _graphOptions.temporal;
+  (showEdges ? (data.edges || []) : []).forEach(edge => {
+    const a = points.get(edge.source);
+    const b = points.get(edge.target);
+    if (!a || !b) return;
+    const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+    line.setAttribute("class", "graph-edge");
+    line.setAttribute("x1", a.x);
+    line.setAttribute("y1", a.y);
+    line.setAttribute("x2", b.x);
+    line.setAttribute("y2", b.y);
+    line.setAttribute("stroke-width", Math.max(1, Math.min(8, Math.log1p(edge.weight || 1))));
+    svg.appendChild(line);
+  });
+  (data.nodes || []).forEach(node => {
+    const p = points.get(node.id);
+    const group = document.createElementNS("http://www.w3.org/2000/svg", "g");
+    const isCluster = data.rung === "island" || data.rung === "continent";
+    group.setAttribute("class", "graph-node" + (isCluster ? " cluster" : "") + (_selectedGraphNode?.id === node.id ? " selected" : ""));
+    group.setAttribute("transform", `translate(${p.x}, ${p.y})`);
+    group.addEventListener("click", () => selectGraphNode(node));
+    group.addEventListener("dblclick", () => descendGraphNode(node));
+    const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+    circle.setAttribute("r", Math.max(8, Math.min(22, 8 + Math.log1p(node.member_count || 1) * 4)));
+    circle.setAttribute("fill", graphColor(node.rung));
+    const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
+    text.setAttribute("x", 12);
+    text.setAttribute("y", 4);
+    text.textContent = String(node.label || node.id).slice(0, 42);
+    group.appendChild(circle);
+    group.appendChild(text);
+    svg.appendChild(group);
+  });
+}
+
+function renderGraphBreadcrumb() {
+  const root = el("graph-breadcrumb");
+  if (!root) return;
+  root.innerHTML = "";
+  _graphPath.forEach((item, idx) => {
+    const btn = document.createElement("button");
+    btn.className = "graph-crumb";
+    btn.type = "button";
+    btn.textContent = item.label || item.rung;
+    btn.onclick = () => {
+      _graphPath = _graphPath.slice(0, idx + 1);
+      _graphViewBox = null;
+      loadGraphView();
+    };
+    root.appendChild(btn);
+  });
+}
+
+function selectGraphNode(node) {
+  _selectedGraphNode = node;
+  renderGraph(_graphData);
+  const side = el("graph-side-panel");
+  if (!side) return;
+  const next = nextGraphRung(node.rung);
+  const entities = (node.top_entities || [])
+    .map(item => `<li>${escapeHtml(item.name || item.id)} (${fmtCount(item.count || 0)})</li>`)
+    .join("");
+  const passages = (node.representative_passages || [])
+    .map(item => `<li>${escapeHtml(item.source_label || item.passage_id)}: ${escapeHtml((item.preview || "").slice(0, 140))}</li>`)
+    .join("");
+  side.innerHTML = `
+    <h3>${escapeHtml(node.label || node.id)}</h3>
+    <div class="graph-side-meta">
+      ${escapeHtml(node.rung)} · ${fmtCount(node.member_count)} members · ${fmtCount(node.passage_count)} passages<br>
+      Sources: ${escapeHtml((node.source_names || []).join(", ") || "—")}
+    </div>
+    ${next ? `<button type="button" onclick="descendGraphNode(_selectedGraphNode)" style="display:block;width:100%;margin:8px 0;padding:8px 10px;background:var(--accent);color:#0a1414;border:none;border-radius:6px;font-weight:600;cursor:pointer;">Descend into ${next}s ↓</button>` : ""}
+    <ol class="graph-side-list">${entities || "<li>No entity summary yet.</li>"}</ol>
+    <ol class="graph-side-list">${passages || "<li>No passage preview yet.</li>"}</ol>
+  `;
+}
+
+function descendGraphNode(node) {
+  if (!node) return;
+  const next = nextGraphRung(node.rung);
+  if (!next) return;
+  _graphPath.push({ rung: next, parentId: node.id, label: node.label || node.id });
+  _graphViewBox = null;
+  _selectedGraphNode = null;
+  loadGraphView();
+}
+
+function resetGraphView() {
+  _graphPath = [{ rung: "continent", parentId: null, label: "Continents" }];
+  _graphViewBox = null;
+  _selectedGraphNode = null;
+  loadGraphView("continent", null, "Continents");
+}
+
+function toggleGraphChannel(channel) {
+  _graphOptions[channel] = !_graphOptions[channel];
+  el(`graph-toggle-${channel}`)?.classList.toggle("active", _graphOptions[channel]);
+  renderGraph(_graphData);
+}
+
+function wireGraphCanvasInteractions() {
+  const svg = el("graph-canvas-svg");
+  if (!svg || svg.dataset.wired === "1") return;
+  svg.dataset.wired = "1";
+  svg.addEventListener("wheel", (evt) => {
+    evt.preventDefault();
+    if (!_graphViewBox) return;
+    const factor = evt.deltaY < 0 ? 0.9 : 1.1;
+    const rect = svg.getBoundingClientRect();
+    const px = _graphViewBox.x + ((evt.clientX - rect.left) / rect.width) * _graphViewBox.w;
+    const py = _graphViewBox.y + ((evt.clientY - rect.top) / rect.height) * _graphViewBox.h;
+    _graphViewBox = {
+      x: px - (px - _graphViewBox.x) * factor,
+      y: py - (py - _graphViewBox.y) * factor,
+      w: _graphViewBox.w * factor,
+      h: _graphViewBox.h * factor,
+    };
+    renderGraph(_graphData);
+  }, { passive: false });
+  // Pan only after the pointer actually moves past a small threshold. Capturing the
+  // pointer on every pointerdown (the prior behavior) retargeted the follow-up click
+  // to the SVG and SWALLOWED node clicks — making it impossible to select/descend a
+  // node. Defer capture until a real drag is detected so stationary clicks reach nodes.
+  const DRAG_THRESHOLD_PX = 4;
+  svg.addEventListener("pointerdown", (evt) => {
+    if (!_graphViewBox) return;
+    _graphDrag = { x: evt.clientX, y: evt.clientY, box: { ..._graphViewBox }, pointerId: evt.pointerId, active: false };
+  });
+  svg.addEventListener("pointermove", (evt) => {
+    if (!_graphDrag || !_graphViewBox) return;
+    const movedX = evt.clientX - _graphDrag.x;
+    const movedY = evt.clientY - _graphDrag.y;
+    if (!_graphDrag.active) {
+      if (Math.hypot(movedX, movedY) < DRAG_THRESHOLD_PX) return;  // not a drag yet — preserve the click
+      _graphDrag.active = true;
+      try { svg.setPointerCapture(_graphDrag.pointerId); } catch (e) {}
+      svg.classList.add("dragging");
+    }
+    const rect = svg.getBoundingClientRect();
+    const dx = movedX / rect.width * _graphDrag.box.w;
+    const dy = movedY / rect.height * _graphDrag.box.h;
+    _graphViewBox = { ..._graphDrag.box, x: _graphDrag.box.x - dx, y: _graphDrag.box.y - dy };
+    renderGraph(_graphData);
+  });
+  const _endGraphDrag = () => {
+    if (_graphDrag?.active) { try { svg.releasePointerCapture(_graphDrag.pointerId); } catch (e) {} }
+    svg.classList.remove("dragging");
+    _graphDrag = null;
+  };
+  svg.addEventListener("pointerup", _endGraphDrag);
+  svg.addEventListener("pointercancel", _endGraphDrag);
+}
+
+wireGraphCanvasInteractions();
+
+// U12 (2026-05-21): pulse indicator — animates when activity detected.
+// Polls /diagnostics/speculative_cache_hit_rate at 5s; activity = recent
+// invalidation OR cache stats changed since last poll. Full U4 WebSocket
+// subscription deferred to a later sprint.
+let _lastPulseSignal = null;
+let _pulseHeaderTimer = null;
+
+function pulseHeader() {
+  const indicator = el("pulse-indicator");
+  if (!indicator) return;
+  indicator.classList.add("active");
+  if (_pulseHeaderTimer) clearTimeout(_pulseHeaderTimer);
+  _pulseHeaderTimer = setTimeout(() => indicator.classList.remove("active"), 3500);
+}
+
+async function refreshPulse() {
+  try {
+    const resp = await fetch(API_BASE + "/diagnostics/speculative_cache_hit_rate", {
+      signal: AbortSignal.timeout(5000),
+    });
+    if (!resp.ok) {
+      el("pulse-indicator")?.classList.remove("active");
+      return;
+    }
+    const data = await resp.json();
+    // Build a compact signal from cache state + invalidation token + hit count.
+    const signal = `${data.cache_size ?? 0}|${data.hits ?? 0}|${data.misses ?? 0}|${data.current_invalidation_token ?? ""}`;
+    if (_lastPulseSignal !== null && signal !== _lastPulseSignal) {
+      pulseHeader();
+    }
+    _lastPulseSignal = signal;
+  } catch (e) {
+    el("pulse-indicator")?.classList.remove("active");
+  }
+}
+
+// Pulse polling is always on (not tab-gated) so the indicator shows whenever
+// any tab is active. 5s polling is light-weight (cached `/health`-style endpoint).
+setInterval(refreshPulse, 5000);
+// First poll quickly after page load.
+setTimeout(refreshPulse, 1500);
+
+// U13 (2026-05-21): Debug mode — expand Evidence by default in Search results.
+// Persisted in localStorage under TPVRG_DEBUG_EVIDENCE_EXPANDED. Consumed by
+// makeContextToggle() at render time.
+function onDebugEvidenceToggle() {
+  const cb = el("debug-evidence-expanded");
+  if (cb && cb.checked) {
+    localStorage.setItem("TPVRG_DEBUG_EVIDENCE_EXPANDED", "1");
+  } else {
+    localStorage.removeItem("TPVRG_DEBUG_EVIDENCE_EXPANDED");
+  }
+}
+
+// Initialize Debug mode checkbox state from localStorage on page load.
+function initDebugEvidenceCheckbox() {
+  const cb = el("debug-evidence-expanded");
+  if (!cb) return;
+  cb.checked = localStorage.getItem("TPVRG_DEBUG_EVIDENCE_EXPANDED") === "1";
+}
+
+let _queueTimer = null;
+
+function summarizeSource(item) {
+  const total = item.total_units || 0;
+  const done = item.completed_units || 0;
+  const progress = total > 0 ? `${done}/${total}` : `${done}`;
+  return `${item.source_type} · ${item.source_path} (${progress})`;
+}
+
+function renderQueueList(targetId, rows) {
+  const list = el(targetId);
+  list.innerHTML = "";
+  if (!rows.length) {
+    const li = document.createElement("li");
+    li.textContent = "—";
+    list.appendChild(li);
+    return;
+  }
+  rows.forEach((item) => {
+    const li = document.createElement("li");
+    li.textContent = summarizeSource(item);
+    list.appendChild(li);
+  });
+}
+
+async function refreshQueuePanel() {
+  try {
+    const resp = await fetch(API_BASE + "/watch_folder/status", { signal: AbortSignal.timeout(TIMEOUT_STATUS_PROBE_MS) });
+    if (!resp.ok) return;
+    const data = await resp.json();
+    const queue = Array.isArray(data.queue) ? data.queue : [];
+    const active = queue.filter(item => item.status === "running" || item.status === "paused");
+    const completed = queue.filter(item => item.status === "completed").slice(0, 10);
+    const failed = queue.filter(item => item.status === "failed").slice(0, 10);
+    el("queue-folder-path").textContent = `Inbox: ${data.folder || "~/"}`;
+    el("queue-current").textContent = "Current: " + (active[0] ? summarizeSource(active[0]) : "—");
+    el("queue-counts").textContent = `Processed: ${data.processed_count || 0} | Failed: ${data.failed_count || 0}`;
+    el("watch-toggle-btn").textContent = data.watching ? "Stop watching" : "Start watching";
+    renderQueueList("queue-pending", active);
+    renderQueueList("queue-completed", completed);
+    renderQueueList("queue-failed", failed);
+  } catch (_) {}
+}
+
+function startQueuePolling() {
+  refreshQueuePanel();
+  if (_queueTimer) return;
+  _queueTimer = setInterval(refreshQueuePanel, 2000);
+}
+
+function stopQueuePolling() {
+  if (_queueTimer) {
+    clearInterval(_queueTimer);
+    _queueTimer = null;
+  }
+}
+
+async function toggleWatchFolder() {
+  const currentLabel = el("watch-toggle-btn").textContent.toLowerCase();
+  const endpoint = currentLabel.includes("stop") ? "/watch_folder/stop" : "/watch_folder/start";
+  try {
+    await fetch(API_BASE + endpoint, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({}),
+    });
+  } catch (_) {}
+  refreshQueuePanel();
+}
+
+function openInboxFolder() {
+  const text = el("queue-folder-path").textContent || "";
+  const folder = text.replace(/^Inbox:\s*/, "").trim();
+  if (folder) {
+    window.open(`file://${folder}`, "_blank");
+  }
+}
+
+// ── File selection ────────────────────────────────────────────────────────
+let _selectedFiles = [];
+
+function updateDropZoneLabel() {
+  const lbl = el("drop-zone-label");
+  if (_selectedFiles.length === 0) {
+    lbl.textContent = "Drop .txt or .md files here, or click to select";
+  } else if (_selectedFiles.length === 1) {
+    lbl.textContent = _selectedFiles[0].name;
+  } else {
+    lbl.textContent = `${_selectedFiles.length} files selected`;
+  }
+  el("ingest-file-btn").disabled = _selectedFiles.length === 0;
+}
+
+function setIngestStatus(id, cls, msg) {
+  const el_ = el(id);
+  el_.className = "ingest-status " + cls;
+  el_.textContent = msg;
+}
+
+// ── Ingest text ───────────────────────────────────────────────────────────
+async function handleIngestText() {
+  const text = el("ingest-text").value.trim();
+  if (!text) { setIngestStatus("ingest-text-status", "error", "Paste some text first."); return; }
+  const source = el("ingest-source-text").value.trim();
+  const btn = el("ingest-text-btn");
+  btn.disabled = true;
+  btn.textContent = "Ingesting…";
+  setIngestStatus("ingest-text-status", "info", "Ingesting…");
+  try {
+    const resp = await fetch(API_BASE + "/ingest", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text, source }),
+      signal: AbortSignal.timeout(TIMEOUT_LONG_OP_MS),
+    });
+    const data = await resp.json();
+    if (data.status === "ok" || data.status === "partial") {
+      setIngestStatus("ingest-text-status", "success",
+        `✓ +${data.nodes_added} nodes, +${data.edges_added} edges (total: ${data.total_nodes} nodes)`);
+      refreshDashboard();
+    } else {
+      setIngestStatus("ingest-text-status", "error", "Error: " + (data.message || "unknown"));
+    }
+  } catch (err) {
+    setIngestStatus("ingest-text-status", "error", "Error: " + err.message);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = "Ingest Text";
+  }
+}
+
+// ── Ingest files ──────────────────────────────────────────────────────────
+async function handleIngestFiles() {
+  if (_selectedFiles.length === 0) return;
+  const sourcePrefix = el("ingest-source-file").value.trim();
+  const btn = el("ingest-file-btn");
+  btn.disabled = true;
+  let totalNodes = 0, totalEdges = 0, errors = [];
+
+  for (let i = 0; i < _selectedFiles.length; i++) {
+    const file = _selectedFiles[i];
+    setIngestStatus("ingest-file-status", "info",
+      `Ingesting ${i + 1}/${_selectedFiles.length}: ${file.name}…`);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      if (sourcePrefix) formData.append("source", sourcePrefix);
+      const resp = await fetch(API_BASE + "/ingest/file", {
+        method: "POST",
+        body: formData,
+        signal: AbortSignal.timeout(TIMEOUT_LONG_OP_MS),
+      });
+      if (resp.status === 413) {
+        errors.push(`${file.name}: file too large (max 1 MB)`);
+        continue;
+      }
+      const data = await resp.json();
+      if (data.status === "ok" || data.status === "partial") {
+        totalNodes += data.nodes_added || 0;
+        totalEdges += data.edges_added || 0;
+      } else {
+        errors.push(`${file.name}: ${data.message || "unknown error"}`);
+      }
+    } catch (err) {
+      errors.push(`${file.name}: ${err.message}`);
+    }
+  }
+
+  const summary = `✓ ${_selectedFiles.length} file(s) — +${totalNodes} nodes, +${totalEdges} edges`;
+  const errMsg = errors.length ? " | Errors: " + errors.join("; ") : "";
+  setIngestStatus("ingest-file-status", errors.length > 0 ? "error" : "success", summary + errMsg);
+  _selectedFiles = [];
+  el("file-input").value = "";
+  updateDropZoneLabel();
+  refreshDashboard();
+  btn.disabled = true;
+}
+
+// ── ChatGPT history import ─────────────────────────────────────────────
+let _chatgptFile = null;
+
+function updateChatGPTDropLabel() {
+  const lbl = el("chatgpt-drop-label");
+  lbl.textContent = _chatgptFile
+    ? _chatgptFile.name
+    : "Drop conversations.json here, or click to select";
+  el("chatgpt-import-btn").disabled = !_chatgptFile;
+}
+
+el("chatgpt-file-input").addEventListener("change", (e) => {
+  const files = Array.from(e.target.files).filter(f => f.name.endsWith(".json"));
+  _chatgptFile = files[0] || null;
+  updateChatGPTDropLabel();
+});
+
+const _cdz = el("chatgpt-drop-zone");
+_cdz.addEventListener("dragover",  (e) => { e.preventDefault(); _cdz.classList.add("drag-over"); });
+_cdz.addEventListener("dragleave", ()  => _cdz.classList.remove("drag-over"));
+_cdz.addEventListener("drop", (e) => {
+  e.preventDefault();
+  _cdz.classList.remove("drag-over");
+  const files = Array.from(e.dataTransfer.files).filter(f => f.name.endsWith(".json"));
+  _chatgptFile = files[0] || null;
+  updateChatGPTDropLabel();
+});
+
+async function handleImportChatGPT() {
+  if (!_chatgptFile) return;
+  const btn = el("chatgpt-import-btn");
+  btn.disabled = true;
+  btn.textContent = "Uploading…";
+  setIngestStatus("chatgpt-status", "info", "Uploading file…");
+  el("chatgpt-progress").classList.remove("active");
+
+  try {
+    const formData = new FormData();
+    formData.append("file", _chatgptFile);
+    const resp = await fetch(API_BASE + "/ingest/chatgpt", {
+      method: "POST",
+      body: formData,
+    });
+
+    if (resp.status === 413) {
+      setIngestStatus("chatgpt-status", "error", "File too large (max 200 MB)");
+      return;
+    }
+    if (!resp.ok) {
+      setIngestStatus("chatgpt-status", "error", `HTTP ${resp.status}: ${resp.statusText}`);
+      return;
+    }
+
+    btn.textContent = "Importing…";
+    const reader = resp.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = "";
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split("\n");
+      buffer = lines.pop(); // keep incomplete line in buffer
+
+      for (const line of lines) {
+        if (!line.trim()) continue;
+        try {
+          const msg = JSON.parse(line);
+          handleChatGPTProgress(msg);
+        } catch { /* skip malformed lines */ }
+      }
+    }
+    // Process any remaining buffer
+    if (buffer.trim()) {
+      try { handleChatGPTProgress(JSON.parse(buffer)); } catch {}
+    }
+
+  } catch (err) {
+    setIngestStatus("chatgpt-status", "error", "Error: " + err.message);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = "Import History";
+    _chatgptFile = null;
+    el("chatgpt-file-input").value = "";
+    updateChatGPTDropLabel();
+  }
+}
+
+function handleChatGPTProgress(msg) {
+  const progress = el("chatgpt-progress");
+  const fill = el("chatgpt-progress-fill");
+  const label = el("chatgpt-progress-label");
+
+  switch (msg.type) {
+    case "parsed":
+      progress.classList.add("active");
+      fill.style.width = "0%";
+      label.textContent = `Found ${msg.conversations_found} conversations (${msg.conversations_skipped} skipped). Ingesting ${msg.to_ingest}…`;
+      setIngestStatus("chatgpt-status", "info",
+        `Parsed ${msg.conversations_found} conversations. Ingesting ${msg.to_ingest}…`);
+      break;
+
+    case "progress": {
+      const pct = Math.round((msg.current / msg.total) * 100);
+      fill.style.width = pct + "%";
+      label.textContent = `${msg.current} / ${msg.total} — ${msg.title}`;
+      break;
+    }
+
+    case "warning":
+      // Don't overwrite status — just log
+      console.warn("ChatGPT import warning:", msg.message);
+      break;
+
+    case "done":
+      fill.style.width = "100%";
+      label.textContent = "";
+      setIngestStatus("chatgpt-status", "success",
+        `✓ ${msg.conversations_ingested} conversations imported — +${msg.nodes_added} nodes, +${msg.edges_added} edges`);
+      refreshDashboard();
+      setTimeout(() => progress.classList.remove("active"), 2000);
+      break;
+
+    case "error":
+      setIngestStatus("chatgpt-status", "error", msg.message);
+      progress.classList.remove("active");
+      break;
+  }
+}
+
+// ── Clear graph ───────────────────────────────────────────────────────────
+async function handleClearGraph() {
+  if (!confirm("Clear ALL graph data?\n\nThis will delete every node, edge, and passage. This cannot be undone.")) return;
+  const btn = el("clear-graph-btn");
+  btn.disabled = true;
+  setIngestStatus("clear-status", "info", "Clearing graph…");
+  try {
+    const resp = await fetch(API_BASE + "/graph/clear", {
+      method: "DELETE",
+      signal: AbortSignal.timeout(TIMEOUT_GRAPH_READ_MS),
+    });
+    const data = await resp.json();
+    if (data.status === "cleared" || data.status === "ok") {
+      setIngestStatus("clear-status", "success", "✓ Graph cleared.");
+      refreshDashboard();
+    } else {
+      setIngestStatus("clear-status", "error", "Error: " + (data.message || "unknown"));
+    }
+  } catch (err) {
+    setIngestStatus("clear-status", "error", "Error: " + err.message);
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+// ── Startup warmup gate ────────────────────────────────────────────────────
+// Polls /health until the backend is ready, then dismisses the overlay and
+// initialises the dashboard. Subscribes to /ws/progress for real-time warmup
+// stage names (UX-1: "Loading GLiNER..." → "Loading embeddings..." → "Ready").
+//
+// 2026-04-21 sprint additions — escape hatches so the user is never stranded:
+//   - At 60s: "Skip intro" button appears. Click → force-dismiss overlay,
+//     bring up the UI. Queries may fail if backend isn't actually ready;
+//     the hint text explains this.
+//   - At 180s: "Reload" button appears. Click → window.location.reload().
+//     Handles the case where backend became ready after we last polled,
+//     or where the frontend-backend signal got desynced.
+//   - On 3 consecutive non-2xx /health responses: reveal the Reload button
+//     early (backend likely degraded, not slow).
+async function warmup() {
+  const overlay    = el("startup-overlay");
+  const mainLine   = el("warmup-main-line");
+  const glinerLine = el("warmup-gliner-line");
+  const memoryBadge = el("warmup-memory");
+  const skipBtn    = el("warmup-skip");
+  const skipHint   = el("warmup-skip-hint");
+  const reloadBtn  = el("warmup-reload");
+  const start      = Date.now();
+  let nonOkStreak  = 0;
+  let mainStageMessage = "";
+  let mainStageStart = start;
+  let glinerStageMessage = "";
+  let glinerStageStart = start;
+
+  const updateMainLine = (message, current, total) => {
+    if (!mainLine || !message) return;
+    if (message !== mainStageMessage) {
+      mainStageMessage = message;
+      mainStageStart = Date.now();
+    }
+    const elapsed = Math.round((Date.now() - mainStageStart) / 1000);
+    const hasProgress = Number.isFinite(Number(current)) && Number.isFinite(Number(total));
+    const prefix = hasProgress ? `Stage ${current}/${total}: ` : "";
+    mainLine.textContent = `${prefix}${message} (${elapsed}s)`;
+  };
+
+  const updateGlinerLine = (message) => {
+    if (!glinerLine || !message || message === "pending") return;
+    if (message !== glinerStageMessage) {
+      glinerStageMessage = message;
+      glinerStageStart = Date.now();
+    }
+    const elapsed = Math.round((Date.now() - glinerStageStart) / 1000);
+    glinerLine.style.display = "block";
+    glinerLine.textContent = `GLiNER (background): ${message} (${elapsed}s)`;
+  };
+
+  const updateMemoryBadge = (memoryMb) => {
+    if (!memoryBadge || typeof memoryMb !== "number") return;
+    memoryBadge.textContent = `Memory: ${memoryMb.toLocaleString()} MB`;
+  };
+
+  const dismissAndInit = () => {
+    if (warmupWs) try { warmupWs.close(); } catch (_) {}
+    overlay.classList.add("hidden");
+    overlay.addEventListener("transitionend", () => overlay.remove(), { once: true });
+    refreshDashboard();
+    setInterval(refreshDashboard, REFRESH_INTERVAL_MS);
+    initProvider();
+  };
+
+  // Wire escape hatches once — idempotent; buttons stay hidden until revealed
+  skipBtn.addEventListener("click", () => {
+    console.warn("[cockpit] user skipped warmup before backend reported ready");
+    dismissAndInit();
+  });
+  reloadBtn.addEventListener("click", () => {
+    console.warn("[cockpit] user triggered reload from warmup escape hatch");
+    window.location.reload();
+  });
+
+  // Subscribe to progress events for warmup stage names
+  let warmupWs = null;
+  try {
+    warmupWs = new WebSocket(`${WS_BASE}/ws/progress`);
+    warmupWs.onmessage = (evt) => {
+      try {
+        const d = JSON.parse(evt.data);
+        if (d.stage === "warmup" && d.message) {
+          updateMainLine(d.message, d.current, d.total);
+        }
+        if (d.stage === "gliner" && d.message) {
+          updateGlinerLine(d.message);
+        }
+      } catch (_) {}
+    };
+  } catch (_) {
+    // WebSocket not available yet — fall back to timer-only display
+  }
+
+  while (true) {
+    const elapsed = Math.round((Date.now() - start) / 1000);
+    // Only show generic timer if WebSocket hasn't provided a stage name
+    if (!warmupWs || warmupWs.readyState !== WebSocket.OPEN) {
+      updateMainLine("Warming up…");
+    }
+
+    // Threshold-based escape hatch reveal (idempotent — button's own
+    // display property is re-set but that's a no-op when already visible).
+    if (elapsed >= 60) {
+      skipBtn.style.display = "inline-block";
+      skipHint.style.display = "block";
+    }
+    if (elapsed >= 180) {
+      reloadBtn.style.display = "inline-block";
+    }
+
+    try {
+      const resp = await fetch(API_BASE + "/health", {
+        signal: AbortSignal.timeout(TIMEOUT_INIT_POLL_MS),
+      });
+      if (resp.ok) {
+        nonOkStreak = 0;
+        const data = await resp.json();
+        // Explicit contract (2026-04-21): backend always emits
+        // `initializing: bool`. Treat missing key as conservatively "true"
+        // so a malformed response keeps us polling rather than silently
+        // dismissing into a broken UI.
+        if (data.initializing === false) {
+          setEngineReady(true);
+          dismissAndInit();
+          return;
+        }
+        setEngineReady(false);
+        // Still initializing — show stage from health poll (reliable path)
+        if (data.warmup_stage) {
+          updateMainLine(data.warmup_stage);
+        }
+        if (data.gliner_stage && data.gliner_stage !== "pending") {
+          updateGlinerLine(data.gliner_stage);
+        }
+        if (typeof data.memory_mb === "number") {
+          updateMemoryBadge(data.memory_mb);
+        }
+      } else {
+        // Non-2xx: count streak. After 3 consecutive, surface the reload
+        // button early — backend is likely degraded, not just slow.
+        nonOkStreak += 1;
+        if (nonOkStreak >= 3) {
+          reloadBtn.style.display = "inline-block";
+        }
+      }
+    } catch (_) {
+      // Fetch error (network, timeout, etc). Count as non-ok for the
+      // escape-hatch heuristic, but keep polling.
+      nonOkStreak += 1;
+      if (nonOkStreak >= 3) {
+        reloadBtn.style.display = "inline-block";
+      }
+    }
+
+    await new Promise(r => setTimeout(r, 2000));
+  }
+}
+
+warmup();
+
+// U13 (2026-05-21): hydrate Debug mode checkbox from localStorage.
+initDebugEvidenceCheckbox();
+
+// File input wiring
+el("file-input").addEventListener("change", (e) => {
+  _selectedFiles = Array.from(e.target.files).filter(
+    f => f.name.endsWith(".txt") || f.name.endsWith(".md")
+  );
+  updateDropZoneLabel();
+});
+const _dz = el("drop-zone");
+_dz.addEventListener("dragover",  (e) => { e.preventDefault(); _dz.classList.add("drag-over"); });
+_dz.addEventListener("dragleave", ()  => _dz.classList.remove("drag-over"));
+_dz.addEventListener("drop", (e) => {
+  e.preventDefault();
+  _dz.classList.remove("drag-over");
+  _selectedFiles = Array.from(e.dataTransfer.files).filter(
+    f => f.name.endsWith(".txt") || f.name.endsWith(".md")
+  );
+  updateDropZoneLabel();
+});
+
+const ACTIVITY_HISTORY_LIMIT = 100;
+const activityHistory = [];
+
+function renderActivityLog() {
+  const list = el("activity-log-list");
+  if (!list) return;
+  if (!activityHistory.length) {
+    list.innerHTML = '<div class="activity-log-item"><span class="activity-log-time">--:--</span><span class="activity-log-stage">idle</span><span>No events yet.</span></div>';
+    return;
+  }
+  list.innerHTML = activityHistory.slice(0, 100).map(item => `
+    <div class="activity-log-item">
+      <span class="activity-log-time">${escapeHtml(item.time)}</span>
+      <span class="activity-log-stage">${escapeHtml(item.stage)}</span>
+      <span>${escapeHtml(item.message)}</span>
+    </div>
+  `).join("");
+}
+
+function pushActivityHistory(evt) {
+  activityHistory.unshift(evt);
+  if (activityHistory.length > ACTIVITY_HISTORY_LIMIT) activityHistory.pop();
+  renderActivityLog();
+}
+
+function toggleActivityLog() {
+  el("activity-log-panel")?.classList.toggle("open");
+  renderActivityLog();
+}
+
+/* ── UX-1 + UX-4 + UX-9a: WebSocket progress + activity ticker ── */
+(function initProgressWS() {
+  const bar       = document.getElementById("progress-bar");
+  const fill      = bar.querySelector(".fill");
+  const label     = bar.querySelector(".label");
+  const pctSpan   = bar.querySelector(".pct");
+  const strip     = document.getElementById("activity-strip");
+  const pulseDot  = document.getElementById("pulse-dot");
+  const tickerEl  = document.getElementById("ticker-latest");
+  let hideTimer   = null;
+  let pulseTimer  = null;
+  let lastTailTs  = Math.max(0, (Date.now() / 1000) - 5);
+  let progressWsOpen = false;
+  const seenEvents = new Set();
+
+  function tickerPush(msg, isTail = false, event = {}) {
+    const now = new Date();
+    const ts  = String(now.getHours()).padStart(2,"0") + ":" +
+                String(now.getMinutes()).padStart(2,"0");
+    tickerEl.textContent = ts + "  " + msg;
+    tickerEl.classList.toggle("tail-event", isTail);
+    pushActivityHistory({
+      time: ts,
+      stage: event.stage || (isTail ? "tail" : "event"),
+      message: msg,
+    });
+    // Pulse dot: active while events flow, dim after 5s idle
+    pulseDot.classList.add("active");
+    pulseHeader();
+    if (pulseTimer) clearTimeout(pulseTimer);
+    pulseTimer = setTimeout(() => pulseDot.classList.remove("active"), 5000);
+  }
+
+  function eventKey(d) {
+    return [
+      d.ts ?? d.timestamp ?? "",
+      d.pid ?? "",
+      d.source ?? "",
+      d.stage ?? "",
+      d.current ?? "",
+      d.total ?? "",
+      d.message ?? "",
+    ].join("|");
+  }
+
+  function clearProgressBar() {
+    if (hideTimer) { clearTimeout(hideTimer); hideTimer = null; }
+    bar.style.display = "none";
+    strip.classList.remove("with-progress");
+    // Lower the HUD + activity-log panel in lockstep. Looked up lazily because
+    // the #hud footer is parsed AFTER this IIFE runs, so it may not exist at init.
+    document.getElementById("hud")?.classList.remove("with-progress");
+    document.getElementById("activity-log-panel")?.classList.remove("with-progress");
+    fill.style.width = "0%";
+    pctSpan.textContent = "";
+    label.textContent = "";
+  }
+
+  function eventTs(d) {
+    return Number(d.ts ?? d.timestamp ?? 0) || 0;
+  }
+
+  function progressTotal(d) {
+    return Number(d.total ?? 0) || 0;
+  }
+
+  function progressCurrent(d) {
+    return Number(d.current ?? 0) || 0;
+  }
+
+  function isWarmupProgress(d) {
+    return d && d.stage === "warmup";
+  }
+
+  function isWarmupComplete(d) {
+    const message = String(d.message || "").trim().toLowerCase();
+    const total = progressTotal(d);
+    return isWarmupProgress(d) && (
+      message === "ready" ||
+      (total > 0 && progressCurrent(d) >= total)
+    );
+  }
+
+  function handleProgressEvent(d, origin) {
+    const ts = eventTs(d);
+    if (ts > 0) {
+      lastTailTs = Math.max(lastTailTs, ts);
+    }
+    if (ENGINE_READY && isWarmupProgress(d) && !isWarmupComplete(d)) {
+      return;
+    }
+
+    const key = eventKey(d);
+    if (seenEvents.has(key)) return;
+    seenEvents.add(key);
+    if (seenEvents.size > 2048) seenEvents.clear();
+
+    const srcTag = d.source ? ` [${d.source}]` : (origin === "tail" ? " [tail]" : "");
+
+    // -- Activity ticker (always) --
+    const msg = (d.message || d.stage || "working") + srcTag;
+    const total = progressTotal(d);
+    const current = progressCurrent(d);
+    const progressSuffix = (total > 0) ? ` (${current}/${total})` : "";
+    tickerPush(msg + progressSuffix, origin === "tail", d);
+
+    if (isWarmupComplete(d)) {
+      clearProgressBar();
+      return;
+    }
+
+    // -- Progress bar (only for operations with total) --
+    if (total > 0) {
+      bar.style.display = "block";
+      strip.classList.add("with-progress");
+      document.getElementById("hud")?.classList.add("with-progress");
+      document.getElementById("activity-log-panel")?.classList.add("with-progress");
+      if (hideTimer) { clearTimeout(hideTimer); hideTimer = null; }
+
+      const pct = Math.round((current / total) * 100);
+      fill.style.width = pct + "%";
+      pctSpan.textContent = pct + "%";
+
+      // Build label: "stage: message (ETA Xs)"
+      let lbl = msg;
+      if (d.eta_seconds && d.eta_seconds > 0) {
+        lbl += ` — ETA ${Math.round(d.eta_seconds)}s`;
+      }
+      label.textContent = lbl;
+
+      // Auto-hide 4s after completion
+      if (current >= total) {
+        hideTimer = setTimeout(() => {
+          clearProgressBar();
+        }, 4000);
+      }
+    }
+  }
+
+  async function pollTail() {
+    if (progressWsOpen) return;
+    try {
+      const resp = await fetch(`${API_BASE}/progress/events?since=${encodeURIComponent(lastTailTs)}&limit=100`, {
+        signal: AbortSignal.timeout(TIMEOUT_STATUS_PROBE_MS),
+      });
+      if (!resp.ok) return;
+      const data = await resp.json();
+      const events = Array.isArray(data.events) ? data.events : [];
+      events
+        .sort((a, b) => eventTs(a) - eventTs(b))
+        .forEach((evt) => {
+          handleProgressEvent(evt, "tail");
+        });
+    } catch (_) {
+      // no-op; websocket path still works for in-process events
+    }
+  }
+
+  function connect() {
+    const ws = new WebSocket(`${WS_BASE}/ws/progress`);
+    ws.onopen = () => {
+      progressWsOpen = true;
+      lastTailTs = Math.max(lastTailTs, (Date.now() / 1000) - 5);
+    };
+    ws.onmessage = (evt) => {
+      const d = JSON.parse(evt.data);
+      handleProgressEvent(d, "in-process");
+    };
+    ws.onclose = () => {
+      progressWsOpen = false;
+      setTimeout(connect, 3000);
+    };
+    ws.onerror = () => {
+      progressWsOpen = false;
+      ws.close();
+    };
+  }
+  window.addEventListener("tpvrg:engine-ready", clearProgressBar);
+  // Delay initial connect to let the API server start
+  setTimeout(connect, 2000);
+  setInterval(pollTail, 2000);
+})();
+</script>
+<!-- HUD instrument cluster — fed by fetchHealth() + the query stats -->
+<footer id="hud">
+  <span><span class="hud-dot" id="hud-dot"></span><span id="hud-state">connecting…</span></span>
+  <span>nodes <b id="hud-nodes">—</b></span>
+  <span>edges <b id="hud-edges">—</b></span>
+  <span>passages <b id="hud-passages">—</b></span>
+  <span>graph <b id="hud-size">—</b></span>
+  <span id="hud-render" style="display:none">last render <b id="hud-tokens">—</b> tok</span>
+  <span id="hud-conf" style="display:none">confidence <b>—</b></span>
+  <span id="hud-pred" style="display:none;color:var(--accent)">pre-rendered ⚡</span>
+  <span class="hud-save" id="hud-save"></span>
+</footer>
+<script>
+// ── HUD updaters (doctrine: instruments never lie; mono = engine-emitted) ──
+function updateHudFromHealth(data, online) {
+  const dot = el("hud-dot");
+  if (!online) {
+    dot.className = "hud-dot";
+    el("hud-state").textContent = "engine offline";
+    return;
+  }
+  dot.className = "hud-dot ok";
+  el("hud-state").textContent =
+    data.initializing !== false ? (data.warmup_stage || "warming up…") : "engine ready";
+  if (data.node_count != null)    el("hud-nodes").textContent    = fmt(data.node_count);
+  if (data.edge_count != null)    el("hud-edges").textContent    = fmt(data.edge_count);
+  if (data.passage_count != null) el("hud-passages").textContent = fmt(data.passage_count);
+  if (data.graph_file_bytes != null) el("hud-size").textContent  = fmtBytes(data.graph_file_bytes);
+}
+let _viLast = 0;
+async function refreshVisibleIntelligence() {
+  if (Date.now() - _viLast < 30000) return;  // 30s throttle; clusters are cheap but not free
+  _viLast = Date.now();
+  try {
+    const r = await fetch(API_BASE + "/diagnostics/query_clusters?top_n=5",
+      { signal: AbortSignal.timeout(TIMEOUT_GRAPH_READ_MS) });
+    const d = await r.json();
+    const box = el("query-patterns");
+    if (d.status === "ok" && d.clusters && d.clusters.length) {
+      box.innerHTML = "";
+      d.clusters.forEach(c => {
+        const row = document.createElement("div");
+        row.style.cssText = "padding:3px 0";
+        row.textContent = `${c.member_count}\u00D7  ${c.representative}`;
+        box.appendChild(row);
+      });
+    } else {
+      box.textContent = d.status === "ok" ? "No query history yet in this window." : (d.message || "unavailable");
+    }
+  } catch (e) { el("query-patterns").textContent = "unavailable: " + e.message; }
+  try {
+    const r = await fetch(API_BASE + "/diagnostics/implied_questions?limit=8",
+      { signal: AbortSignal.timeout(TIMEOUT_GRAPH_READ_MS) });
+    const d = await r.json();
+    const box = el("implied-questions");
+    if (d.status === "ok" && d.questions && d.questions.length) {
+      box.innerHTML = "";
+      d.questions.forEach(q => {
+        const row = document.createElement("div");
+        row.style.cssText = "padding:3px 0;cursor:pointer;color:var(--curiosity)";
+        row.textContent = "? " + q;
+        row.onclick = () => { switchTab("search"); el("query-input").value = q; };
+        box.appendChild(row);
+      });
+    } else {
+      box.textContent = d.status === "ok" ? "No topology questions yet (ingest first)." : (d.message || "unavailable");
+    }
+  } catch (e) { el("implied-questions").textContent = "unavailable: " + e.message; }
+}
+
+function updateHudFromStats(stats) {
+  if (!stats || stats.tokens_used == null) return;
+  el("hud-render").style.display = "";
+  el("hud-tokens").textContent = (stats.tokens_used ?? 0).toLocaleString();
+  // visible-intelligence instruments (2026-06-10): confidence + prediction
+  if (stats.render_confidence != null) {
+    const c = stats.render_confidence;
+    const elc = el("hud-conf");
+    elc.style.display = "";
+    elc.querySelector("b").textContent = c.toFixed(2);
+    elc.querySelector("b").style.color =
+      c >= 0.8 ? "var(--green)" : c >= 0.5 ? "var(--yellow)" : "var(--red)";
+  }
+  if (stats.speculative && stats.speculative.hit) {
+    el("hud-pred").style.display = "";
+  }
+  if (stats.savings_pct_this_query != null && stats.counterfactual_all_lod0 > 0) {
+    el("hud-save").textContent =
+      "−" + stats.savings_pct_this_query.toFixed(1) + "% vs LOD_0";
+  }
+}
+</script>
+</body>
+</html>

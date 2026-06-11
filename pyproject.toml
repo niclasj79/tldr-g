@@ -1,0 +1,116 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "tp-vrg"
+version = "0.3.0"
+description = "A local-first knowledge rendering engine for agents and second brains"
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.11"
+dependencies = [
+    "networkx>=3.0",
+    "igraph>=1.0,<2.0",
+    "leidenalg>=0.11",
+    "python-louvain>=0.16",
+    "pydantic>=2.0",
+    "numpy>=1.24",
+    "scipy>=1.11",
+    "h5py>=3.8",
+    "dateparser>=1.2",
+    "rapidfuzz>=3.0",
+    "psutil>=5.9",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "pytest-asyncio>=0.23",
+    "httpx>=0.27",
+    "grimp>=3.0",
+]
+llm = [
+    "anthropic>=0.40",
+    "openai>=1.0",
+]
+embeddings = [
+    "sentence-transformers>=2.2",
+]
+attestation = [
+    "cryptography>=42.0",
+]
+tokens = [
+    "tiktoken>=0.5",
+]
+normalizer = []
+mcp = [
+    "mcp>=1.0",
+    "anthropic>=0.40",
+    "sentence-transformers>=2.2",
+    "tiktoken>=0.5",
+]
+tools = [
+    "anthropic>=0.40",
+    "openai>=1.0",
+    "sentence-transformers>=2.2",
+    "tiktoken>=0.5",
+    "psutil>=5.9",
+]
+sqlite = [
+    "sqlite-vec>=0.1",
+]
+local = [
+    "ollama>=0.3",
+]
+api = [
+    "fastapi>=0.111",
+    "uvicorn[standard]>=0.29",
+    "httpx>=0.27",
+    "anthropic>=0.40",
+    "sentence-transformers>=2.2",
+    "tiktoken>=0.5",
+]
+gliner = [
+    # Zero-LLM extraction: GLiNER2 (NER) + spaCy (dep-parse relationships)
+    # NOTE: Requires Python 3.12. Not compatible with Python 3.14 (pydantic v1 compat).
+    # After install, run: python -m spacy download en_core_web_sm
+    # NER_BACKEND=gliner2 is the canonical default (models.py).
+    "gliner2>=1.3.0",
+    "spacy>=3.7.0",
+    # LingMess coreference (sieve mode = LingMess + rules fallback, now default)
+    "fastcoref>=2.1.6",
+]
+coref = [
+    # Standalone coref extra (fastcoref also included in gliner group above)
+    "fastcoref>=2.1.6",
+]
+cockpit = [
+    # Desktop GUI: PyWebView window + pystray system tray
+    # Pillow is a pystray dependency for icon creation (likely already installed via sentence-transformers)
+    "pywebview>=5.0",
+    "pystray>=0.19",
+    "Pillow>=9.0",
+    "requests>=2.28",
+    "fastapi>=0.111",
+    "uvicorn[standard]>=0.29",
+]
+all = [
+    "tp-vrg[llm,embeddings,tokens,mcp,tools,normalizer,sqlite,local,gliner,coref,api,cockpit,attestation]",
+]
+
+[project.scripts]
+tp-vrg = "tp_vrg.cli:main"
+tp-vrg-mcp = "tp_vrg.mcp_server:main"
+tp-vrg-api = "tp_vrg.api_server:main"
+tp-vrg-cockpit = "tp_vrg.cockpit_app:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+"tp_vrg.cockpit_ui" = ["*.html", "*.css", "*.js"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
