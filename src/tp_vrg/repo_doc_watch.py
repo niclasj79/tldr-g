@@ -16,7 +16,7 @@ from typing import Iterator, Literal, Sequence
 from tp_vrg import ingestion_progress
 
 
-DEFAULT_ROOTS: tuple[str, ...] = ("docs",)
+DEFAULT_ROOTS: tuple[str, ...] = ("docs", ".claude/plans")
 DEFAULT_IGNORE_DIRS: frozenset[str] = frozenset(
     {"_archive", "_closed", ".git", "node_modules"}
 )

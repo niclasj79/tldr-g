@@ -1512,7 +1512,7 @@ class ContextRenderer:
         #      may temporarily exceed token_budget by up to section_ref_budget
         #      tokens; the Governor handles final trimming downstream.
         #
-        # Remaining gaps (future-work items, not blockers):
+        # Remaining gaps (future-pool items, not blockers):
         #   - No support for "[12]"-style footnote/citation references.
         #   - No support for back-reference phrases without a structural keyword
         #     ("as discussed above", "per the previous paragraph").

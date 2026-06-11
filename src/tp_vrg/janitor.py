@@ -35,6 +35,7 @@ from tp_vrg.storage import StorageBackend
 _STITCH_WINDOW_SIZE: int = 5
 _BAKE_PARTITIONS_TASK: str = "bake_partitions"
 _BAKE_SIMILARITY_EDGES_TASK: str = "bake_similarity_edges"
+_BAKE_RENDER_AFFINITY_TASK: str = "bake_render_affinity"
 _BACKFILL_NODE_PROVENANCE_TASK: str = "backfill_node_provenance"
 
 
@@ -1130,6 +1131,66 @@ class GraphJanitor:
             )
         return result
 
+    async def bake_render_affinity(
+        self,
+        *,
+        dry_run: bool = False,
+        max_questions: int | None = None,
+        top_k: int | None = None,
+    ) -> dict[str, object]:
+        """Run the render-affinity (L3 / RTWM) co-render edge bake as a Janitor task.
+
+        DEFAULT OFF (``TPVRG_RENDER_AFFINITY``): when the flag is unset/false
+        the task no-ops — byte-identical to today (the sibling discipline the
+        similarity bake follows). Sources: real provenance traces (read-only)
+        + the HyPE synthetic-trace cold-start (capped, deterministic).
+        """
+        conn = self._sqlite_connection_for_partition_bake()
+        from tp_vrg.storage.render_affinity_edges import (
+            render_affinity_counts,
+            render_affinity_enabled,
+        )
+
+        if dry_run or not render_affinity_enabled():
+            return {
+                "enabled": render_affinity_enabled(),
+                "rung": "asset",
+                "edge_counts": render_affinity_counts(conn),
+                "dry_run": bool(dry_run),
+            }
+
+        from tp_vrg.janitor.bake_render_affinity import (
+            bake_render_affinity_edges,
+            open_provenance_readonly,
+        )
+
+        progress.emit(
+            "janitor",
+            message=f"task={_BAKE_RENDER_AFFINITY_TASK} started",
+        )
+        prov_conn = open_provenance_readonly()
+        try:
+            result = await asyncio.to_thread(
+                bake_render_affinity_edges,
+                conn,
+                prov_conn=prov_conn,
+                max_questions=max_questions,
+                top_k=top_k,
+            )
+        finally:
+            if prov_conn is not None:
+                prov_conn.close()
+        result["enabled"] = True
+        progress.emit(
+            "janitor",
+            message=(
+                f"task={_BAKE_RENDER_AFFINITY_TASK} completed "
+                f"(edges={result['edge_count']} provenance_traces="
+                f"{result['provenance_traces']} hype_traces={result['hype_traces']})"
+            ),
+        )
+        return result
+
     async def repo_ingest_new_docs(
         self,
         *,
@@ -1194,6 +1255,18 @@ class GraphJanitor:
                 force_rebake=bool(kwargs.get("force_rebake", False)),
                 recompute_centroids=bool(kwargs.get("recompute_centroids", True)),
                 dry_run=dry_run,
+            )
+        if task == _BAKE_RENDER_AFFINITY_TASK:
+            return await self.bake_render_affinity(
+                dry_run=dry_run,
+                max_questions=(
+                    int(kwargs["max_questions"])
+                    if kwargs.get("max_questions") is not None
+                    else None
+                ),
+                top_k=(
+                    int(kwargs["top_k"]) if kwargs.get("top_k") is not None else None
+                ),
             )
         if task == _BAKE_SIMILARITY_EDGES_TASK:
             return await self.bake_similarity_edges(

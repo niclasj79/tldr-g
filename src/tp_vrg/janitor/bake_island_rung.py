@@ -182,6 +182,88 @@ def fold_partition_similarity_edges(
     return _merge_asset_edge_weights(asset_edges, similarity_asset_edges)
 
 
+# --- Render-affinity (L3 / RTWM) partition fold — 2026-06-11 -----------------
+# Sibling of the similarity fold above. Render-affinity edges carry co-render
+# evidence (real provenance traces + HyPE synthetic traces) — the only edge
+# family that can bridge topically-dissimilar Assets, per the weighting-
+# invariance verdict (docs/diagnostics/2026-06-11-maec-sigma-partition-probe-
+# verdict.md). DEFAULT OFF; byte-identical when off.
+PARTITION_USE_RENDER_AFFINITY_ENV = "TPVRG_PARTITION_USE_RENDER_AFFINITY"
+PARTITION_RENDER_AFFINITY_WEIGHT_ENV = "TPVRG_PARTITION_RENDER_AFFINITY_WEIGHT"
+DEFAULT_PARTITION_RENDER_AFFINITY_WEIGHT = 100.0
+
+
+def partition_render_affinity_enabled(raw_value: str | None = None) -> bool:
+    """Resolve whether render-affinity edges feed the Island partition objective."""
+    configured = (
+        os.environ.get(PARTITION_USE_RENDER_AFFINITY_ENV)
+        if raw_value is None
+        else raw_value
+    )
+    if configured is None:
+        return False
+    candidate = str(configured).strip().lower()
+    if candidate in _TRUE_VALUES:
+        return True
+    if candidate in _FALSE_VALUES:
+        return False
+    raise ValueError(
+        f"{PARTITION_USE_RENDER_AFFINITY_ENV}={candidate!r} must be one of "
+        f"{sorted(_TRUE_VALUES | _FALSE_VALUES)}"
+    )
+
+
+def get_partition_render_affinity_weight(raw_value: str | None = None) -> float:
+    """Resolve the affinity-to-integer multiplier for partition render-affinity edges."""
+    configured = (
+        os.environ.get(PARTITION_RENDER_AFFINITY_WEIGHT_ENV)
+        if raw_value is None
+        else raw_value
+    )
+    if configured is None or not str(configured).strip():
+        weight = DEFAULT_PARTITION_RENDER_AFFINITY_WEIGHT
+    else:
+        try:
+            weight = float(str(configured).strip())
+        except ValueError as exc:
+            raise ValueError(
+                f"{PARTITION_RENDER_AFFINITY_WEIGHT_ENV} must be > 0"
+            ) from exc
+    if weight <= 0.0:
+        raise ValueError(f"{PARTITION_RENDER_AFFINITY_WEIGHT_ENV} must be > 0")
+    return weight
+
+
+def fold_partition_render_affinity_edges(
+    asset_edges: list[tuple[str, str, int]],
+    conn,
+) -> list[tuple[str, str, int]]:
+    """Fold baked render-affinity edges into the Island partition graph.
+
+    DEFAULT OFF: when the flag is unset/false, return the existing edge list
+    directly and do not touch the render-affinity schema or storage path.
+    """
+    if not partition_render_affinity_enabled():
+        return asset_edges
+
+    asset_ids = _read_asset_ids(conn)
+    asset_id_set = set(asset_ids)
+    multiplier = get_partition_render_affinity_weight()
+
+    from tp_vrg.storage.render_affinity_edges import read_render_affinity_edges
+
+    affinity_asset_edges: list[tuple[str, str, int]] = []
+    for edge in read_render_affinity_edges(ASSET_RUNG, conn):
+        src_id = str(edge.src_id)
+        tgt_id = str(edge.tgt_id)
+        if src_id not in asset_id_set or tgt_id not in asset_id_set:
+            continue
+        weight = max(1, int(round(float(edge.weight) * multiplier)))
+        affinity_asset_edges.append((src_id, tgt_id, weight))
+
+    return _merge_asset_edge_weights(asset_edges, affinity_asset_edges)
+
+
 def _singleton_partition(asset_ids: list[str]) -> dict[str, list[str]]:
     return _communities_to_partition(([asset_id] for asset_id in asset_ids), asset_ids)
 
@@ -439,6 +521,7 @@ def bake_island_rung(conn, *, recompute_centroids: bool = True) -> dict[str, lis
     """Bake Island membership, labels, inter-Island edges, and derived centroids."""
     asset_edges = aggregate_bundle_attribution(ASSET_RUNG, conn)
     asset_edges = fold_partition_similarity_edges(asset_edges, conn)
+    asset_edges = fold_partition_render_affinity_edges(asset_edges, conn)
     partition = bake_island_rung_partition(asset_edges, conn)
     bake_island_rung_labels(partition, conn)
     bake_island_rung_edges(partition, asset_edges, conn)

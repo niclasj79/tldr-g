@@ -2052,7 +2052,7 @@ async def diagnostics_embedding_health(
     Spectral + norm statistics over a bounded sample of the stored
     vectors: effective rank, anisotropy, collapse verdicts. Run before
     quantization decisions and after embedder swaps. Per
-    the public diagnostics roadmap.
+    docs/intelligence/2026-06-10-creative-opportunity-sweep.md s2 #2.
     """
     try:
         from tp_vrg.embedding_health import embedding_health, sample_stored_embeddings
@@ -2179,7 +2179,7 @@ async def diagnostics_query_clusters(
     Surfaces the clustering that already feeds the speculative pre-render
     cache (the engine adapts to your query distribution today; this lets
     you SEE it). Visible-intelligence exposure per
-    the public diagnostics roadmap.
+    docs/intelligence/2026-06-10-creative-opportunity-sweep.md §2 #1.
     """
     try:
         from tp_vrg.janitor.query_shape_cluster import (

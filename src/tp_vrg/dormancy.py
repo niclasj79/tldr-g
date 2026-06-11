@@ -104,6 +104,17 @@ DERIVED_STATE_WRITERS: tuple[DerivedStateWriter, ...] = (
               "dormant; the probe reports OFF_BY_DESIGN unless the flag is enabled.",
     ),
     DerivedStateWriter(
+        "render_affinity_edges",
+        "Render-Affinity Axis L3/RTWM (render_affinity_edges table)",
+        LivenessKind.COLUMN_POPULATED,
+        "render_affinity_edges",
+        gated_off_env="TPVRG_RENDER_AFFINITY",
+        notes="Default-OFF (TPVRG_RENDER_AFFINITY; shipped 2026-06-11 per the "
+              "weighting-invariance verdict). Co-render edges from provenance traces "
+              "+ HyPE synthetic cold-start; consumed by the Island-partition fold "
+              "(TPVRG_PARTITION_USE_RENDER_AFFINITY). 0 rows when off = OFF_BY_DESIGN.",
+    ),
+    DerivedStateWriter(
         "node_provenance",
         "Node provenance reverse index (node_provenance table)",
         LivenessKind.COLUMN_POPULATED,

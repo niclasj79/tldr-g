@@ -23,7 +23,7 @@ from tp_vrg.models import EdgeData, NodeData, SourcePassage
 class StorageInitError(RuntimeError):
     """Raised when a StorageBackend cannot initialize cleanly.
 
-    Per [[the pipeline invariant policy]] INV-2 (fail-loud) +
+    Per [[.claude/rules/code-invariants.md]] INV-2 (fail-loud) +
     [[docs/diagnostics/2026-05-14-cockpit-substrate-coherent-reframe.md]] §3 +
     [[GOTCHAS.md]] entry "/health wedge after backbone-load (2026-05-17)":
     storage init failures must raise rather than silently fall back to

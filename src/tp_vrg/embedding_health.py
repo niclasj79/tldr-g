@@ -1,6 +1,6 @@
 """Embedding health + whitening conditioner — the SIGReg steal, applied post-hoc.
 
-The LeJEPA/SIGReg insight ([[the embedding-health design note]]
+The LeJEPA/SIGReg insight ([[docs/intelligence/2026-06-05-sota-steal-jepa-world-models.md]]
 §1, promoted via the 2026-06-10 creative opportunity sweep §2 #2): an
 embedding space whose marginals are isotropic-Gaussian is the space in
 which (a) linear probes provably recover latent factors, (b) Mahalanobis

@@ -62,9 +62,9 @@ class PipelineContractViolation(RuntimeError):
     bugs *before* they corrupt ingestion. The 2026-04-06 incident (MAX_TOKENS=1000
     > max_seq_length=512) ran for ~2 months under the prior `warnings.warn` approach
     because the warning was easily missed in init logs; converting to a raise
-    enforces the the pipeline invariant policy INV-2 ("fail loud") discipline.
+    enforces the .claude/rules/code-invariants.md INV-2 ("fail loud") discipline.
 
-    See the public pipeline contract docs for the full contract table.
+    See .claude/skills/pipeline-contracts/SKILL.md for the full contract table.
 
     Emergency override: set ``TPVRG_PIPELINE_CONTRACT_LAX=1`` to downgrade the
     raise to a warning. This is for short-term legacy-graph migrations only;
@@ -264,7 +264,7 @@ class LODGraphMemory:
         logger.info("[engine-init] step 6 OK (Ingester)  +%.3fs", time.monotonic() - _init_start)
 
         # Pipeline contracts C1 + C7 enforcement at engine init.
-        # Per the public pipeline contract docs + the pipeline invariant policy INV-2
+        # Per .claude/skills/pipeline-contracts/SKILL.md + .claude/rules/code-invariants.md INV-2
         # ("fail loud — must raise, not silently continue"). The 2026-04-06 silent-truncation
         # incident ran for ~2 months because the prior `warnings.warn` was easily missed in
         # init logs. Now raises by default; emergency override via TPVRG_PIPELINE_CONTRACT_LAX=1.
@@ -279,7 +279,7 @@ class LODGraphMemory:
             PipelineContractViolation: if any contract fails AND
                 TPVRG_PIPELINE_CONTRACT_LAX is not set.
 
-        See the public pipeline contract docs § "Contract Table"
+        See .claude/skills/pipeline-contracts/SKILL.md § "Contract Table"
         for the full invariant list. C2 is enforced separately at storage
         attach time (hard error on dim mismatch). C8 (async-handler event-loop
         safety) is a static check, not a runtime invariant.
@@ -346,7 +346,7 @@ class LODGraphMemory:
         msg = (
             "Pipeline contract violations at engine init:\n  - "
             + "\n  - ".join(violations)
-            + "\n\nSee the public pipeline contract docs for the full contract table."
+            + "\n\nSee .claude/skills/pipeline-contracts/SKILL.md for the full contract table."
         )
         if os.environ.get("TPVRG_PIPELINE_CONTRACT_LAX") == "1":
             import warnings
@@ -1255,7 +1255,7 @@ class LODGraphMemory:
 
         # ── Early-winner skip ─────────────────────────────────────────────
         # If any Tier 1 alternative already meets the C3_THRESHOLD, skip
-        # _tier2_entity_render. Per the topology-first policy, Tier 2 is
+        # _tier2_entity_render. Per .claude/rules/topology-first.md, Tier 2 is
         # a fallback competitor when Tier 1 is weak; if Tier 1 already wins,
         # the entity render's compute is wasted (it never wins on Mode 7's
         # slow queries per the 2026-04-28 failure-trace synthesis, which

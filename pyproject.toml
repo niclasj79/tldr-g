@@ -73,21 +73,17 @@ api = [
 ]
 gliner = [
     # Zero-LLM extraction: GLiNER2 (NER) + spaCy (dep-parse relationships)
-    # NOTE: Requires Python 3.12. Not compatible with Python 3.14 (pydantic v1 compat).
+    # NOTE: Requires Python 3.12. Not compatible with Python 3.14.
     # After install, run: python -m spacy download en_core_web_sm
     # NER_BACKEND=gliner2 is the canonical default (models.py).
     "gliner2>=1.3.0",
     "spacy>=3.7.0",
-    # LingMess coreference (sieve mode = LingMess + rules fallback, now default)
     "fastcoref>=2.1.6",
 ]
 coref = [
-    # Standalone coref extra (fastcoref also included in gliner group above)
     "fastcoref>=2.1.6",
 ]
 cockpit = [
-    # Desktop GUI: PyWebView window + pystray system tray
-    # Pillow is a pystray dependency for icon creation (likely already installed via sentence-transformers)
     "pywebview>=5.0",
     "pystray>=0.19",
     "Pillow>=9.0",

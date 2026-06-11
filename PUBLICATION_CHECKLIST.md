@@ -9,7 +9,7 @@ This repo is not public-ready until every required row is checked.
 - [x] Clean virtualenv install smoke passes on Windows. See `docs/smoke-2026-06-11.md`.
 - [x] `python examples/quickstart.py` passes after install.
 - [x] Public smoke tests pass.
-- [ ] Secret/internal-term scan passes.
+- [x] Secret/internal-term scan passes.
 - [ ] Source boundary review resolves the full-package inclusion question in `PUBLIC_BOUNDARY.md`.
 - [ ] Windows installer points at this repo/package and passes clean-machine smoke.
 - [ ] At least three outside soft-seed installs complete or launch slips by the ratified rule.

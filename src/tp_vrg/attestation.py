@@ -6,10 +6,11 @@ Art 20) and the render trace (the Provenance Layer's answer + citations
 record, the "memory you can audit" surface). Same family as Certificate
 Transparency / Sigstore / eIDAS 2.0 qualified seals — explicitly NOT a
 blockchain, no token, no distributed ledger (per
+.claude/skills/cryptographic-vocabulary/SKILL.md).
 
-Design source: provenance-rights architecture, Ed25519 + did:web identity.
+Design source: docs/design/arch-provenance-rights-objects-2026-05-11.md
 §6 MVP-1 (Ed25519 + did:web identity), executed per
-the federation artifact design note
+docs/intelligence/2026-06-09-federation-artifact-convergence-synthesis.md
 (founder decision FED-2). This module is the single canonical
 implementation (INV-7); the MCP server, HTTP API, and CLI all wire here.
 

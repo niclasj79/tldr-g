@@ -175,7 +175,8 @@ SENTENCE_EMBEDDINGS_ENABLED: bool = os.environ.get(
 # Default is OFF (lean-mode default) — the audit on the Mode 7 M&A corpus
 # showed 0pp accuracy delta between cascade-on and cascade-off, with a
 # 32% ingest speedup and 10% query speedup when disabled. See
-# See the measurement note for the full details.
+# [[.claude/plans/lane-b/2026-04-22-whitepaper-audit-b1-b3/item-1-entity-embedding-audit.md]]
+# for the full measurement.
 #
 # The flag (and the code behind it) is RETAINED because the cascade
 # provides architectural optionality for Phase 2+ directions —
@@ -221,7 +222,9 @@ ENTITY_EMBEDDINGS_ENABLED: bool = os.environ.get(
 # rendered context." Default flipped OFF; flag kept as escape hatch (mirrors
 # the B1 Path C-prime landing on TPVRG_ENTITY_EMBEDDING).
 #
-# LOD0 invariant cross-check: no public claim depends on this specific invariant.
+# Patent cross-check (Step 1, [[.claude/plans/lane-b/2026-04-22-whitepaper-audit-b1-b3/item-2-lod0-invariant-audit.md]]):
+# GREEN — no independent or dependent claim in the filed application
+# (P 26-0025SE) requires this specific invariant. Lowest-first coarsening
 # order (Claim 1c, 3b) is a strictly weaker property that remains independent
 # of this flag.
 #
@@ -291,7 +294,7 @@ _VALID_USR_STRATEGIES: frozenset[str] = frozenset(
 #     → Entity_topology is not only useless on these workloads — it's actively unstable.
 #
 # Decision: global flip safe AND beneficial. Mode 7 harness override
-# (the benchmark runner) is now redundant — the global default propagates.
+# (research/mode7/run_mode7.py) is now redundant — the global default propagates.
 #
 # Override: set TPVRG_USR_STRATEGIES=all (re-enables entity_topology cascade)
 #           for the rare workload that genuinely needs it OR for diagnostic A/B work
@@ -300,8 +303,8 @@ _VALID_USR_STRATEGIES: frozenset[str] = frozenset(
 #           (per founder direction 2026-05-14 morning; future research direction).
 #
 # Source artifacts:
-#   benchmark summary EXP-074 vs EXP-075
-#   benchmark summary EXP-077/EXP-078
+#   research/results/2026-05-14-night-late/SUMMARY.md (EXP-074 vs EXP-075)
+#   research/results/2026-05-14-morning-audit/SUMMARY.md (EXP-077 crash + EXP-078)
 #   backlog-completed.md [ENTITY-TOPOLOGY-PIPELINE-LATENCY-WEDGE] (RESOLVED-BY-CULL)
 #   docs/diagnostics/2026-04-28-tier2-entity-render-failure-trace-synthesis.md
 #     §"Empirical validation + post-hoc reframe (2026-05-14 morning)"

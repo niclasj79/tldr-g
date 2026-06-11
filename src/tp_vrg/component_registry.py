@@ -1,20 +1,30 @@
-"""Unified component registry.
+"""Unified Component Registry (K-B keystone, L1 + L2).
 
-Single canonical catalog of the engine's pluggable components, covering both
-deterministic mechanisms and optional LLM-augmented injectors.
+Single canonical catalog of the engine's pluggable components — both FIRE
+(deterministic mechanisms) and WATER (LLM-augmented injectors). Realizes ledger
+#80 (Fire and Water are ONE component class) and implements the mode-profile
+architecture of ``docs/design/arch-mechanism-mode-profiles.md``.
 
-The registry exposes:
-  * ``ComponentDescriptor`` plus the descriptor table and lookup API.
-  * ``resolve_mode_profile`` and ``apply_mode_profile`` for lean/standard/full
-    mode defaults.
-  * ``registry_summary`` for ``/health`` observability.
+Design + the full 33-component inventory: ``docs/design/arch-unified-component-registry-2026-06-05.md``.
 
-Safety invariant:
-  ``apply_mode_profile`` is a no-op unless a mode is explicitly provided or
-  ``TPVRG_MODE`` is set. It uses ``setdefault`` semantics, so individually-set
-  environment variables win. With no mode selected, default behavior is
-  unchanged. ``TPVRG_MODE=standard`` reproduces canonical defaults, while
-  ``lean`` and ``full`` are explicit opt-ins.
+Scope of THIS module (Phase 1, GPU-free):
+  * L1 — the registry: ``ComponentDescriptor`` + the descriptor table + the lookup API.
+  * L2 — the mode-profile-loader: ``resolve_mode_profile`` (pure) + ``apply_mode_profile``.
+  * An observability summary for ``/health`` (``registry_summary``).
+
+SAFETY INVARIANT (why this is safe to land without GPU validation):
+  ``apply_mode_profile`` is a **no-op unless TPVRG_MODE is explicitly set**, and it
+  uses ``setdefault`` semantics so any individually-set env var wins. Therefore with
+  no ``TPVRG_MODE`` the engine's existing env reads see exactly what they see today —
+  default behavior is byte-unchanged. The ``"standard"`` mode-default of every
+  component equals its current canonical default (enforced by
+  ``test_component_registry`` against ``models.py``), so ``TPVRG_MODE=standard`` also
+  reproduces current behavior. ``lean`` / ``full`` are opt-in and GPU-validated later.
+
+NOT in scope here (Phase 2, GPU-validated): inverting the dependency so ``models.py``
+/ ``centrality.py`` / ``water.py`` READ their defaults FROM this registry (the change
+that makes the three-way split-brain impossible). This module is additive — the
+existing toggle reads are untouched.
 """
 
 from __future__ import annotations

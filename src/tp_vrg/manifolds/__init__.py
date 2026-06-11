@@ -12,7 +12,7 @@ section 5.
 
 INV-7 disposition (founder 2026-06-08): the product / benchmark entry points are
 NON-consumers BY DESIGN (staged, not a capability-leverage violation). See
-the capability leverage audit note. When wiring
+docs/intelligence/2026-06-07-capability-leverage-audit.md section 4. When wiring
 begins, prefer the additive-telemetry form first (construct + emit alongside the
 existing computation, assert equivalent, byte-identical renders) before any
 decision-routing A/B.

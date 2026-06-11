@@ -4367,7 +4367,7 @@ class SQLiteBackend:
         entire asyncio event loop blocked for the duration. On the founder's
         97K-node / 985K-edge graph under 89% RAM paging, this blocked Cockpit
         startup for 30+ minutes (2026-04-21 incident; full timeline in
-        ``the Cockpit ready-signal migration note``).
+        ``.claude/plans/lane-b/2026-04-21-cockpit-ui-ready-signal/``).
 
         Current behavior: never recompute on read. Log the first observed
         drift at WARNING level (so operators notice) but serve the existing
