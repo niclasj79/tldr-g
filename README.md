@@ -1,10 +1,12 @@
-# TP-VRG — Contracts & Verification
+# TLDR-G — Contracts & Verification
 
-TP-VRG is a local-first **knowledge rendering engine**: it turns source material into a graph and renders query-specific, source-grounded context at the right level of detail under a token budget — not a RAG wrapper, not a hosted memory SaaS.
+TLDR-G is a local-first **knowledge rendering engine**: it turns source material into a graph and renders query-specific, source-grounded context at the right level of detail under a token budget — not a RAG wrapper, not a hosted memory SaaS.
 
-**This repository is the open boundary of TP-VRG — its contracts and its offline verification surface, not the engine itself.** It lets you (a) integrate against the stable boundary contracts and (b) independently verify any artifact the engine produces, without trusting a server. The rendering engine is the commercial product.
+**This repository is the open boundary of TLDR-G — its contracts and its offline verification surface, not the engine itself.** It lets you (a) integrate against the stable boundary contracts and (b) independently verify any artifact the engine produces, without trusting a server. The rendering engine is the product; this repo is how you build against it and check its outputs.
 
-![TP-VRG launch architecture](docs/diagrams/launch-architecture-tiny.png)
+> **A note on names:** the product is **TLDR-G**. The Python package you import is `tp_vrg` and the verification CLI is `tp-vrg-verify` — these keep the engine's internal names on purpose, so an integration written against this repo runs unchanged against the real engine.
+
+![TLDR-G launch architecture](docs/diagrams/launch-architecture-tiny.png)
 
 ## What's in here
 
@@ -14,7 +16,21 @@ TP-VRG is a local-first **knowledge rendering engine**: it turns source material
 
 ## What's NOT in here
 
-The rendering engine itself — ingestion, scoring, the render selector, the Janitor, partition/bake, mode profiles, and the runnable MCP / HTTP / Cockpit surfaces. Those are the commercial product. This repo is the **integration + verification** surface: build against a stable boundary and prove the engine's outputs are faithful, without the engine source.
+The rendering engine itself — ingestion, scoring, the render selector, the Janitor, partition/bake, mode profiles, and the runnable MCP / HTTP / Cockpit surfaces. Those are the product. This repo is the **integration + verification** surface: build against a stable boundary and prove the engine's outputs are faithful, without the engine source. **To run against a real engine, see "Running against a real engine" below.**
+
+## Running against a real engine
+
+The engine ships as a **free local application** — no cloud, no API key, runs on a laptop:
+
+- the **Cockpit desktop app** — ingest your own sources, query them, and watch the engine show its own reasoning (render confidence, the intent it inferred, the tokens it saved, the questions it thinks you haven't asked yet); and
+- **`tp-vrg-mcp`**, an MCP server any agent client (Claude Desktop, Cursor, …) can call as a tool.
+
+**Get the engine:** download the latest release from the **Releases** page of this repository, or from **[tldr-g.ai](https://tldr-g.ai)**.
+_(During the pre-launch period the public build isn't posted yet — email `niclas@tldr-g.ai` for an early build.)_
+
+**Free during launch.** The full local engine is **free for early adopters during the launch period.** After that it moves to a tiered model — a free local tier for everyday use, paid tiers for higher capacity and the sovereign / enterprise build — and early-adopter installs keep working. Whatever tier you run, the artifacts it produces (the render trace and the portable artifact) are exactly the objects this repo's contracts describe and `tp-vrg-verify` checks — so your integration and your verification don't change when the pricing does.
+
+**Commercial / sovereign.** On-prem, air-gapped, GDPR erasure + portability, signed attestation, and support are the Enterprise tier — `niclas@tldr-g.ai`.
 
 ## Quickstart (no engine, no API key)
 
@@ -36,4 +52,4 @@ python -m pytest -q
 
 ## Status
 
-Private, pre-launch candidate — please don't redistribute.
+Private, pre-launch candidate — please don't redistribute. _(At launch this note is removed and the engine download link above goes live.)_

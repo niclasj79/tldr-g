@@ -1,8 +1,8 @@
-"""TP-VRG public quickstart — the trust story in ~20 lines. No engine, no key.
+"""TLDR-G public quickstart — the trust story in ~20 lines. No engine, no key.
 
 Signs a sample render trace, verifies it offline, then tampers one byte and
 shows verification fail. This is the offline, server-free integrity check
-anyone holding a TP-VRG export can run.
+anyone holding a TLDR-G export can run.
 
 The render trace below is a stand-in: the real one is produced by the engine,
 but its SHAPE is the public contract in docs/contracts/render-trace-v1.md, and

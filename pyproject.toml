@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "tp-vrg"
 version = "0.3.0"
-description = "TP-VRG — open boundary contracts + offline verification for the knowledge rendering engine"
+description = "TLDR-G — open boundary contracts + offline verification for the knowledge rendering engine"
 readme = "README.md"
 license = "Apache-2.0"
 requires-python = ">=3.11"

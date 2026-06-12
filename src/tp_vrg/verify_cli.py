@@ -1,4 +1,4 @@
-"""tp-vrg-verify — offline integrity verification of a signed TP-VRG export.
+"""tp-vrg-verify — offline integrity verification of a signed TLDR-G export.
 
 A thin CLI over ``tp_vrg.attestation.verify_envelope`` so a counterparty can
 check a signed render trace / portable artifact without writing Python and

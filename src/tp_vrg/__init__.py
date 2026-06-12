@@ -1,4 +1,4 @@
-"""TP-VRG — public contracts + verification surface.
+"""TLDR-G — public contracts + verification surface.
 
 This is the public launch candidate: the open boundary **contracts** and the
 offline **verification** surface — NOT the proprietary rendering engine. It

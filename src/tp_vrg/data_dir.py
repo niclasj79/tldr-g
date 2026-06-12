@@ -1,4 +1,4 @@
-"""TP-VRG data directory layout + atomic legacy migration.
+"""TLDR-G data directory layout + atomic legacy migration.
 
 Single source of truth for the `~/.tp_vrg/*` directory structure.
 
@@ -39,10 +39,10 @@ __all__ = [
 ]
 
 
-_README_CONTENT = """TP-VRG data directory
+_README_CONTENT = """TLDR-G data directory
 =====================
 
-This directory holds TP-VRG state across sessions.
+This directory holds TLDR-G state across sessions.
 
 Layout:
   internal/        Engine artifacts (SQLite knowledge graph + sidecars).
@@ -52,21 +52,21 @@ Layout:
                    and not part of the product's public API. It can change
                    between versions without notice.
 
-  provenance.db    Your query audit trail. Each answer produced by TP-VRG
+  provenance.db    Your query audit trail. Each answer produced by TLDR-G
                    records which source segments contributed to it, so you
                    can see "why did the engine say X?" This file is safe
                    to read — use any SQLite client. Do NOT write to it
-                   directly; use the TP-VRG tools/API instead.
+                   directly; use the TLDR-G tools/API instead.
 
   README.txt       This file.
 
-To reset everything: delete the entire ~/.tp_vrg directory. TP-VRG will
+To reset everything: delete the entire ~/.tp_vrg directory. TLDR-G will
 recreate the layout on next run.
 """
 
 
 def get_data_dir() -> Path:
-    """Return the TP-VRG data directory.
+    """Return the TLDR-G data directory.
 
     Overridable via the TP_VRG_HOME environment variable (useful for
     isolated tests and alternate installs).
@@ -112,7 +112,7 @@ def get_provenance_db_path(data_dir: Path | None = None) -> Path:
 
 
 def get_log_path(name: str = "cockpit.log", data_dir: Path | None = None) -> Path:
-    """Return the canonical path to a TP-VRG log file.
+    """Return the canonical path to a TLDR-G log file.
 
     Layout: `<data_dir>/<name>` (not under ``internal/`` — users may
     legitimately want to read these when reporting bugs, unlike the
@@ -214,7 +214,7 @@ def _migrate_legacy_graph(data_dir: Path) -> bool:
 
 
 def ensure_data_dir_layout(data_dir: Path | None = None) -> None:
-    """Ensure the TP-VRG data directory has the correct layout.
+    """Ensure the TLDR-G data directory has the correct layout.
 
     Idempotent. Safe to call multiple times. Performs:
       1. Create the data directory if missing.

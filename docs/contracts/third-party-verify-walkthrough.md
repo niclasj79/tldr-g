@@ -9,7 +9,7 @@ exported trace given the operator's public-key infrastructure.* The tooling is
 
 ## What a counterparty can verify, and how
 
-**You received** a TP-VRG export — a signed render trace (`*.signed.json` from
+**You received** a TLDR-G export — a signed render trace (`*.signed.json` from
 `GET /trace/{id}/export`) or a signed PortableArtifact (from
 `GET /asset/{id}/export?sign=true`). You do NOT need access to the producing
 system.

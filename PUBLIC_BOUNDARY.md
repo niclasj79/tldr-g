@@ -31,7 +31,7 @@ open core at this stage — just the contracts and interactive surfaces"). Licen
 ratified **Apache-2.0**.
 
 The public rule: a stranger can **integrate against the contracts and
-independently verify any TP-VRG artifact offline, without proprietary
+independently verify any TLDR-G artifact offline, without proprietary
 services** — they do not receive the engine that produces those artifacts.
 
 This is the gate-G1 surface. Whether to additionally ship a thin, engine-free

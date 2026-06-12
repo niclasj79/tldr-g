@@ -1,4 +1,4 @@
-.venv/
+.venv*/
 __pycache__/
 *.py[cod]
 .pytest_cache/
@@ -21,5 +21,3 @@ build/
 PUBLIC_SYNC.md
 PUBLIC_BOUNDARY.md
 PUBLICATION_CHECKLIST.md
-
-.venv-g5/
