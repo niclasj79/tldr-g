@@ -1,23 +1,22 @@
 # Publication Checklist
 
-This repo is not public-ready until every required row is checked.
+In-repo mirror of the project's **external-share gate** (the project's internal
+tracker holds the authoritative copy + live status).
 
-## Required
+**This repo MUST NOT be shared externally — even selectively to one trusted
+person — until every G-row below is green.** A private pre-share is still
+publication.
 
-- [ ] Founder confirms final OSI license (`MIT` in this candidate; Apache-2.0 still may be preferable if IP-grant posture matters).
-- [ ] README claims scrubbed against the launch proof pack.
-- [x] Clean virtualenv install smoke passes on Windows. See `docs/smoke-2026-06-11.md`.
-- [x] `python examples/quickstart.py` passes after install.
-- [x] Public smoke tests pass.
-- [x] Secret/internal-term scan passes.
-- [ ] Source boundary review resolves the full-package inclusion question in `PUBLIC_BOUNDARY.md`.
-- [ ] Windows installer points at this repo/package and passes clean-machine smoke.
-- [ ] At least three outside soft-seed installs complete or launch slips by the ratified rule.
+## Gate (G1–G7)
+
+- [x] **G1 — Scope ratified.** ✅ RATIFIED 2026-06-11. Ships contracts + offline verification, NOT the engine. `public/allowlist.txt` + `PUBLIC_BOUNDARY.md` reflect it.
+- [x] **G2 — Automated scrub clean.** ✅ `python tools/sync_public_repo.py` exits 0 on the narrowed surface (validated 2026-06-11).
+- [x] **G3 — Manual scrub.** ✅ 2026-06-11. Clean overlay contract docs (internal "PRIVATE DRAFT/patent-counsel" home notes not synced); sync-process meta gitignored from the shared repo; README de-internalized; `tp-vrg-verify` CLI added so the verify docs are real. README is category-first; no patent framing, retracted claims, or PII on the shipped surface.
+- [x] **G4 — License ratified + present.** ✅ Apache-2.0 (ratified 2026-06-11); `LICENSE` + `pyproject.toml` match.
+- [ ] **G5 — Install + smoke green on THIS scoped repo.** Validated here via source path (`import tp_vrg` engine-free + `quickstart.py` + 31 tests pass 2026-06-11); founder runs the final `pip install -e .` on a clean venv to confirm.
+- [x] **G6 — Claims grounded.** ✅ The narrowed surface carries no quantitative performance claims (format specs + verification) — nothing to ground.
+- [x] **G7 — Verify story works.** ✅ `tp-vrg-verify` returns VALID on a signed export; sign→verify→tamper demonstrated by `quickstart.py` + `test_attestation`.
 
 ## Explicitly Not Required For Launch
 
-- FRAMES rerun.
-- sovereign GPU run.
-- Public M2.1 head-to-head.
-- Continent-rung multi-membership.
-- World-map render.
+- FRAMES rerun · sovereign GPU run · public M2.1 head-to-head · continent-rung multi-membership · world-map render.

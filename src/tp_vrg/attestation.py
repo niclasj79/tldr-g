@@ -1,18 +1,15 @@
-"""Signed-artifact attestation — the IV-2 Q1 federation artifact.
+"""Signed-artifact attestation — the federation attestation artifact.
 
 Sigstore-class detached signatures over the engine's two exportable
 boundary objects: the PortableArtifact (rung-level subgraph export, GDPR
 Art 20) and the render trace (the Provenance Layer's answer + citations
 record, the "memory you can audit" surface). Same family as Certificate
 Transparency / Sigstore / eIDAS 2.0 qualified seals — explicitly NOT a
-blockchain, no token, no distributed ledger (per
-.claude/skills/cryptographic-vocabulary/SKILL.md).
+blockchain, no token, no distributed ledger.
 
-Design source: docs/design/arch-provenance-rights-objects-2026-05-11.md
-§6 MVP-1 (Ed25519 + did:web identity), executed per
-docs/intelligence/2026-06-09-federation-artifact-convergence-synthesis.md
-(founder decision FED-2). This module is the single canonical
-implementation (INV-7); the MCP server, HTTP API, and CLI all wire here.
+Ed25519 detached signatures + did:web identity. This module is the single
+canonical attestation implementation; the engine's MCP server, HTTP API, and
+CLI all wire here.
 
 Envelope shape (attestation_version 1):
 

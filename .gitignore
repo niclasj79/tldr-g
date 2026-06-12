@@ -13,3 +13,13 @@ dist/
 build/
 *.egg-info/
 .public-sync-root
+
+# Sync-process meta — generated into the working copy for the maintainer, but
+# NOT committed to the shared/public repo (they describe how the repo is built +
+# the internal readiness gate, not the product).
+.public-sync-root
+PUBLIC_SYNC.md
+PUBLIC_BOUNDARY.md
+PUBLICATION_CHECKLIST.md
+
+.venv-g5/

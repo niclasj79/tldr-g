@@ -78,12 +78,29 @@ def get_data_dir() -> Path:
 
 
 def get_graph_db_path(data_dir: Path | None = None) -> Path:
-    """Return the canonical path to the graph database.
+    """Return the canonical path to the active graph database.
 
-    Post-F16: `<data_dir>/internal/graph.db`.
+    Post-F16 default: `<data_dir>/internal/graph.db`.
+
+    UX-12 (multi-graph picker): if a graph registry exists, resolve through the
+    active named-graph profile instead. This is the single seam every surface
+    (Cockpit, HTTP API, MCP server, CLI) inherits, so switching the active graph
+    switches all of them at once (INV-1: one source of truth for the path).
+    Registry resolution must never break the legacy default — any absence or
+    error falls back to `internal/graph.db`, the exact pre-UX-12 behaviour.
     """
     if data_dir is None:
         data_dir = get_data_dir()
+    try:
+        # Lazy import avoids a circular dependency (graph_registry imports this
+        # module for get_data_dir).
+        from tp_vrg.graph_registry import resolve_active_graph_path
+
+        active = resolve_active_graph_path(data_dir)
+        if active is not None:
+            return active
+    except Exception:
+        pass
     return data_dir / "internal" / "graph.db"
 
 

@@ -1,70 +1,39 @@
-# TP-VRG
+# TP-VRG — Contracts & Verification
 
-TP-VRG is a local-first knowledge rendering engine. It turns source material into a graph, then renders query-specific context at the right level of detail under a token budget.
+TP-VRG is a local-first **knowledge rendering engine**: it turns source material into a graph and renders query-specific, source-grounded context at the right level of detail under a token budget — not a RAG wrapper, not a hosted memory SaaS.
 
-It is not a RAG wrapper and not a hosted memory SaaS. Retrieval fetches chunks. TP-VRG renders context from topology, resolution, provenance, and budget constraints.
+**This repository is the open boundary of TP-VRG — its contracts and its offline verification surface, not the engine itself.** It lets you (a) integrate against the stable boundary contracts and (b) independently verify any artifact the engine produces, without trusting a server. The rendering engine is the commercial product.
 
 ![TP-VRG launch architecture](docs/diagrams/launch-architecture-tiny.png)
 
-## What You Can Do
+## What's in here
 
-- Ingest notes, documents, chats, or repo text into a local graph.
-- Query the graph through Python, CLI, HTTP, MCP, or the desktop Cockpit.
-- Render source-grounded context for an agent or LLM.
-- Inspect citations, provenance, and signed extracts.
-- Experiment with optional Water mode, where an LLM can help with query expansion, reranking, and extraction enrichment while the deterministic pipeline remains the fallback.
+- **Boundary contracts** — `docs/contracts/` (the artifact + render-trace formats) and `src/tp_vrg/adapters/` (the adapter interface a host integrates against). The two exportable boundary objects are the `PortableArtifact` (a rung-level subgraph export, GDPR Art-20 shaped) and the render trace (the answer + citations "memory you can audit" record).
+- **Offline attestation / verify** — `src/tp_vrg/attestation.py` + the `tp-vrg-verify` CLI: Ed25519 detached signatures over those artifacts (same family as Sigstore / Certificate Transparency / eIDAS 2.0 qualified seals — **not** a blockchain, no token, no ledger). Anyone holding an exported artifact can run `tp-vrg-verify <file>` and check tamper-evidence offline.
+- **Provenance audit** — `tools/provenance_audit.py`: a stdlib-only tool that checks every cited snippet in a render trace actually exists in the source material — the "no hallucinated citations" proof.
 
-## Quickstart
+## What's NOT in here
+
+The rendering engine itself — ingestion, scoring, the render selector, the Janitor, partition/bake, mode profiles, and the runnable MCP / HTTP / Cockpit surfaces. Those are the commercial product. This repo is the **integration + verification** surface: build against a stable boundary and prove the engine's outputs are faithful, without the engine source.
+
+## Quickstart (no engine, no API key)
 
 ```bash
 python -m venv .venv
-.venv\Scripts\activate
+# Windows: .venv\Scripts\activate   •   macOS/Linux: source .venv/bin/activate
 pip install -e .
 python examples/quickstart.py
 ```
 
-On macOS/Linux, activate with `source .venv/bin/activate`.
+`examples/quickstart.py` signs a sample artifact, verifies it offline, then tampers one byte and shows verification fail — the whole trust story in ~20 lines.
 
-For the public smoke tests, install the dev extra and run:
+## Tests
 
 ```bash
 pip install -e ".[dev]"
-python -m pytest tests/test_public_smoke.py tests/test_water.py tests/test_component_registry.py tests/adapters/test_contracts.py tests/adapters/test_registry.py -q
+python -m pytest -q
 ```
-
-## Minimal Python Example
-
-```python
-import asyncio
-from tp_vrg import LODGraphMemory
-
-async def main():
-    mem = LODGraphMemory()
-    await mem.ingest(
-        "OpenAI, led by Sam Altman, developed GPT-4. "
-        "Anthropic was founded by Dario Amodei, who previously worked at OpenAI. "
-        "Both companies focus on AI safety."
-    )
-    context = await mem.render_context("How are OpenAI and Anthropic connected?", profile="chat")
-    print(context)
-
-asyncio.run(main())
-```
-
-## Main Surfaces
-
-- `tp-vrg`: CLI demo and utilities.
-- `tp-vrg-mcp`: MCP server for agent clients.
-- `tp-vrg-api`: HTTP API for local apps and tools.
-- `tp-vrg-cockpit`: local desktop Cockpit.
-- `tools/provenance_audit.py`: verifies that cited text exists in the source material.
-
-## Open Boundary
-
-This launch repo exposes the runnable local ingest-to-render pipeline and proof contracts: sources to passages/assets, graph/rungs, render selector, rendered answer, provenance, and trace.
-
-Production tuning, advanced Janitor optimization, enterprise operations, and production federation tooling remain internal for now.
 
 ## Status
 
-Private launch candidate. Do not publish until `PUBLICATION_CHECKLIST.md` is green.
+Private, pre-launch candidate — please don't redistribute.
