@@ -177,6 +177,8 @@ def test_build_render_trace_composes_answer_and_citations(
     assert trace["answer_id"] == "ans-1"
     assert trace["query_text"] == "What did the merger agreement say?"
     assert trace["model_label"] == "test-model"
+    assert trace["temporal_summary"]["trace_hash"]
+    assert trace["temporal_summary"]["durability_ceiling"] == 0.6
     assert len(trace["citations"]) == 1
     assert trace["citations"][0]["segment_id"] == "seg-1"
     # seg-1 was never written to source_segments -> orphaned citation

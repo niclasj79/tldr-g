@@ -11,12 +11,12 @@ Exposed:
   - ``tp_vrg.adapters``    — the boundary adapter contracts + registry a host
     integrates against.
 
-The engine that *produces* the artifacts these contracts describe is the
-commercial product; this repo lets anyone integrate against it and
-independently verify its outputs.
+The engine that *produces* the artifacts these contracts describe is a free
+local app (a closed binary); this repo is its open boundary — letting anyone
+integrate against it and independently verify its outputs.
 """
 
-__version__ = "0.3.0"
+__version__ = "0.1.0"
 
 from tp_vrg import adapters, attestation
 

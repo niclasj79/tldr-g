@@ -1,0 +1,217 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>TLDR-G — the knowledge rendering engine</title>
+<meta name="description" content="A knowledge rendering engine: it renders the context an answer needs instead of retrieving chunks. Local-first, sovereign, evidence-grade. Free engine, open SDK." />
+<!-- CLAIMS NOTICE: every quantitative claim below is marked CLAIM: and MUST pass
+     the disclosure-boundary pre-publish screen + marketing-claim-grounding 6-tuple
+     before this page goes public. Numbers use the SSOT wording; verify against a
+     result file + commit before publishing. -->
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+<header class="nav">
+  <div class="wrap">
+    <a class="brand" href="/">TLDR-G</a>
+    <nav>
+      <a href="#how">How</a>
+      <a href="#proof">Proof</a>
+      <a href="#sovereign">Sovereign</a>
+      <a href="#open">Open</a>
+      <a href="/learn/">Learn</a>
+      <a class="ghost" href="https://github.com/niclasj79/tldr-g">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <section class="hero wrap">
+    <p class="eyebrow">A knowledge rendering engine</p>
+    <h1>Render the context an answer needs.<br/>Don't retrieve chunks.</h1>
+    <p class="lede">
+      TLDR-G builds a structured graph of your knowledge and <em>renders</em> exactly the
+      context a question needs — preserving the connections, the provenance, and a hard
+      token budget. It runs on your machine, against the model you choose.
+    </p>
+    <div class="cta">
+      <a class="btn" href="#install">Install</a>
+      <a class="btn ghost" href="https://github.com/niclasj79/tldr-g">Read the SDK</a>
+      <a class="btn ghost" href="#whitepaper">Get the whitepaper</a>
+    </div>
+    <p class="fineprint">Free engine (closed binary, for now) · Open SDK (Apache-2.0) · On-device · EU-resident by construction</p>
+  </section>
+
+  <section id="problem" class="wrap band">
+    <h2>Retrieval loses the truth it was supposed to carry</h2>
+    <p>
+      The dominant pattern — chunk, embed, retrieve top-k, stuff into context — throws away
+      the thing that made the knowledge meaningful: its <strong>structure</strong>. Connected
+      facts arrive as disconnected fragments. Sources blur into a summary you can't check.
+      And the context window fills with near-duplicates while the one bridging fact is missing.
+    </p>
+    <p class="claim">
+      <!-- CLAIM (SSOT-grounded per metrics-reference.md): legal multi-hop = parity at ~88% fewer tokens;
+           67–88% across benchmarks. Founder: final 6-tuple check before publish (marketing-claim-grounding). -->
+      TLDR-G matches a full-context baseline's answer quality at roughly
+      <strong>88% fewer tokens</strong> on legal multi-hop — and 67–88% fewer across benchmarks —
+      because it renders what matters instead of stuffing everything.
+    </p>
+  </section>
+
+  <section id="how" class="wrap">
+    <h2>How it works</h2>
+    <div class="grid">
+      <div class="card">
+        <h3>Build a graph, not a pile</h3>
+        <p>Your documents become a two-scale graph of atoms and passages, with typed
+        connections across structural, temporal, causal, and authorial axes.</p>
+      </div>
+      <div class="card">
+        <h3>Render, don't dump</h3>
+        <p>For each question, the engine descends the graph and allocates a hard token
+        budget across what's relevant — verbatim where it matters, summarized where it
+        doesn't. A relevance gradient, not a fixed truncation.</p>
+      </div>
+      <div class="card">
+        <h3>Keep the receipts</h3>
+        <p>Every rendered passage carries verbatim provenance back to its source. A built-in
+        <code>verify</code> step lets anyone confirm the cited text actually exists in the
+        original — no trust required.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="proof" class="wrap band">
+    <h2>Proof, not adjectives</h2>
+    <ul class="proof">
+      <li class="claim">
+        <!-- CLAIM (SSOT): parity at ~88% fewer tokens (legal multi-hop); 67–88% across benchmarks. -->
+        Parity with a full-context baseline at ~88% fewer tokens on legal multi-hop (67–88% across benchmarks).
+      </li>
+      <li>On-device, single-file (SQLite) storage — your data never has to leave the machine.</li>
+      <li>Verifiable provenance: a runnable <code>verify</code> step over signed attestations.</li>
+      <li>A hard token budget enforced as law — high-signal context is protected, not truncated.</li>
+    </ul>
+    <p><a class="btn ghost" href="https://github.com/niclasj79/tldr-g">See the benchmark note + reproduce it</a></p>
+  </section>
+
+  <section id="sovereign" class="wrap">
+    <h2>Sovereign by construction</h2>
+    <p>
+      The week this launched, a US government directive cut off foreign access to a leading
+      frontier model overnight, and that model's terms forced 30-day data retention with no
+      enterprise exception. Depending on someone else's cloud for your knowledge layer is a
+      risk that can materialize without warning.
+    </p>
+    <div class="grid">
+      <div class="card">
+        <h3>Local-first</h3>
+        <p>The engine runs on your hardware. Your data plane is yours; nothing is sent anywhere
+        by default.</p>
+      </div>
+      <div class="card">
+        <h3>Model-agnostic</h3>
+        <p>The deterministic core needs no LLM at all. Where a model helps, bring your own —
+        local, EU-hosted, or open-weights. No lock-in to any provider.</p>
+      </div>
+      <div class="card">
+        <h3>Inspectable</h3>
+        <p>Provenance is verifiable and the contracts are open. We apply the same transparency
+        we sell — to ourselves.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="open" class="wrap band">
+    <h2>Free engine. Open SDK. Not open-core.</h2>
+    <p>
+      The engine is free to run, distributed as a compiled binary. The <strong>SDK</strong> —
+      the integration contracts and the verification surface — is open source under Apache-2.0,
+      so you can build against a stable boundary and verify everything for yourself. We're not
+      open-core: the engine stays closed; the contracts you depend on stay open.
+    </p>
+    <p>
+      And we're building an honest way for it to get better for everyone: an <strong>opt-in</strong>,
+      <strong>content-free</strong> signal about <em>how</em> it rendered — never your data, never one
+      user exposed to another — that improves the shared defaults. It's <strong>off by default</strong>,
+      inspectable, and won't switch on until its privacy guarantee is provable. We apply the
+      transparency we sell to ourselves.
+    </p>
+    <p><a class="btn ghost" href="https://github.com/niclasj79/tldr-g">Read the open contracts</a></p>
+  </section>
+
+  <section id="install" class="wrap">
+    <h2>Get it</h2>
+    <div class="grid">
+      <div class="card">
+        <h3>Developers — build &amp; verify now</h3>
+        <p>The open SDK: integration contracts + offline verification. Clone, <code>pip install -e .</code>,
+        run the quickstart (sign → verify → tamper).</p>
+        <p><a class="btn small" href="https://github.com/niclasj79/tldr-g">Get the SDK</a></p>
+      </div>
+      <div class="card">
+        <h3>The engine — free download</h3>
+        <p>The local Cockpit desktop app + <code>tp-vrg-mcp</code> server + HTTP API. Free to use.</p>
+        <p class="fineprint"><strong>Requirements (v0.1):</strong> Windows 10/11 (64-bit). NVIDIA GPU with ≥4&nbsp;GB VRAM strongly recommended (GTX&nbsp;1060&nbsp;6&nbsp;GB or better) — runs on CPU-only, but ingest and query are ~20–50× slower. 16&nbsp;GB RAM recommended. ~3&nbsp;GB of models download once on first launch. <em>macOS and Linux: fast-follow.</em></p>
+        <p><a class="btn small" href="https://github.com/niclasj79/tldr-g/releases">Download free (Windows)</a></p>
+      </div>
+    </div>
+    <p class="fineprint">A composable developer distribution is on the roadmap — see the Learn page for where this is going.</p>
+  </section>
+
+  <section id="whitepaper" class="wrap band">
+    <h2>Get the whitepaper</h2>
+    <p>
+      The full technical paper — the rendering thesis, the substrate and engine, the provenance and
+      sovereignty layer, the engineering discipline, and an honest evaluation. Leave your email and
+      we'll send it over, along with the occasional launch update.
+    </p>
+    <!-- EMAIL CAPTURE — native Airtable form (founder-chosen conduit; wired 2026-06-18).
+         Airtable-hosted Interface form embedded as an iframe; signups land in the
+         "Waitlist" table (Life OS base appDSTEUZRTgUVZFL / tbleRcGpAnX9YksB9), kept
+         separate from the curated TP-VRG Outreach CRM. To change the form, edit it in
+         Airtable. ⚠️ Before flip: confirm the form loads + accepts a submission when
+         NOT logged in to Airtable (test in an incognito window — Interface forms need
+         the interface shared publicly, unlike classic shr… forms).
+         Tracked: backlog [SITE-EMAIL-CAPTURE-WIRE]. -->
+    <iframe class="airtable-embed signup-embed"
+            src="https://airtable.com/embed/appDSTEUZRTgUVZFL/pagloT2rd7D50c4Jw/form"
+            title="Get the whitepaper — email signup"
+            frameborder="0" width="100%" height="533"
+            style="background: transparent; border: 1px solid var(--line); border-radius: 12px;"></iframe>
+    <p class="fineprint">No spam — your email is used only to send the whitepaper and the
+      occasional launch update, and you can unsubscribe anytime.</p>
+  </section>
+
+  <section class="wrap demo">
+    <h2>See it render</h2>
+    <div class="video-placeholder">
+      <!-- Embed the 2-minute demo here once recorded (P2; founder-owned). -->
+      <p>2-minute demo — coming at launch</p>
+    </div>
+  </section>
+</main>
+
+<footer class="wrap">
+  <div class="foot-grid">
+    <div>
+      <p class="brand">TLDR-G</p>
+      <p class="muted">A knowledge rendering engine. Built in Sweden 🇸🇪 · EU-resident by construction.</p>
+    </div>
+    <div>
+      <p class="muted">Connect</p>
+      <a href="https://github.com/niclasj79/tldr-g">GitHub</a><br/>
+      <a href="mailto:niclas@tldr-g.ai?subject=TLDR-G">Email — niclas@tldr-g.ai</a>
+      <!-- Founder: add X / LinkedIn links here once the handles are reserved (DP-1). -->
+    </div>
+    <div>
+      <p class="muted">Read</p>
+      <a href="/learn/">Learn</a>
+    </div>
+  </div>
+  <p class="muted small">© 2026 · Knowledge that flows without losing truth.</p>
+</footer>
+</body>
+</html>

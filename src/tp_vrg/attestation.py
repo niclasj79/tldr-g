@@ -319,6 +319,9 @@ def build_render_trace(answer_id: str, provenance) -> dict[str, Any]:
         raise KeyError(f"answer_id not found: {answer_id}")
 
     citations = provenance.get_citations_for_answer(answer_id)
+    from tp_vrg.kro_temporal import compute_kro_temporal_summary
+
+    temporal_summary = compute_kro_temporal_summary(citations).as_dict()
     total = len(citations)
     null_sources = sum(1 for c in citations if c.get("source_label") is None)
     if total == 0 or null_sources == total:
@@ -335,6 +338,7 @@ def build_render_trace(answer_id: str, provenance) -> dict[str, Any]:
         "answered_at": answer["answered_at"],
         "model_label": answer["model_label"],
         "provenance_coverage": coverage,
+        "temporal_summary": temporal_summary,
         "citations": [
             {
                 "cite_order": c.get("cite_order"),
