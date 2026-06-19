@@ -2,7 +2,7 @@
 
 This repo is generated from the private home repo by `tools/sync_public_repo.py`.
 
-- Source commit: `46c71136c1f4a1a183b331c87c81a795a84cfa5f`
+- Source commit: `cc6a348895f4e881c041b508c50270a150567e26`
 - Public-managed source dirty at sync: `no`
 - Full source checkout dirty at sync: `no`
 - Source of truth: home repo
