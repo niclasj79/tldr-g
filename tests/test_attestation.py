@@ -13,12 +13,19 @@ Provenance Layer, did:web identity-document shape.
 from __future__ import annotations
 
 import base64
+import importlib.util
 import json
 from pathlib import Path
 
 import pytest
 
 pytest.importorskip("cryptography")
+
+# Temporal-manifold enrichment is an engine feature. The engine-free public
+# package ships attestation.py without tp_vrg.kro_temporal, so the render trace
+# omits temporal_summary there. Boundary assertions run in both builds; the
+# temporal assertions only when the engine module is present.
+_HAS_KRO_TEMPORAL = importlib.util.find_spec("tp_vrg.kro_temporal") is not None
 
 from tp_vrg.attestation import (
     build_did_web_document,
@@ -177,8 +184,12 @@ def test_build_render_trace_composes_answer_and_citations(
     assert trace["answer_id"] == "ans-1"
     assert trace["query_text"] == "What did the merger agreement say?"
     assert trace["model_label"] == "test-model"
-    assert trace["temporal_summary"]["trace_hash"]
-    assert trace["temporal_summary"]["durability_ceiling"] == 0.6
+    if _HAS_KRO_TEMPORAL:
+        assert trace["temporal_summary"]["trace_hash"]
+        assert trace["temporal_summary"]["durability_ceiling"] == 0.6
+    else:
+        # Engine-free public build: temporal_summary is omitted entirely.
+        assert "temporal_summary" not in trace
     assert len(trace["citations"]) == 1
     assert trace["citations"][0]["segment_id"] == "seg-1"
     # seg-1 was never written to source_segments -> orphaned citation

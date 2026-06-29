@@ -319,9 +319,19 @@ def build_render_trace(answer_id: str, provenance) -> dict[str, Any]:
         raise KeyError(f"answer_id not found: {answer_id}")
 
     citations = provenance.get_citations_for_answer(answer_id)
-    from tp_vrg.kro_temporal import compute_kro_temporal_summary
 
-    temporal_summary = compute_kro_temporal_summary(citations).as_dict()
+    # Temporal-manifold enrichment is an ENGINE feature, not part of the open
+    # boundary. The public (engine-free) package ships attestation.py without
+    # tp_vrg.kro_temporal; in that build the render trace simply omits
+    # temporal_summary (the public render-trace-v1 contract does not promise it).
+    # In the full engine the module is present and the summary is included.
+    try:
+        from tp_vrg.kro_temporal import compute_kro_temporal_summary
+
+        temporal_summary = compute_kro_temporal_summary(citations).as_dict()
+    except ImportError:
+        temporal_summary = None
+
     total = len(citations)
     null_sources = sum(1 for c in citations if c.get("source_label") is None)
     if total == 0 or null_sources == total:
@@ -331,14 +341,13 @@ def build_render_trace(answer_id: str, provenance) -> dict[str, Any]:
     else:
         coverage = "partial"
 
-    return {
+    trace: dict[str, Any] = {
         "trace_version": 1,
         "answer_id": answer["answer_id"],
         "query_text": answer["query_text"],
         "answered_at": answer["answered_at"],
         "model_label": answer["model_label"],
         "provenance_coverage": coverage,
-        "temporal_summary": temporal_summary,
         "citations": [
             {
                 "cite_order": c.get("cite_order"),
@@ -351,6 +360,9 @@ def build_render_trace(answer_id: str, provenance) -> dict[str, Any]:
             for c in citations
         ],
     }
+    if temporal_summary is not None:
+        trace["temporal_summary"] = temporal_summary
+    return trace
 
 
 # ---------------------------------------------------------------------------
