@@ -1,0 +1,528 @@
+/* =============================================================================
+   TLDR-G VISUAL DEMO — INTERACTION
+   -----------------------------------------------------------------------------
+   The input surface, the hover card, the rubber band, the command palette, the
+   filter chips and the path readout.
+
+   Zero hex, zero raw rgb(), zero durations and zero radii that are not a var()
+   from design-tokens.css. Elevation is a 1px --line border plus --edge-light,
+   which is an INSET highlight along the top edge — there is no light source above
+   this UI, so nothing here casts a shadow.
+   ============================================================================= */
+
+/* -----------------------------------------------------------------------------
+   1. THE SURFACE
+   -----------------------------------------------------------------------------
+   Full-bleed over the terrain, and it must be EXACTLY over the terrain: its own
+   bounding rect is what anchors every zoom. `touch-action: none` is load-bearing
+   on a trackpad and on glass — without it the browser claims the gesture for
+   page scroll and the terrain receives a pan that already happened somewhere else.
+   -------------------------------------------------------------------------- */
+
+.ix-surface {
+  position: absolute;
+  inset: 0;
+  z-index: var(--z-nodes);
+  touch-action: none;
+  overscroll-behavior: none;
+  cursor: grab;
+  /* The label layer underneath is presentational; the surface is the target. */
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.ix-surface[data-dragging] {
+  cursor: grabbing;
+}
+
+.ix-surface:focus-visible {
+  /* The ring is declared once in base.css. It is inset here because the surface
+     is flush with the viewport and an outset ring would be clipped away. */
+  outline-offset: calc(-1 * var(--focus-ring-offset) - var(--focus-ring-w));
+}
+
+/* -----------------------------------------------------------------------------
+   2. THE RUBBER BAND
+   -----------------------------------------------------------------------------
+   1px of --render at 12% fill. It is the engine's attention being aimed by hand,
+   so it is the attention light — at the lowest strength the token file declares,
+   because a bright rectangle over a terrain hides the thing being selected.
+   -------------------------------------------------------------------------- */
+
+.ix-marquee {
+  position: absolute;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+  border: var(--border-1) solid var(--render-a56);
+  background: var(--render-a06);
+  border-radius: var(--r-6);
+}
+
+/* -----------------------------------------------------------------------------
+   3. THE SELECTION READOUT
+   -------------------------------------------------------------------------- */
+
+.ix-selection {
+  position: absolute;
+  left: var(--pad-panel);
+  bottom: var(--pad-panel);
+  display: flex;
+  align-items: center;
+  gap: var(--gap-row);
+  padding: var(--pad-row) var(--pad-control);
+  min-height: var(--hit-min);
+  background: var(--panel-bg);
+  border: var(--panel-border);
+  border-radius: var(--r-10);
+  backdrop-filter: blur(var(--panel-blur));
+  box-shadow: var(--edge-light); /* inset — the top-edge light, never an outer shadow */
+  font-size: var(--fs-12-5);
+}
+
+/* -----------------------------------------------------------------------------
+   4. THE HOVER CARD
+   -----------------------------------------------------------------------------
+   Portalled to <body>: a backdrop-filter ancestor is a containing block for
+   fixed descendants, so a card rendered inside a Panel would be trapped in it.
+   `pointer-events: none` is not a nicety — the card follows the cursor, and a
+   card that could receive the pointer would steal the hover it is describing.
+   -------------------------------------------------------------------------- */
+
+.ix-card {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: var(--z-overlay);
+  pointer-events: none;
+  width: 264px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-row);
+  padding: var(--pad-section);
+  background: var(--panel-bg);
+  border: var(--panel-border);
+  border-radius: var(--r-10);
+  backdrop-filter: blur(var(--panel-blur));
+  box-shadow: var(--edge-light); /* inset */
+  animation: ix-card-in var(--t-fast) var(--ease-ui);
+}
+
+@keyframes ix-card-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.ix-card__hd {
+  display: flex;
+  align-items: baseline;
+  gap: var(--gap-tight);
+  min-width: 0;
+}
+
+.ix-card__kindmark {
+  flex: none;
+}
+
+.ix-card__label {
+  font-size: var(--fs-16);
+  font-weight: var(--fw-500);
+  line-height: var(--lh-tight);
+  color: var(--ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ix-card__badges,
+.ix-card__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--gap-tight);
+}
+
+.ix-card__rows,
+.ix-card__mix {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-tight);
+}
+
+.ix-card__mix {
+  padding-top: var(--pad-row);
+  border-top: var(--border-1) solid var(--line-a40);
+}
+
+.ix-card__mixhd {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--gap-row);
+}
+
+ /* A Row lays out `minmax(0, 1fr) auto`, and `auto` takes its max-content width
+    first — so an unbreakable 34-character community id claimed the whole row and
+    squeezed the label out of existence. Caught by looking at a screenshot: the
+    card showed a wrapped machine id with nothing naming it. Inside a
+    fixed-width card the VALUE is what should give way. */
+.ix-card .row {
+  grid-template-columns: minmax(0, auto) minmax(0, 1fr);
+}
+
+.ix-card .row-v {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ix-card__ft {
+  padding-top: var(--pad-row);
+  border-top: var(--border-1) solid var(--line-a40);
+  font-size: var(--fs-11);
+  color: var(--ink-faint);
+}
+
+/* -----------------------------------------------------------------------------
+   5. THE COMMAND PALETTE
+   -------------------------------------------------------------------------- */
+
+.ix-palette__scrim {
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: 12vh;
+}
+
+.ix-palette {
+  width: min(720px, calc(100vw - var(--s-12)));
+  max-height: 68vh;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  background: var(--panel-bg);
+  border: var(--panel-border);
+  border-radius: var(--r-14);
+  backdrop-filter: blur(var(--panel-blur));
+  box-shadow: var(--edge-light); /* inset */
+  overflow: hidden;
+}
+
+.ix-palette__field {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-row);
+  padding: var(--pad-panel);
+  border-bottom: var(--border-1) solid var(--line);
+}
+
+.ix-palette__slash {
+  flex: none;
+}
+
+.ix-palette__input {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: var(--fs-16);
+  color: var(--ink);
+}
+
+.ix-palette__input::placeholder {
+  color: var(--ink-faint);
+}
+
+.ix-palette__list {
+  padding: var(--pad-row) 0;
+  min-height: 0;
+}
+
+.ix-palette__group {
+  display: block;
+  padding: var(--pad-section) var(--pad-panel) var(--pad-row);
+}
+
+.ix-palette__row {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-row);
+  width: 100%;
+  min-height: var(--hit-row);
+  padding: var(--pad-row) var(--pad-panel);
+  border-left: var(--border-1) solid transparent;
+  font-size: var(--fs-12-5);
+  color: var(--ink-dim);
+  transition: background var(--t-fast) var(--ease-ui), color var(--t-fast) var(--ease-ui);
+}
+
+.ix-palette__row[data-active='true'] {
+  background: var(--render-a06);
+  border-left-color: var(--render);
+  color: var(--ink);
+}
+
+.ix-palette__glyph {
+  flex: none;
+  width: var(--s-4);
+  text-align: center;
+  color: var(--ink-faint);
+}
+
+.ix-palette__main {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.ix-palette__title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ix-palette__sub {
+  font-size: var(--fs-11);
+  color: var(--ink-faint);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ix-palette__hit {
+  background: none;
+  color: var(--render);
+  font-weight: var(--fw-500);
+}
+
+.ix-palette__empty {
+  padding: var(--pad-panel);
+  font-size: var(--fs-12-5);
+  color: var(--ink-faint);
+  max-width: 56ch;
+}
+
+.ix-palette__ft {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--gap-row);
+  padding: var(--pad-row) var(--pad-panel);
+  border-top: var(--border-1) solid var(--line);
+  font-size: var(--fs-11);
+}
+
+.ix-palette__count {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--gap-tight);
+}
+
+/* -----------------------------------------------------------------------------
+   6. THE σ-CLASS FILTER BAR
+   -------------------------------------------------------------------------- */
+
+.ix-filters {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--gap-tight);
+  padding: var(--pad-row) var(--pad-control);
+  background: var(--panel-bg);
+  border: var(--panel-border);
+  border-radius: var(--r-10);
+  backdrop-filter: blur(var(--panel-blur));
+  box-shadow: var(--edge-light); /* inset */
+}
+
+.ix-filters__label {
+  margin-right: var(--gap-tight);
+}
+
+.ix-filters__withheld {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--gap-tight);
+  margin-left: var(--gap-row);
+  padding-left: var(--gap-row);
+  border-left: var(--border-1) solid var(--line);
+}
+
+/* -----------------------------------------------------------------------------
+   7. THE PATH READOUT
+   -------------------------------------------------------------------------- */
+
+.ix-path__note {
+  font-size: var(--fs-12-5);
+  color: var(--ink-dim);
+  max-width: 68ch;
+  margin-bottom: var(--gap-section);
+}
+
+.ix-path__ends {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-row);
+  margin-bottom: var(--gap-section);
+}
+
+.ix-path__arrow {
+  flex: none;
+  color: var(--ink-faint);
+  font-family: var(--ff-mono);
+}
+
+.ix-path__verdict {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-row);
+  align-items: flex-start;
+}
+
+.ix-path__hops {
+  display: flex;
+  flex-direction: column;
+}
+
+.ix-hop {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-tight);
+  padding: var(--pad-row) 0;
+}
+
+.ix-hop + .ix-hop {
+  border-top: var(--border-1) solid var(--line-a40);
+}
+
+.ix-hop__index {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--gap-tight);
+}
+
+.ix-hop__chain {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: var(--gap-tight);
+  font-size: var(--fs-14);
+  color: var(--ink);
+}
+
+.ix-hop__node {
+  font-weight: var(--fw-500);
+}
+
+.ix-hop__rel {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--gap-tight);
+  font-size: var(--fs-12-5);
+}
+
+.ix-hop__family {
+  font-family: var(--ff-mono);
+  color: var(--render);
+  letter-spacing: var(--tracking-mono);
+}
+
+.ix-hop__arrow {
+  color: var(--render-deep);
+  font-family: var(--ff-mono);
+}
+
+.ix-hop__meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--gap-tight);
+}
+
+.ix-hop__evidence {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--gap-tight);
+}
+
+.ix-hop__noevidence {
+  font-size: var(--fs-11);
+  color: var(--alarm);
+}
+
+/* -----------------------------------------------------------------------------
+   8. THE ENDPOINT PICKER
+   -------------------------------------------------------------------------- */
+
+.ix-picker {
+  position: relative;
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.ix-picker__field {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-tight);
+  min-height: var(--hit-min);
+  padding: 0 var(--pad-control);
+  background: var(--panel-bg-2);
+  border: var(--panel-border);
+  border-radius: var(--r-6);
+  box-shadow: var(--edge-light); /* inset */
+}
+
+.ix-picker__glyph {
+  flex: none;
+  color: var(--ink-faint);
+}
+
+.ix-picker__input {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: var(--fs-12-5);
+  color: var(--ink);
+}
+
+.ix-picker__input::placeholder {
+  color: var(--ink-dim);
+}
+
+.ix-picker__list {
+  position: absolute;
+  z-index: var(--z-overlay);
+  left: 0;
+  right: 0;
+  top: calc(100% + var(--s-1));
+  max-height: 240px;
+  background: var(--surface);
+  border: var(--panel-border);
+  border-radius: var(--r-6);
+  box-shadow: var(--edge-light); /* inset */
+}
+
+.ix-picker__row {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-tight);
+  width: 100%;
+  min-height: var(--hit-row);
+  padding: var(--pad-row) var(--pad-control);
+  font-size: var(--fs-12-5);
+  color: var(--ink-dim);
+  transition: background var(--t-fast) var(--ease-ui);
+}
+
+.ix-picker__row:hover {
+  background: var(--render-a06);
+  color: var(--ink);
+}
+
+.ix-picker__label {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

@@ -1,0 +1,118 @@
+/* =============================================================================
+   TLDR-G VISUAL DEMO — THE LABEL LAYER
+   -----------------------------------------------------------------------------
+   DOM, not WebGL. A glyph atlas would cost a draw call per label batch and a
+   font pipeline of its own; the DOM already has a subpixel-accurate text
+   renderer, and at ~40 labels the cost is nil. Every value below is a token.
+
+   The halo is a text-shadow — a 1px --void outline that keeps a label legible
+   where it crosses dense terrain. Elevation in this product is a 1px --line
+   border plus an inset top-edge light, and there is no drop shadow anywhere.
+   ============================================================================= */
+
+.tg-labels {
+  position: absolute;
+  inset: 0;
+  z-index: var(--z-labels);
+  pointer-events: none;
+  overflow: hidden;
+  contain: strict;
+}
+
+.tg-label {
+  position: absolute;
+  top: 0;
+  left: 0;
+  font-family: var(--ff-ui);
+  font-size: var(--fs-11);
+  font-weight: var(--fw-500);
+  line-height: 1;
+  letter-spacing: var(--tracking-normal);
+  color: var(--ink-dim);
+  white-space: nowrap;
+  pointer-events: none;
+  /* A document title can be eighty characters. Eighty characters is not a map
+     label, it is a paragraph lying on the terrain.
+
+     BUT IT IS NEVER ELLIPSED. "Control-room thread — holding period, …" tells
+     the reader nothing and tells them, in the same glance, that the instrument
+     gave up; two such labels are indistinguishable from each other. The layer
+     instead shortens at a boundary the author already wrote (see BREAKS in
+     labels.ts) or drops the label entirely, so `overflow` here is a backstop
+     that should never fire rather than a design decision. */
+  display: inline-block;
+  max-width: var(--label-max-width);
+  overflow: hidden;
+  text-overflow: clip;
+  /* 1px --void halo. Legibility over dense points, no glow, no shadow. */
+  text-shadow:
+    1px 0 0 var(--void),
+    -1px 0 0 var(--void),
+    0 1px 0 var(--void),
+    0 -1px 0 var(--void),
+    0 0 3px var(--void);
+  transition: opacity var(--t-fast) linear;
+}
+
+/* The map-city rule: the few labels that survive at every altitude read as the
+   place names, and the rest are side streets. */
+.tg-label--major {
+  font-size: var(--fs-12-5);
+  color: var(--ink);
+}
+
+/* THE ANSWER PATH. --render is spent here and nowhere else on this layer: the
+   answer, the bridge entity and the two hop endpoints. Everything else in a
+   constellation is context, and context that is the same colour as the answer
+   is why the render light stopped meaning anything. */
+.tg-label--render {
+  color: var(--render);
+}
+
+/* The one name the question asked for. The only label that outranks the path. */
+.tg-label--answer {
+  font-size: var(--fs-14);
+  font-weight: var(--fw-650);
+  color: var(--render);
+}
+
+/* What the user is pointing at, or has selected. Full ink, not a third light. */
+.tg-label--attend {
+  color: var(--ink);
+}
+
+/* FOG OF WAR, in the label layer. The peripheral world keeps its names — nothing
+   is hidden — at the weight of context rather than of subject. */
+.tg-label--fog {
+  color: var(--ink-faint);
+}
+
+.tg-label--fog .tg-label__glyph {
+  color: var(--ink-faint);
+  opacity: 0.6;
+}
+
+/* NO GOLD ON THIS LAYER. There was an `--evidence` label variant here for "a
+   label attached to a source or a citation" and nothing ever applied it — which
+   made it exactly the leak the doctrine warns about: a third light sitting in
+   the stylesheet waiting to be spent on something that is not evidence. Gold
+   marks evidence anchors, citations, hashes and signatures, and every one of
+   those lives in the rail where the bytes are. A place name on the terrain is
+   not evidence, so no name on the terrain is gold. */
+
+.tg-label--hidden {
+  opacity: 0;
+}
+
+/* The rung glyph, carried inline so a label states what kind of thing it names
+   without a legend lookup. */
+.tg-label__glyph {
+  color: var(--ink-faint);
+  margin-right: var(--gap-tight);
+}
+
+.tg-label--major .tg-label__glyph,
+.tg-label--render .tg-label__glyph {
+  color: inherit;
+  opacity: 0.7;
+}

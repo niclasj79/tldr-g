@@ -1,0 +1,295 @@
+/* =============================================================================
+   TLDR-G VISUAL DEMO — BASE
+   -----------------------------------------------------------------------------
+   Reset, self-hosted type, the focus ring, the scrollbars, and the type scale.
+   Nothing here knows about a component. Everything here is the ground the
+   instrument is machined onto.
+
+   THREE RULES THIS FILE ENFORCES GLOBALLY:
+     1. The page never scrolls. The terrain owns the viewport; panels scroll
+        internally. `overflow: hidden` on <body> is load-bearing, not tidiness.
+     2. Every focusable thing has a visible keyboard ring. It is declared once,
+        here, from --focus-ring-* tokens, and it is never removed downstream.
+     3. Fonts are SELF-HOSTED. No CDN, no network font, no FOUT during a demo,
+        no third party watching a sovereign product load.
+
+   Zero hex, zero raw rgb(). Every value is a var() from design-tokens.css.
+   ============================================================================= */
+
+@import './design-tokens.css';
+
+/* Inter 400 / 500 / 600 — the whole authored UI weight budget.
+   The scale calls for 400 / 500 / 650; 650 is a *requested* weight that resolves
+   to the 600 face, and `font-synthesis-weight: none` below guarantees the
+   browser renders the real 600 rather than smearing a fake bold over the 500. */
+@import '@fontsource/inter/400.css';
+@import '@fontsource/inter/500.css';
+@import '@fontsource/inter/600.css';
+
+/* JetBrains Mono 400 / 500 — EVERY NUMBER THAT MEASURES. Two weights only:
+   400 for readouts, 500 for the one figure a view is actually about. */
+@import '@fontsource/jetbrains-mono/400.css';
+@import '@fontsource/jetbrains-mono/500.css';
+
+/* -----------------------------------------------------------------------------
+   1. RESET — small, opinionated, no third-party normalize.
+   -------------------------------------------------------------------------- */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+* {
+  margin: 0;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+html {
+  color-scheme: dark;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  background: var(--void);
+  color: var(--ink);
+  font-family: var(--ff-ui);
+  font-size: var(--fs-14);
+  font-weight: var(--fw-400);
+  line-height: var(--lh-ui);
+  letter-spacing: var(--tracking-normal);
+
+  /* Instrument legibility: no faux weights, no ligature surprises in labels. */
+  font-synthesis-weight: none;
+  font-synthesis-style: none;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+
+  /* THE PAGE NEVER SCROLLS. Panels scroll internally; the terrain stays put. */
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+
+img,
+svg,
+canvas,
+video {
+  display: block;
+  max-width: 100%;
+}
+
+svg {
+  overflow: visible;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  letter-spacing: inherit;
+  color: inherit;
+  background: none;
+  border: 0;
+  padding: 0;
+  border-radius: 0;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+button {
+  cursor: pointer;
+  text-align: inherit;
+}
+
+button:disabled {
+  cursor: not-allowed;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+ul,
+ol {
+  list-style: none;
+  padding: 0;
+}
+
+table {
+  border-collapse: collapse;
+  border-spacing: 0;
+}
+
+hr {
+  border: 0;
+}
+
+summary {
+  cursor: pointer;
+  list-style: none;
+}
+
+summary::-webkit-details-marker,
+summary::marker {
+  display: none;
+  content: '';
+}
+
+/* Selection is the engine noticing you. Same light, lowest strength. */
+::selection {
+  background: var(--render-a20);
+  color: var(--ink);
+}
+
+/* -----------------------------------------------------------------------------
+   2. THE FOCUS RING — declared once, honoured everywhere, never removed.
+   -----------------------------------------------------------------------------
+   A 1px --render hairline held --focus-ring-offset off the control. It uses the
+   ATTENTION light on purpose: keyboard focus IS the engine attending to a
+   control, which is exactly what cyan means everywhere else in the product.
+
+   `:focus` clears the platform ring; `:focus-visible` puts ours back. The two
+   rules exist as a pair — deleting either one is a regression, not a cleanup.
+   -------------------------------------------------------------------------- */
+
+:where(a, button, input, select, textarea, summary, [tabindex], [role='button']):focus {
+  outline: none;
+}
+
+:where(a, button, input, select, textarea, summary, [tabindex], [role='button']):focus-visible {
+  outline: var(--focus-ring-w) solid var(--render);
+  outline-offset: var(--focus-ring-offset);
+  border-radius: inherit;
+}
+
+/* -----------------------------------------------------------------------------
+   3. SCROLLBARS — 6px, --line thumb, transparent track, no arrows.
+   -------------------------------------------------------------------------- */
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--line) transparent;
+}
+
+::-webkit-scrollbar {
+  width: var(--scrollbar-w);
+  height: var(--scrollbar-w);
+}
+
+::-webkit-scrollbar-track,
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--line);
+  border-radius: var(--r-full);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--ink-faint);
+}
+
+::-webkit-scrollbar-button {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
+/* Anything that scrolls does it inside itself. */
+.u-scroll {
+  overflow: auto;
+  min-height: 0;
+}
+
+/* -----------------------------------------------------------------------------
+   4. THE TYPE SCALE — 11 / 12.5 / 14 / 16 / 20 / 28, and nothing between.
+   -----------------------------------------------------------------------------
+   Tracking tightens from --fs-20 up, because Inter opens up as it grows and an
+   untracked 28px header reads as a marketing headline instead of a readout.
+   -------------------------------------------------------------------------- */
+
+.t-11 {
+  font-size: var(--fs-11);
+  line-height: var(--lh-ui);
+}
+.t-12-5 {
+  font-size: var(--fs-12-5);
+  line-height: var(--lh-ui);
+}
+.t-14 {
+  font-size: var(--fs-14);
+  line-height: var(--lh-body);
+}
+.t-16 {
+  font-size: var(--fs-16);
+  line-height: var(--lh-ui);
+}
+.t-20 {
+  font-size: var(--fs-20);
+  line-height: var(--lh-tight);
+  letter-spacing: var(--tracking-tight);
+}
+.t-28 {
+  font-size: var(--fs-28);
+  line-height: var(--lh-tight);
+  letter-spacing: var(--tracking-tight);
+}
+
+.w-400 {
+  font-weight: var(--fw-400);
+}
+.w-500 {
+  font-weight: var(--fw-500);
+}
+.w-650 {
+  font-weight: var(--fw-650);
+}
+
+.ink {
+  color: var(--ink);
+}
+.ink-dim {
+  color: var(--ink-dim);
+}
+.ink-faint {
+  color: var(--ink-faint);
+}
+
+/* The mono rail. Anything measured sits on it — via <Num>, never by hand. */
+.mono {
+  font-family: var(--ff-mono);
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1, 'zero' 1;
+  letter-spacing: var(--tracking-mono);
+}
+
+/* The only sanctioned uppercase in the product: micro-labels and unit chips. */
+.caps {
+  font-size: var(--fs-11);
+  font-weight: var(--fw-500);
+  line-height: var(--lh-ui);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-caps);
+}
+
+/* Screen-reader-only, for labels a sighted user reads from context. */
+.u-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}

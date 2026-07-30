@@ -1,0 +1,109 @@
+/* =============================================================================
+   TLDR-G VISUAL DEMO — INTERACTION HARNESS (development only, never shipped)
+   -----------------------------------------------------------------------------
+   A frame around the terrain so the hands can be judged. Same tokens as the
+   product, because a rig styled with invented values teaches the wrong feel.
+   ============================================================================= */
+
+/* base.css gives height to #root; this rig's mount point is #harness. Without
+   this the flex column has no height to distribute and the terrain collapses to
+   whatever its content happens to be. Caught by looking at a screenshot. */
+#harness {
+  height: 100%;
+}
+
+.hx {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: var(--void);
+}
+
+.hx__bar {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-section);
+  padding: var(--pad-row) var(--pad-panel);
+  border-bottom: var(--border-1) solid var(--line);
+  font-size: var(--fs-12-5);
+}
+
+.hx__brand {
+  font-weight: var(--fw-650);
+  letter-spacing: var(--tracking-tight);
+}
+
+.hx__crumbs {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-tight);
+  min-width: 0;
+  color: var(--ink-dim);
+}
+
+.hx__crumb {
+  color: var(--ink-dim);
+}
+
+.hx__crumb:hover {
+  color: var(--ink);
+}
+
+.hx__rungs,
+.hx__readouts {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-tight);
+}
+
+.hx__readouts {
+  margin-left: auto;
+  gap: var(--gap-row);
+}
+
+.hx__ro {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--gap-tight);
+}
+
+.hx__body {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+}
+
+.hx__stage {
+  position: relative;
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.hx__side {
+  flex: none;
+  width: 360px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-section);
+  padding: var(--pad-panel);
+  border-left: var(--border-1) solid var(--line);
+}
+
+.hx__filters {
+  flex: none;
+}
+
+.hx__facts {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-row);
+  font-size: var(--fs-11);
+}
+
+.hx__fact {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--gap-row);
+}

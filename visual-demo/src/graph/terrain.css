@@ -1,0 +1,58 @@
+/* =============================================================================
+   TLDR-G VISUAL DEMO — THE TERRAIN HOST
+   -----------------------------------------------------------------------------
+   The terrain owns the full bleed. It is the ground everything else floats over,
+   so it is positioned, not laid out: panels sit on top of it as thin glass, and
+   nothing is allowed to push it into a column.
+   ============================================================================= */
+
+.tg-terrain {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: var(--void);
+  /* The terrain is a map. Browser text selection across it is always accidental. */
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.tg-terrain__canvas {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  z-index: var(--z-terrain);
+  /* Interaction is owned by the interaction layer; the canvas only reports. */
+  touch-action: none;
+}
+
+/* WebGL2 is a hard requirement, and a black rectangle is not an error message.
+   The three fields of a DegradedReason, rendered by the host that failed.      */
+.tg-terrain__degraded {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: var(--gap-row);
+  padding: var(--pad-panel);
+  font-family: var(--ff-ui);
+  font-size: var(--fs-14);
+  line-height: var(--lh-body);
+  color: var(--ink-dim);
+  background: var(--void);
+}
+
+.tg-terrain__degraded strong {
+  font-weight: var(--fw-650);
+  color: var(--alarm);
+}
+
+.tg-terrain__degraded code {
+  font-family: var(--ff-mono);
+  font-size: var(--fs-12-5);
+  letter-spacing: var(--tracking-mono);
+  color: var(--ink);
+}

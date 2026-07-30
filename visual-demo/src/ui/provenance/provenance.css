@@ -1,0 +1,1402 @@
+/* =============================================================================
+   TLDR-G VISUAL DEMO — PROVENANCE & TRUST
+   -----------------------------------------------------------------------------
+   Every value here is a var() from design-tokens.css. There is no hex, no raw
+   rgb() literal, no drop shadow, and no glow — nothing in this section is the
+   engine's ATTENTION, so nothing in this section is allowed to be emissive. The
+   trust surface is read, not scanned from across the room.
+
+   THE THREE LIGHTS, SPENT EXACTLY ONCE EACH:
+     --evidence   the document's own bytes: quotes, hashes, source segments,
+                  verbatim spans, the struck side of a resolution diff.
+     --render     the ENGINE'S HAND: what it spent, what it substituted, the
+                  inserted side of a resolution diff, render confidence.
+     --curiosity  what is not established: omitted-but-connected, and the truth
+                  gate's rejections. Both are frontier, not failure.
+     --alarm      a verification that actually failed, and nothing else. It
+                  appears on the verdict, the bytes that moved, and — since a
+                  repudiated receipt must not leave the map still vouching for
+                  it — the marks section 14 draws over the answer path.
+
+   ELEVATION is a 1px --line border plus the inset top-edge light, as everywhere
+   else. The only non-standard box-shadow here is the citation card's in-flight
+   rail, which is also inset — it is a 2px edge, not a glow.
+   ============================================================================= */
+
+/* -----------------------------------------------------------------------------
+   0. LAYOUT SCAFFOLD
+   -------------------------------------------------------------------------- */
+
+/* ONE SCROLL SURFACE PER COLUMN, AND THE RAIL IS IT.
+   `max-height: 100%` lived here so a panel could never be taller than its host.
+   In the rail — which is itself `overflow: auto` — that resolved against ONE
+   viewport, so the render trace (2 501px of content) capped at 1 289px and grew
+   its own inner scrollbar inside a column that already had one. Measured cost:
+   three of the five citations, the admission list, the omitted frontier and the
+   cache were behind a second scroll gesture with no affordance announcing it —
+   including the one citation in this corpus that carries a substitution, which
+   is the most trust-building object the product owns.
+
+   A scroll trap inside a scroll column is also a lie of a smaller kind: the
+   wheel stops meaning "move down the rail" for 1 300px and then starts again.
+   So panels take their natural height and the rail scrolls. `flex: none` is the
+   other half of it — a flex item in a column shrinks by default, which is how
+   the body got squeezed in the first place. */
+.pv-panel {
+  min-width: 0;
+  flex: none;
+}
+
+/* -----------------------------------------------------------------------------
+   0a. WHERE THE TRUST PANELS SIT IN THE COLUMN
+   -----------------------------------------------------------------------------
+   Two ORDER rules, and they are the only two places in this stylesheet that
+   reach outside a panel. Both encode the same idea: the rail's stacking is a
+   consequence of the receipt's STATE, and the receipt is the only thing that
+   knows its state.
+
+     THE RECEIPT LEADS.  The four figures the whole thesis rests on were the
+     fourth thing in the column, at 70% of the way down a 1440px frame, in the
+     scene named after them. They lead now.
+
+     UNLESS IT CANNOT BE TRUSTED.  When the payload hash stops matching, the
+     receipt is arithmetic over bytes that are gone, and the SIGNATURE panel —
+     which was a 280px card off the bottom of the frame — takes the head of the
+     column instead. That swap is the posture change: `verify-valid` and
+     `verify-invalid` are no longer the same picture with one corner different.
+
+   These belong in the rail's own JSX and are noted as such in the report; a
+   stylesheet is a poor place to keep an argument about reading order, and it
+   leaves DOM order — which is what a screen reader and the tab ring follow —
+   disagreeing with what the eye sees.
+   -------------------------------------------------------------------------- */
+
+.pv-receipt {
+  order: -1;
+}
+
+.pv-receipt.is-disputed {
+  order: 0;
+}
+
+.pv-verify.is-invalid {
+  order: -2;
+}
+
+/* TRIED AND REVERTED, RECORDED SO IT IS NOT TRIED AGAIN: `.pv-trace { order: 1 }`
+   to lift the signature block above the ~2 500px audit and back beside the
+   arithmetic it vouches for. It works, and it also carries the render trace past
+   the node inspector and past `.shell__railfoot` — which holds the one
+   destructive control in the product. A stylesheet reordering a sibling it does
+   not own moved `Close corpus` into the middle of the column. The verdict is
+   already on the receipt's own header as a badge, and a failing signature takes
+   the head of the column outright, which is the case that matters. */
+
+/* -----------------------------------------------------------------------------
+   0b. NOTHING THAT NAMES A THING IS ALLOWED TO TRUNCATE
+   -----------------------------------------------------------------------------
+   Scoped overrides of two primitives, inside the trust panels only, and both
+   fix the same inversion: the product was eliding its IDENTIFIERS and keeping
+   its decoration. `Check…` beside a full ISO timestamp, `Answ…` beside a full
+   family list, a panel titled `REN…` because two chips wanted the same row.
+
+   A value you cannot name is not a readout, it is a number lying around. Row
+   labels wrap; panel titles keep their width and let the actions wrap instead.
+   Prose is the thing that gets cut, and it has been — see `Why` in bits.tsx.
+   -------------------------------------------------------------------------- */
+
+.pv-panel .row-l {
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
+}
+
+/* AND THE LABEL COLUMN IS THE ONE THAT GETS ITS WIDTH FIRST.
+   `Row` sizes its label track to the leftovers, which is right in a readout of
+   short values and catastrophic for machine strings: a 39-character key id took
+   the whole row, the label track collapsed to nine pixels, and `Key` printed on
+   top of its own value. Flipping which track is elastic makes the VALUE wrap —
+   a digest breaks mid-token by definition, there are no words in it — and
+   leaves the label at its natural width, where a name belongs. */
+.pv-panel .row {
+  grid-template-columns: auto minmax(0, 1fr);
+}
+
+.pv-panel .row-v {
+  overflow-wrap: anywhere;
+}
+
+.pv-panel .panel-hd {
+  flex-wrap: wrap;
+}
+
+.pv-panel .panel-title {
+  overflow: visible;
+  text-overflow: clip;
+  flex: none;
+}
+
+/* A mono machine string in a row's right column wraps rather than running out
+   of the panel. A DID flush to the glass edge is a DID with a character
+   missing, as far as the reader can tell. */
+.pv-panel .row-v.is-mono {
+  overflow-wrap: anywhere;
+}
+
+/* The rationale seam. `Why` is a Tip anchor around a heading, so it has to
+   behave like the heading it wraps rather than like an inline chip. */
+.tip-anchor.pv-why {
+  display: block;
+  max-width: 100%;
+}
+
+/* A block of rows under one label. The gap is the section rhythm; Divider is
+   what separates two of them. */
+.pv-sec {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-tight);
+  min-width: 0;
+}
+
+.pv-sec-hd {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--gap-row);
+}
+
+/* A row of controls. Wraps, because a rail is narrow and a control that has
+   been pushed off the edge is a control that does not exist. */
+.pv-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--gap-tight);
+  padding-top: var(--gap-tight);
+}
+
+/* -----------------------------------------------------------------------------
+   1. PROSE
+   -----------------------------------------------------------------------------
+   Capped to a measure. A 400px-wide rail full of full-width 12.5px prose is a
+   wall; the cap means the eye returns to a predictable left edge.
+   -------------------------------------------------------------------------- */
+
+.pv-note {
+  margin: 0;
+  max-width: 62ch;
+  color: var(--ink-dim);
+  font-size: var(--fs-12-5);
+  line-height: var(--lh-body);
+}
+
+.pv-empty {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-row);
+  padding: var(--pad-section) 0;
+}
+
+.pv-empty-title {
+  color: var(--ink);
+  font-size: var(--fs-14);
+  font-weight: var(--fw-500);
+  line-height: var(--lh-ui);
+}
+
+/* Tooltip internals. Two depths of explanation stacked, with the machine code
+   underneath both. */
+.pv-tip-title,
+.pv-tip-body,
+.pv-tip-code {
+  display: block;
+}
+
+.pv-tip-title {
+  color: var(--ink);
+  font-weight: var(--fw-500);
+}
+
+.pv-tip-body {
+  color: var(--ink-dim);
+  margin-top: var(--s-1);
+}
+
+.pv-tip-code {
+  margin-top: var(--s-1);
+  font-family: var(--ff-mono);
+  color: var(--ink-faint);
+  letter-spacing: var(--tracking-mono);
+}
+
+/* -----------------------------------------------------------------------------
+   2. MACHINE CODES AND IDS
+   -----------------------------------------------------------------------------
+   The sentence leads; the engine's own token sits under it on the mono rail.
+   Both, always. The token is what you would grep for.
+   -------------------------------------------------------------------------- */
+
+.pv-code {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 0;
+  min-width: 0;
+}
+
+.pv-code-text {
+  color: var(--ink-dim);
+  font-size: var(--fs-12-5);
+  line-height: var(--lh-ui);
+}
+
+.pv-code-raw {
+  font-family: var(--ff-mono);
+  font-size: var(--fs-11);
+  letter-spacing: var(--tracking-mono);
+  color: var(--ink-faint);
+  overflow-wrap: anywhere;
+}
+
+.pv-id {
+  display: inline-flex;
+  align-items: baseline;
+  min-width: 0;
+  font-family: var(--ff-mono);
+  font-size: var(--fs-11);
+  letter-spacing: var(--tracking-mono);
+  color: var(--ink-dim);
+}
+
+.pv-id-prefix {
+  color: var(--ink-faint);
+  flex: none;
+}
+
+.pv-id-v {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* -----------------------------------------------------------------------------
+   3. BADGES
+   -----------------------------------------------------------------------------
+   Three flat 11px caps badges, all the same shape, all tinted from --tone. They
+   are labels, not controls: no hover, no radius beyond --r-6, no fill above 12%.
+   -------------------------------------------------------------------------- */
+
+.pv-res,
+.pv-seg-badge,
+.pv-bridge,
+.pv-standin {
+  display: inline-flex;
+  align-items: center;
+  flex: none;
+  padding: 0 var(--pad-chip);
+  border: var(--border-1) solid rgb(var(--tone-rgb) / 0.4);
+  border-radius: var(--r-6);
+  background: rgb(var(--tone-rgb) / 0.12);
+  color: var(--tone);
+  font-size: var(--fs-11);
+  font-weight: var(--fw-500);
+  line-height: calc(var(--s-4) + var(--s-1));
+  letter-spacing: var(--tracking-caps);
+  white-space: nowrap;
+}
+
+/* The stand-in marker inherits --ink-faint rather than a light: a substituted
+   figure is not evidence, is not attention, and is not a gap. */
+.pv-standin {
+  --tone: var(--ink-faint);
+  --tone-rgb: var(--ink-faint-rgb);
+}
+
+/* A resolution badge in --ink-faint is a badge that has nothing to report, so
+   it drops its fill entirely and keeps only the hairline. Only travel is lit;
+   see the header of bits.tsx. */
+.pv-res.tone-faint {
+  background: none;
+  border-color: var(--line);
+}
+
+/* How many spans the engine touched, inside the badge, on the mono rail. */
+.pv-res-n {
+  margin-left: 0.6ch;
+  font-size: 0.92em;
+}
+
+.pv-prov {
+  flex: none;
+}
+
+/* -----------------------------------------------------------------------------
+   4. THE RECEIPT
+   -----------------------------------------------------------------------------
+   An itemisation, a rule, a total — right-aligned on ONE column, so the
+   subtraction is something the eye performs rather than something the copy
+   asserts. Four figures, three sizes, no prose:
+
+     Stuffed context   21 044 tok   12.5px --ink-dim   the naive alternative
+     Rendered           5 040 tok   28px   --render    the hero, counted down
+     ───────────────────────────────────────────────   the rule
+     Saved                 76.1 %   20px   --ink       the bottom line
+
+   ONE LIGHT, ON ONE FIGURE. `Rendered` is --render because it is literally the
+   count of what the engine attended to. `Saved` was --evidence, and that was
+   gold spent on a RESULT: a ratio this panel computed is not old light from a
+   source, and an amber 76.1% eleven pixels under a cyan 5 040 made the block a
+   swatch card. The bottom line keeps its 20px and its rule; hierarchy here is
+   size and position, which is how a receipt has always done it.
+   -------------------------------------------------------------------------- */
+
+.pv-receipt-blk {
+  gap: 0;
+  padding: 0;
+}
+
+/* IN FLIGHT, for exactly as long as the figure is moving. The same 2px inset
+   rail a citation card wears while its ping is unresolved — an edge, not a
+   glow. It comes off when the count lands, because a mark that never retracts
+   is decoration and this one is a state. */
+.pv-receipt-blk[data-counting='1'] {
+  padding-left: var(--pad-control);
+  box-shadow: inset 2px 0 0 0 var(--render);
+  transition: box-shadow var(--t-ui) var(--ease-ui);
+}
+
+/* One row of the receipt. The label wraps and never elides; the figure sits on
+   the shared right edge. `baseline` rather than `center` so a 28px figure and
+   an 11px label sit on the same line of writing. */
+.pv-rl {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: baseline;
+  gap: var(--gap-row);
+  padding: var(--pad-row) 0;
+}
+
+.pv-rl-l {
+  font-size: var(--fs-11);
+  font-weight: var(--fw-500);
+  line-height: var(--lh-ui);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-caps);
+  color: var(--ink-faint);
+}
+
+.pv-rl-v {
+  text-align: right;
+  min-width: 0;
+}
+
+.pv-rl.is-sm .pv-rl-v {
+  font-size: var(--fs-12-5);
+}
+
+.pv-rl.is-lg {
+  padding-bottom: var(--pad-row);
+}
+
+.pv-rl-hero {
+  font-size: var(--fs-28);
+  line-height: var(--lh-tight);
+  letter-spacing: var(--tracking-tight);
+}
+
+.pv-rl-total {
+  font-size: var(--fs-20);
+  line-height: var(--lh-tight);
+  letter-spacing: var(--tracking-tight);
+}
+
+/* The label of the hero line is the one micro-label allowed to be the same ink
+   as its figure: it is naming the number the whole panel exists for. */
+.pv-rl.is-lg .pv-rl-l {
+  color: var(--ink-dim);
+}
+
+.pv-rl-rule {
+  margin: 0;
+}
+
+/* The ceiling gauge is a different question from the subtraction above it —
+   "did it fit" rather than "what did it save" — so it gets air, not a rule. */
+.pv-receipt-blk .meter {
+  padding-top: var(--pad-row);
+}
+
+/* The receipt stops vouching when the bytes move. One line, --alarm, under the
+   figures it can no longer stand behind — the accusation itself belongs to the
+   signature panel, which by then is at the top of the column. */
+.pv-rl-void {
+  margin: var(--pad-row) 0 0;
+  color: var(--tone);
+  font-size: var(--fs-11);
+  line-height: var(--lh-body);
+}
+
+/* DISPUTED: the lights come off. The figures stay because they are still what
+   is drawn; what they lose is the right to be lit. */
+.pv-receipt.is-disputed .pv-rl-hero,
+.pv-receipt.is-disputed .pv-rl-total {
+  color: var(--ink-dim);
+}
+
+/* A resolution row's label carries its own ramp chip, so the tier is legible
+   without reading the word next to it. */
+.pv-lod-l {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--gap-row);
+  min-width: 0;
+}
+
+/* -----------------------------------------------------------------------------
+   5. GAUGES SHARE A TRACK
+   -----------------------------------------------------------------------------
+   Every meter inside a trust panel is full width, so a column of them is
+   comparable down the column — which is the only reason to stack gauges. A
+   track sized to its own label text draws the weakest component longest and
+   makes the one reading the layout invites the wrong one.
+   -------------------------------------------------------------------------- */
+
+.pv-panel .meter {
+  width: 100%;
+}
+
+.pv-panel .meter-track {
+  width: 100%;
+}
+
+/* -----------------------------------------------------------------------------
+   6. RELATION FAMILIES, GROUPED BY σ-CLASS
+   -------------------------------------------------------------------------- */
+
+.pv-fam-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-tight);
+  padding-top: var(--pad-row);
+}
+
+.pv-fam-hd {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--gap-row);
+}
+
+.pv-fam-sigma {
+  font-size: var(--fs-11);
+  font-weight: var(--fw-500);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-caps);
+  color: var(--tone);
+}
+
+.pv-fams {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--gap-tight);
+}
+
+/* -----------------------------------------------------------------------------
+   7. ADMITTED / OMITTED
+   -------------------------------------------------------------------------- */
+
+.pv-disc-sum {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--gap-row);
+  min-width: 0;
+}
+
+.pv-adms,
+.pv-omit-ids,
+.pv-reasons {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-tight);
+  min-width: 0;
+}
+
+.pv-adm {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  padding: var(--pad-row) 0;
+  border-top: var(--border-1) solid var(--line-a40);
+  min-width: 0;
+}
+
+.pv-adm-hd,
+.pv-adm-ft {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--gap-row);
+  min-width: 0;
+}
+
+.pv-adm-hd {
+  gap: var(--gap-row);
+}
+
+/* The omitted block is the honesty mechanism, so it is the one section that
+   states its allegiance in colour: the frontier is --curiosity, not an error. */
+.pv-omit .pv-note {
+  color: var(--ink-dim);
+}
+
+.pv-omit-ids {
+  max-height: calc(var(--s-12) * 4);
+  overflow: auto;
+}
+
+/* -----------------------------------------------------------------------------
+   8. CITATIONS
+   -----------------------------------------------------------------------------
+   A card per quote. Glass on glass is legal exactly once — the card sits on
+   --panel-bg-2, one step up from the panel, with the same 1px --line and the
+   same inset top-edge light.
+   -------------------------------------------------------------------------- */
+
+.pv-cits {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-row);
+  min-width: 0;
+}
+
+.pv-cit {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-tight);
+  padding: var(--pad-section);
+  border: var(--border-1) solid var(--line);
+  border-radius: var(--r-10);
+  background: var(--panel-bg-2);
+  box-shadow: var(--edge-light); /* inset, top edge only */
+  min-width: 0;
+  transition: border-color var(--t-fast) var(--ease-ui);
+}
+
+/* IN FLIGHT. A 2px inset rail on the leading edge for exactly as long as the
+   ping promise is unresolved — not a duration, the promise. It is an edge, not
+   a glow: the dot itself is drawn in the terrain, and this is the card saying
+   which dot is its. */
+.pv-cit.is-pinging {
+  border-color: var(--evidence-a56);
+  box-shadow: inset 2px 0 0 0 var(--evidence), var(--edge-light);
+}
+
+.pv-cit.is-open {
+  border-color: var(--evidence-a32);
+}
+
+.pv-cit-hd {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-tight);
+  flex-wrap: wrap;
+  min-width: 0;
+}
+
+.pv-cit-more {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: calc(var(--s-1) * -1);
+}
+
+.pv-cit-meta {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--gap-row);
+  flex-wrap: wrap;
+}
+
+.pv-cit-src {
+  margin-top: var(--gap-tight);
+  padding-top: var(--pad-section);
+  border-top: var(--border-1) solid var(--line-a40);
+}
+
+/* THE QUOTE. Old light, held off a 1px --evidence rule. Never italic: the
+   document did not write it in italics. */
+.pv-quote {
+  margin: 0;
+  padding-left: var(--pad-control);
+  border-left: var(--border-1) solid var(--evidence-a32);
+  color: var(--ink);
+  font-size: var(--fs-12-5);
+  line-height: var(--lh-body);
+  overflow-wrap: anywhere;
+}
+
+.pv-quote.tone-render {
+  border-left-color: var(--render-a32);
+}
+
+.pv-quote.is-clamped {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* -----------------------------------------------------------------------------
+   9. THE PASSAGE DRILLDOWN
+   -------------------------------------------------------------------------- */
+
+.pv-pass {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-row);
+  min-width: 0;
+}
+
+.pv-pass-hd {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-tight);
+  flex-wrap: wrap;
+}
+
+.pv-span {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--gap-tight);
+}
+
+.pv-span-dash {
+  color: var(--ink-faint);
+}
+
+/* The source locator, on its own line and left-aligned. It is the one string
+   here somebody might retype, so it breaks where it must and never right-rags. */
+.pv-uri-l {
+  font-size: var(--fs-11);
+  font-weight: var(--fw-500);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-caps);
+  color: var(--ink-faint);
+}
+
+.pv-uri {
+  display: block;
+  font-family: var(--ff-mono);
+  font-size: var(--fs-11);
+  line-height: var(--lh-ui);
+  letter-spacing: var(--tracking-mono);
+  color: var(--ink-dim);
+  overflow-wrap: anywhere;
+}
+
+.pv-hash-check {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--gap-row);
+  min-width: 0;
+}
+
+/* -----------------------------------------------------------------------------
+   9a. THE FULL DIGEST
+   -----------------------------------------------------------------------------
+   A hash printed to be TAKEN AWAY, not to be glanced at: the whole value, wrapped
+   across as many lines as it needs, on the mono rail, still one click to copy.
+   It costs four lines. The alternative cost the reader the ability to verify.
+   -------------------------------------------------------------------------- */
+
+.pv-digest {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-tight);
+  padding: var(--pad-row) var(--pad-control);
+  border: var(--border-1) solid var(--line);
+  border-left: var(--border-1) solid rgb(var(--tone-rgb) / 0.56);
+  border-radius: var(--r-6);
+  background: rgb(var(--void-rgb) / 0.4);
+  min-width: 0;
+}
+
+.pv-digest-l {
+  font-size: var(--fs-11);
+  font-weight: var(--fw-500);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-caps);
+  color: var(--ink-faint);
+}
+
+/* The value has to WRAP, so the inline-flex hash becomes a wrapping flex row and
+   its digest span is allowed to break anywhere. A digest breaks mid-token by
+   definition — there are no words in it. */
+.pv-digest .hash {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  width: 100%;
+  font-size: var(--fs-11);
+  color: var(--tone);
+  text-align: left;
+}
+
+.pv-digest .hash-v {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  text-align: left;
+}
+
+/* The recomputed digest, printed only when it disagrees with the claimed one. */
+.pv-mismatch {
+  display: flex;
+  justify-content: flex-end;
+  padding: var(--pad-row) var(--pad-control);
+  border: var(--border-1) solid rgb(var(--tone-rgb) / 0.4);
+  border-radius: var(--r-6);
+  background: rgb(var(--tone-rgb) / 0.12);
+}
+
+/* A DIGEST IS NEVER BROKEN ACROSS TWO LINES.
+   `.hash-v` truncates by ellipsis, which only happens when it is not allowed to
+   wrap first. Inside a citation card the drilldown has ~40% less measure than
+   the same row has in the rail, and the value came out as `95346e994 …` on one
+   line and `73d` on the next — a hash split in half with its own ellipsis in
+   the middle of it, which is not a hash and cannot be compared to one. */
+.pv-pass .hash-v {
+  min-width: 0;
+  white-space: nowrap;
+}
+
+/* THE DOCUMENT. `pre-wrap` because the source's own line breaks are part of the
+   bytes the hash covers — renormalising them here would quietly disagree with
+   the offsets printed above. */
+.pv-src {
+  max-height: calc(var(--s-12) * 5);
+  padding: var(--pad-control);
+  border: var(--border-1) solid var(--line);
+  border-radius: var(--r-6);
+  background: rgb(var(--void-rgb) / 0.4);
+  color: var(--ink-faint);
+  font-size: var(--fs-12-5);
+  line-height: var(--lh-body);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.pv-src-txt {
+  color: var(--ink-faint);
+}
+
+.pv-src-cut {
+  color: var(--ink-faint);
+}
+
+/* The cited span, in place, in the document. If the offsets were wrong this
+   would land on the wrong words in public — which is the point of showing it.
+
+   NO UNDERLINE. A border-bottom on a `mark` is redrawn under EVERY line box it
+   wraps into, so a nine-line citation came out as nine rules through the
+   paragraph and read as emphasis rather than as a span. The wash alone against
+   --ink-faint context is unambiguous and stays quiet. */
+.pv-mark {
+  background: var(--evidence-a20);
+  color: var(--ink);
+}
+
+.pv-derived {
+  display: flex;
+  flex-direction: column;
+}
+
+.pv-seg-row {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--gap-tight);
+  min-width: 0;
+}
+
+/* -----------------------------------------------------------------------------
+   10. THE RESOLUTION DIFF
+   -----------------------------------------------------------------------------
+   Struck text is what the DOCUMENT said, in --evidence. Marked text is what the
+   ENGINE put there instead, in --render. Both are legible; neither is faint.
+   The reader is being asked to judge a substitution, and you cannot judge what
+   you have to squint at.
+   -------------------------------------------------------------------------- */
+
+.pv-diff {
+  margin: 0;
+  padding-left: var(--pad-control);
+  border-left: var(--border-1) solid var(--line);
+  color: var(--ink-dim);
+  font-size: var(--fs-12-5);
+  line-height: var(--lh-body);
+  overflow-wrap: anywhere;
+}
+
+.pv-del {
+  color: var(--evidence);
+  text-decoration: line-through;
+  text-decoration-color: var(--evidence-a56);
+}
+
+.pv-ins {
+  /* Held off the phrase it replaces, so `The applicant` and `Tollstrand Battery`
+     read as two phrases rather than as one collided word. */
+  margin-left: 0.35em;
+  color: var(--render);
+  text-decoration: none;
+  border-bottom: var(--border-1) solid var(--render-a56);
+}
+
+/* The legend keys are specimens, not part of a sentence: no lead-in space. */
+.pv-diff-key .pv-ins {
+  margin-left: 0;
+}
+
+/* THE DIFF ON A CITATION CARD. It stands where the blockquote stands and takes
+   the blockquote's rule, because it IS the quote — the same words, with what
+   happened to them shown. The rule is --render rather than --evidence: these
+   bytes are not purely the document's any more, and the one place that must
+   never be ambiguous is the left edge of a quotation. */
+.pv-cit-diff {
+  border-left-color: var(--render-a32);
+}
+
+.pv-diff-legend {
+  display: flex;
+  align-items: baseline;
+  gap: var(--gap-row);
+  font-size: var(--fs-11);
+}
+
+.pv-diff-key {
+  display: inline-flex;
+}
+
+/* -----------------------------------------------------------------------------
+   11. VERIFICATION
+   -----------------------------------------------------------------------------
+   VALID is quiet. A receipt verifying is the normal case, and normal cases do
+   not get a colour wash. INVALID is --alarm at full strength, because something
+   is actually wrong.
+   -------------------------------------------------------------------------- */
+
+.pv-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--gap-tight);
+  flex: none;
+}
+
+.pv-badge-t {
+  color: var(--tone);
+  font-size: var(--fs-11);
+  font-weight: var(--fw-500);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-caps);
+}
+
+/* A PASS DOES NOT GET A COLOUR, ONLY A DOT. `verified` was ninety pixels of
+   --ok green at the head of the receipt, next to a teal figure and an amber
+   percentage: three lights and a fourth colour inside one 200px card, for a
+   verdict that is the ordinary case. The green survives as the 5px state dot —
+   which is where a gauge condition belongs — and the word goes to ink.
+   FAILURE IS UNTOUCHED: --alarm keeps the whole badge, because a failure is not
+   the ordinary case and is the one thing here allowed to shout. */
+.pv-badge.tone-ok .pv-badge-t {
+  color: var(--ink-dim);
+}
+
+.pv-verdict {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-tight);
+  padding: var(--pad-section);
+  border: var(--border-1) solid var(--line);
+  border-radius: var(--r-10);
+  min-width: 0;
+}
+
+.pv-verdict.is-invalid {
+  border-color: rgb(var(--tone-rgb) / 0.4);
+  background: rgb(var(--tone-rgb) / 0.12);
+}
+
+.pv-verdict-hd {
+  display: flex;
+  align-items: baseline;
+  gap: var(--gap-row);
+  flex-wrap: wrap;
+}
+
+.pv-verdict-title {
+  margin: 0;
+  color: var(--ink);
+  font-size: var(--fs-14);
+  font-weight: var(--fw-500);
+  line-height: var(--lh-ui);
+}
+
+/* A FAILURE IS READ AT HEADING SCALE. The engine's own sentence — `The payload
+   no longer matches its signed hash` — is the most consequential string this
+   product can print, and it was set at the same 14px as a row label in a card
+   wedged into a corner. At 20px in --alarm, at the head of the column, the two
+   verification frames stop being the same picture. */
+.pv-verdict.is-invalid .pv-verdict-title {
+  color: var(--tone);
+  font-size: var(--fs-20);
+  line-height: var(--lh-tight);
+  letter-spacing: var(--tracking-tight);
+}
+
+/* UNCHECKED IS A PROMPT, NOT A STATUS. A restored receipt arrives here, and the
+   one thing it must not look like is a settled state — so the control below it
+   takes the full measure instead of hiding at 11px in a panel header. */
+.pv-actions.is-lead {
+  padding-top: var(--pad-row);
+}
+
+.pv-btn-wide {
+  width: 100%;
+  justify-content: center;
+}
+
+.pv-tampered {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-row);
+  padding: var(--pad-section);
+  border: var(--border-1) solid rgb(var(--tone-rgb) / 0.4);
+  border-radius: var(--r-10);
+  background: rgb(var(--tone-rgb) / 0.12);
+}
+
+.pv-tampered .pv-note {
+  color: var(--alarm);
+}
+
+.pv-mutation {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-tight);
+}
+
+/* The bytes, before and after, with the character that moved marked in place.
+   Mono because these are machine strings and the columns have to line up. */
+.pv-mut-line {
+  display: block;
+  font-family: var(--ff-mono);
+  font-size: var(--fs-11);
+  line-height: var(--lh-ui);
+  letter-spacing: var(--tracking-mono);
+  color: var(--tone);
+  overflow-wrap: anywhere;
+}
+
+/* The `after` line is the state the receipt is in NOW, so its context is a step
+   brighter than the `before` line's. The two are otherwise identical, which is
+   what makes the one changed character findable. */
+.pv-mut-ctx {
+  color: var(--ink-faint);
+}
+
+.pv-mut-line.tone-alarm .pv-mut-ctx {
+  color: var(--ink-dim);
+}
+
+/* SCOPED OVERRIDE, inside this section only. `StateDot` sets its label to
+   --ink-dim in every state, which is right for a status list and wrong for a
+   verification half: `false` next to a red dot has to read as false without
+   relying on the reader separating red from green. */
+.pv-panel .dot-fail .dot-label {
+  color: var(--alarm);
+}
+
+.pv-mut-char {
+  padding: 0 calc(var(--s-1) * 0.5);
+  background: rgb(var(--tone-rgb) / 0.12);
+  border-bottom: var(--border-1) solid var(--tone);
+  color: var(--tone);
+}
+
+/* -----------------------------------------------------------------------------
+   12. QUARANTINE
+   -------------------------------------------------------------------------- */
+
+.pv-reason {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-tight);
+  padding: var(--pad-row) 0;
+  border-top: var(--border-1) solid var(--line-a40);
+  min-width: 0;
+}
+
+.pv-reason-hd {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--gap-row);
+}
+
+.pv-reason-label {
+  color: var(--ink);
+  font-size: var(--fs-12-5);
+  line-height: var(--lh-ui);
+}
+
+.pv-examples {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--gap-tight);
+}
+
+.pv-examples-l {
+  font-size: var(--fs-11);
+  font-weight: var(--fw-500);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-caps);
+  color: var(--ink-faint);
+}
+
+/* An edge id is a control here: pressing it selects the relation's two ends in
+   the terrain. It looks like what it is — an id — and nothing more. */
+.pv-edge-id {
+  padding: 0 var(--pad-chip);
+  border: var(--border-1) solid var(--line);
+  border-radius: var(--r-6);
+  background: none;
+  color: var(--ink-dim);
+  font-family: var(--ff-mono);
+  font-size: var(--fs-11);
+  letter-spacing: var(--tracking-mono);
+  line-height: calc(var(--s-4) + var(--s-1));
+  transition: color var(--t-fast) var(--ease-ui), border-color var(--t-fast) var(--ease-ui);
+}
+
+.pv-edge-id:hover {
+  color: var(--curiosity);
+  border-color: var(--curiosity-a32);
+}
+
+.pv-notfound {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-tight);
+  padding-top: var(--pad-row);
+}
+
+/* THE RATE CARRIES ITS DENOMINATOR. `2.8 %` alone next to `Quarantined 182` and
+   `Relations extracted 12 910` reads as arithmetic that does not work, because
+   the only denominator that reconciles it — the gated set, structural
+   exemptions removed — was in a different panel. Two numbers, one slash, on the
+   line that needs them. */
+/* THE TRUTH GATE'S FINDING, AT THE HEAD OF ITS OWN SECTION. The rate is what
+   this panel concluded; the four counts under it are the population it concluded
+   over. Reported as five equal rows they were a form, and the conclusion was the
+   fifth line of it. */
+.pv-gate-hd {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--gap-row);
+  width: 100%;
+  padding: var(--pad-row) 0 var(--gap-tight);
+}
+
+.pv-gate-l {
+  font-size: var(--fs-11);
+  font-weight: var(--fw-500);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-caps);
+  color: var(--ink-faint);
+}
+
+.pv-gate-v {
+  font-size: var(--fs-20);
+  line-height: var(--lh-tight);
+  letter-spacing: var(--tracking-tight);
+}
+
+/* The population strip sits directly under the gauge it explains, so it brings
+   no rule of its own — the gauge is already the boundary. */
+.pv-gate-pop {
+  border-top: 0;
+  padding-bottom: 0;
+}
+
+/* THE FOUR FIGURES SHARE A BASELINE. `Exempt (structural)` is the only label
+   here that wraps, and without this its figure dropped a line below the other
+   three — four comparable counts on two different baselines, which is the exact
+   raggedness a fact strip exists to avoid. The floor is two lines of the label's
+   own type, so a longer label grows the strip rather than breaking the row. */
+.pv-gate-pop .pv-fact-l {
+  min-height: calc(var(--fs-11) * var(--lh-ui) * 2);
+}
+
+.tip-anchor.pv-gate-tip {
+  display: block;
+  width: 100%;
+}
+
+.pv-rate {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--gap-row);
+}
+
+.pv-rate-of {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.4ch;
+  padding-left: var(--gap-row);
+  border-left: var(--border-1) solid var(--line);
+  font-size: 0.85em;
+}
+
+.pv-rate-slash {
+  color: var(--ink-faint);
+}
+
+/* -----------------------------------------------------------------------------
+   13. INSPECTOR
+   -------------------------------------------------------------------------- */
+
+.pv-insp {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-row);
+  min-width: 0;
+}
+
+.pv-insp-hd {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-tight);
+  min-width: 0;
+}
+
+.pv-insp-label {
+  color: var(--ink);
+  font-size: var(--fs-16);
+  font-weight: var(--fw-500);
+  line-height: var(--lh-ui);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pv-insp-sub {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-row);
+  flex-wrap: wrap;
+  min-width: 0;
+}
+
+.pv-aliases {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--gap-tight);
+}
+
+/* THE FACT STRIP — small integers as a readout rather than as a questionnaire.
+   Three cells to a line at the rail's narrowest, more when the rail steps up.
+   No rules between them: a hairline between `Degree 22` and `Mentions 14` is
+   drawing a table nobody asked for. One rule above the group, from the section
+   it sits in, is enough separation for four numbers. */
+/* The cell is sized so the LONGEST LABEL fits — `CENTRALITY` at 11px caps with
+   the caps tracking on it. Three cells to a line squeezed it to `CENTRA…`, which
+   is the same defect as `Check…` and `REN…` in a smaller box: the strip existed
+   to stop labels competing with values for one line, and it must not reintroduce
+   the competition by making the cell too narrow. Two to a line in a 310px rail,
+   more as the rail steps up at 2400 and 3200px. */
+.pv-facts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(calc(var(--s-12) * 2), 1fr));
+  gap: var(--gap-row) var(--gap-section);
+  padding: var(--pad-row) 0;
+  border-top: var(--border-1) solid var(--line-a40);
+}
+
+.tip-anchor.pv-fact {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  min-width: 0;
+}
+
+/* A long machine string takes the whole strip rather than ragging over three
+   lines inside a hundred-pixel cell. */
+.tip-anchor.pv-fact.is-wide {
+  grid-column: 1 / -1;
+}
+
+.pv-fact-l {
+  font-size: var(--fs-11);
+  font-weight: var(--fw-500);
+  line-height: var(--lh-ui);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-caps);
+  color: var(--ink-faint);
+  overflow-wrap: anywhere;
+}
+
+.pv-fact-v {
+  font-size: var(--fs-14);
+  line-height: var(--lh-ui);
+  min-width: 0;
+}
+
+/* A fact whose value is a machine STRING rather than a measurement: the mono
+   rail, but not <Num>, because it is not a number and must not pretend to be.
+   It WRAPS rather than eliding — `com:capital…` is not a community id, it is the
+   first half of one, and half an identifier is worse than two lines. */
+.pv-fact-s {
+  display: block;
+  font-family: var(--ff-mono);
+  font-size: var(--fs-12-5);
+  line-height: var(--lh-ui);
+  letter-spacing: var(--tracking-mono);
+  color: var(--ink-dim);
+  overflow-wrap: anywhere;
+}
+
+/* THE TWO HALVES, SIDE BY SIDE. Two cells, so `false` and `true` can be
+   compared in a glance instead of scanned down a table. Exactly two columns —
+   `auto-fit` would drop them onto one line with the timestamp and lose the
+   pairing, which is the only thing this block is for. */
+.pv-halves {
+  grid-template-columns: 1fr 1fr;
+  border-top: 0;
+  padding-top: 0;
+}
+
+/* The identity strip under the digests. No top rule: the digest above it is
+   already a bounded object and a second hairline would fence it twice. */
+.pv-signer {
+  border-top: 0;
+  padding-top: 0;
+  gap: var(--gap-row) var(--gap-row);
+}
+
+/* A fact whose value is MACHINE TEXT rather than a measurement. It takes the
+   colour of its own tone — ink for the identity being claimed, one step back for
+   which key of it, --alarm for whichever the verifier has just accused. The tone
+   reaches the value and never the label: what failed is the claim, not the name
+   of the field. */
+.pv-fact-v.is-mono {
+  display: block;
+  font-family: var(--ff-mono);
+  font-size: var(--fs-12-5);
+  line-height: var(--lh-ui);
+  letter-spacing: var(--tracking-mono);
+  color: var(--tone);
+  overflow-wrap: anywhere;
+}
+
+/* -----------------------------------------------------------------------------
+   14. THE REPUDIATION LAYER — the map stops vouching
+   -----------------------------------------------------------------------------
+   The second and last place --alarm appears in this stylesheet, and it is earned
+   for the same reason as the first: a verification really failed.
+
+   Nothing here is emissive and nothing here moves. The mark is a hairline dash
+   over a path that is still drawn, a ring with a gap in it, and the engine's own
+   verdict — three static marks that say "no longer receipted" without erasing
+   anything the engine actually did.
+
+   The layer is pointer-transparent and sits at --z-labels: over the canvas,
+   under every panel, and it never takes a pixel of terrain away from the reader.
+   -------------------------------------------------------------------------- */
+
+.pv-repud {
+  position: fixed;
+  z-index: var(--z-labels);
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.pv-repud-svg {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+
+/* THE PATH IS STRUCK, NOT ERASED. The hatch crosses the rendered corridor and
+   leaves every pixel of it visible, because the engine really did walk it. What
+   the ticks remove is its standing as evidence, and a mark ACROSS a line is the
+   one every reader already knows. */
+.pv-repud-strike {
+  fill: none;
+  stroke: var(--alarm);
+  stroke-width: calc(var(--border-1) * 2);
+  stroke-linecap: round;
+  opacity: 0.92;
+}
+
+/* The cancel mark, crossing the hop at its midpoint on the hop's own axis. */
+.pv-repud-cancel {
+  stroke: var(--alarm);
+  stroke-width: calc(var(--border-1) * 2);
+  stroke-linecap: round;
+  opacity: 0.9;
+}
+
+/* A BROKEN RING where a receipted node wears a closed one. The gap is the
+   whole message; the dash array that produces it is computed from the radius so
+   the seal reads open at any size. */
+.pv-repud-ring {
+  fill: none;
+  stroke: var(--alarm);
+  stroke-width: calc(var(--border-1) * 1.5);
+  opacity: 0.92;
+}
+
+.pv-repud-tag {
+  position: absolute;
+  transform: translate(-50%, -100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--gap-tight);
+  max-width: 320px;
+  padding: var(--pad-chip) var(--pad-section);
+  border: var(--border-1) solid var(--alarm-a56);
+  border-radius: var(--r-6);
+  background: var(--void-a90);
+  text-align: center;
+}
+
+.pv-repud-badge {
+  font-family: var(--ff-ui);
+  font-size: var(--fs-12-5);
+  font-weight: var(--fw-650);
+  line-height: var(--lh-tight);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-caps);
+  color: var(--alarm);
+  white-space: nowrap;
+}
+
+/* The demo-key disclosure, above the verdict in the Verification panel.
+   Quiet by weight, unmissable by position: it sits before the badge it
+   qualifies rather than in a tooltip under it. Border-left rather than a
+   filled box, because a filled callout here would read as an alarm and this
+   is not a failure — it is the honest scope of a green result. */
+.pv-demo-key {
+  margin: 0 0 var(--s-3);
+  padding-left: var(--s-2);
+  border-left: 1px solid var(--evidence-a32, var(--line));
+  line-height: 1.5;
+  text-wrap: pretty;
+}

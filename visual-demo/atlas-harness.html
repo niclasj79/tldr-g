@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="dark" />
+    <!-- Inline so the harness makes zero network requests of its own; a stray
+         404 in the console is a failure signal the verification pass trips on. -->
+    <link rel="icon" href="data:," />
+    <title>TLDR-G Visual Demo — rung atlas harness</title>
+    <meta
+      name="description"
+      content="Development harness for the rung atlas. Drives the real store and the real renderer through all four rungs so the descent choreography, the breadcrumb, the rung legend and Atlas Mode can be judged side by side."
+    />
+  </head>
+  <body>
+    <div id="harness"></div>
+    <script type="module" src="/src/ui/atlas/harness.tsx"></script>
+  </body>
+</html>

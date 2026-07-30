@@ -1,0 +1,639 @@
+/* =============================================================================
+   TLDR-G VISUAL DEMO — THE RUNG ATLAS
+   -----------------------------------------------------------------------------
+   Breadcrumb, rung legend, rung ledger and Atlas Mode.
+
+   Zero hex. Zero raw rgb(). Every colour, duration, easing, radius and spacing
+   value is a var() from design-tokens.css — the six values this layer needed
+   that did not exist were appended there as §16 and are read back through
+   ./rungGeometry.ts on the TypeScript side.
+
+   ELEVATION IS BORDER + TOP-EDGE INNER LIGHT. There is not one outer shadow in
+   this file. The only emissive rule is the 6px selection glow the token file
+   already caps, and it is spent exactly once: on the rung you are standing on.
+   ============================================================================= */
+
+/* =============================================================================
+   1. BREADCRUMB — the rung stack, and a depth gauge
+   ========================================================================== */
+
+.rb {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-tight);
+  min-width: 0;
+  font-size: var(--fs-12-5);
+  line-height: var(--lh-ui);
+}
+
+.rb-step {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--gap-tight);
+  min-width: 0;
+}
+
+.rb-sep {
+  color: var(--ink-faint);
+  font-size: var(--fs-11);
+  flex: none;
+}
+
+.rb-crumb {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--gap-tight);
+  min-height: var(--hit-row);
+  padding: 0 var(--pad-chip);
+  border-radius: var(--r-6);
+  color: var(--ink-dim);
+  white-space: nowrap;
+  transition: color var(--t-fast) var(--ease-ui), background var(--t-fast) var(--ease-ui);
+}
+
+.rb-crumb:hover {
+  color: var(--ink);
+  background: var(--ink-a06);
+}
+
+.rb-root {
+  color: var(--ink-faint);
+}
+
+.rb-label {
+  max-width: var(--label-max-width);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* THE SCOPE YOU ARE STANDING INSIDE GETS THE MEASURE ITS NAME NEEDS.
+   Twice the clamp, because at the passage rung this crumb names the document
+   the map is drawing as a bounded page, and `Operations and maintenance
+   agreem…` is not a name. The width is not taken from the command bar: at that
+   rung the component drops the ancestors' words and keeps their glyphs, which
+   frees more than this costs — see the note in Breadcrumb.tsx. Ancestors keep
+   the single clamp everywhere above it. */
+.rb-crumb--scope .rb-label {
+  max-width: calc(var(--label-max-width) * 2);
+}
+
+/* The terminal step: where you are standing. It is the only crumb that carries
+   the render light, because it is the only one the engine is attending to. */
+.rb-here {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--gap-tight);
+  min-height: var(--hit-row);
+  padding: 0 var(--pad-control);
+  border: var(--border-1) solid var(--line);
+  border-radius: var(--r-6);
+  background: var(--render-a06);
+  box-shadow: var(--edge-light); /* inset, top edge only */
+}
+
+.rb-current {
+  color: var(--ink);
+  font-weight: var(--fw-500);
+}
+
+.rb-count {
+  padding-left: var(--gap-tight);
+  border-left: var(--border-1) solid var(--line-a40);
+}
+
+/* BEAT FOUR. Keyed on the rung in the component, so this fires exactly when the
+   ontology changes and at no other time. Under prefers-reduced-motion --t-ui is
+   already collapsed to 120ms by the token file: the flip gets shorter, the rung
+   change still happens. */
+.rb-flip {
+  animation: rb-flip var(--t-ui) var(--ease-ui) both;
+  transform-origin: 50% 50%;
+}
+
+@keyframes rb-flip {
+  from {
+    transform: rotateX(-90deg);
+    opacity: var(--lod-2-opacity);
+  }
+  to {
+    transform: rotateX(0deg);
+    opacity: var(--lod-0-opacity);
+  }
+}
+
+/* The rungs below you. Drawn at latent weight because that is exactly what they
+   are: known to exist, resolved to nothing, and taking up their real place. */
+.rb-below {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--gap-tight);
+  padding-left: var(--gap-row);
+  margin-left: var(--gap-tight);
+  border-left: var(--border-1) solid var(--line-a40);
+}
+
+.rb-latent {
+  opacity: var(--latent-opacity);
+}
+
+.rb-up {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--gap-tight);
+  margin-left: var(--gap-row);
+}
+
+/* =============================================================================
+   2. RUNG LEGEND — what this rung MEANS. The HUD owns what is measured.
+   ========================================================================== */
+
+/* ONE ROW, and it stops where its sentence stops. This was a ~1000px panel with
+   four metric columns and a five-tier histogram over a HUD that reported six of
+   the same figures. What is left is a key: a glyph, a noun and a line. */
+.rl {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--gap-row);
+  min-width: 0;
+  max-width: 78ch;
+  padding: var(--pad-row) var(--pad-section);
+  border: var(--panel-border);
+  border-radius: var(--r-10);
+  background: var(--panel-bg);
+  -webkit-backdrop-filter: blur(var(--panel-blur));
+  backdrop-filter: blur(var(--panel-blur));
+  box-shadow: var(--edge-light); /* inset, top edge only */
+}
+
+.rl-name {
+  color: var(--ink);
+  letter-spacing: var(--tracking-normal);
+  white-space: nowrap;
+  flex: none;
+}
+
+.rl-caption {
+  margin: 0;
+  min-width: 0;
+  padding-left: var(--gap-row);
+  border-left: var(--border-1) solid var(--line-a40);
+  color: var(--ink-dim);
+}
+
+/* =============================================================================
+   3. RUNG LEDGER — the register changes with the ontology
+   ========================================================================== */
+
+.rg {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-tight);
+  min-width: 0;
+}
+
+.rg-hd {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--gap-row);
+}
+
+.rg-of {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--gap-tight);
+  font-size: var(--fs-11);
+}
+
+.rg-row {
+  display: flex;
+  align-items: stretch;
+  justify-content: space-between;
+  gap: var(--gap-row);
+  min-width: 0;
+}
+
+.rg-rows {
+  display: flex;
+  flex-direction: column;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  min-width: 0;
+}
+
+.rg-row {
+  min-height: var(--hit-row);
+  padding: var(--pad-row) 0;
+  border-bottom: var(--border-1) solid var(--line-a40);
+}
+
+.rg-row:last-child {
+  border-bottom: 0;
+}
+
+/* A selection is the engine's attention. It is the only thing in the ledger
+   that earns the render light, and the glow is the token-capped 6px. */
+.rg-row.is-marked {
+  background: var(--render-a06);
+  box-shadow: var(--edge-light); /* inset, top edge only */
+}
+
+/* EVERY ROW IS A NAME AND A LINE ABOUT IT, at all four rungs. The name owns the
+   full width of the rail and WRAPS; the figures sit under it, each next to the
+   word for what it counts.
+
+   Neither half is a style preference. Ellipsing the name truncated the one
+   place in the product where a continent's proper noun appears — `Corporate
+   Holding…` — and a right-hand grid of bare numerals under unlabelled glyphs is
+   unreadable at any density: 5 / 93 / 388 could be anything. */
+.rg-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-tight);
+  min-width: 0;
+  width: 100%;
+}
+
+.rg-name {
+  color: var(--ink);
+  font-size: var(--fs-12-5);
+  min-width: 0;
+  /* NO ELLIPSIS, ANYWHERE. A proper noun that only appears here is not allowed
+     to be shortened to fit a column that no longer exists. */
+  overflow-wrap: anywhere;
+}
+
+.rg-figs,
+.rg-manifest {
+  display: flex;
+  align-items: baseline;
+  gap: var(--gap-row);
+  flex-wrap: wrap;
+  min-width: 0;
+}
+
+.rg-fig {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--gap-tight);
+}
+
+/* The word for what the figure counts. Never omitted, never abbreviated to a
+   glyph — this is the half that was missing. */
+.rg-of-what {
+  white-space: nowrap;
+}
+
+/* ---- ▮ asset: the manifest --------------------------------------------- */
+/* The title is a sentence and deserves the width; the manifest line underneath
+   is what makes this rung a rung of MOLECULES. It WRAPS rather than clipping:
+   `537 tol` and `775 to` were units sacrificed to a layout. */
+
+.rg-manifest {
+  gap: var(--gap-tight) var(--gap-row);
+}
+
+/* A CLASSIFICATION, NOT AN EVIDENCE ANCHOR. `contract` / `thread` / `session`
+   says which taxonomy bucket the boundary fell in; it is chrome, and twenty of
+   them stacked down the rail in filled gold is how gold stops meaning "old
+   light from a source". Outline and ink. The gold on this line is spent once,
+   on the date somebody actually declared the boundary. */
+.rg-boundary {
+  color: var(--ink-dim);
+  padding: 0 var(--pad-chip);
+  border: var(--border-1) solid var(--line);
+  border-radius: var(--r-6);
+  white-space: nowrap;
+}
+
+.rg-declared {
+  color: var(--evidence);
+  white-space: nowrap;
+}
+
+/* ---- · passage: a document, not a map ---------------------------------- */
+/* `.rg-passage` is the LEDGER at the passage rung; `.rg-pbody` is one span
+   inside it. They were the same class for a while, which gave the whole list a
+   stray left rule — the kind of thing only a screenshot finds.
+
+   THE GUTTER HELD A BARE ORDINAL AND THE ORDINAL IS GONE. It printed `seq`,
+   which is 0-based, next to a map that prints the same five objects as `span 1`
+   … `span 5`. The row now leads with the node's own label instead, so the two
+   halves of the screen name each span identically. What survives is the RULE —
+   a document has a margin and a map does not — which is the one thing in this
+   ledger that says the ontology changed. */
+
+.rg-pbody {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: var(--gap-tight);
+  min-width: 0;
+  padding-left: var(--gap-row);
+  /* The reading-order rule. A document has a margin; a map does not. */
+  border-left: var(--border-1) solid var(--line);
+}
+
+.rg-span {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--gap-tight);
+  color: var(--ink-faint);
+}
+
+/* THE BAR IS THE TOKEN COUNT. Width is `token_count / widest`, set from the
+   component as --rg-share. There is no minimum width and no easing: a short
+   passage draws a short bar. */
+.rg-bar {
+  display: block;
+  height: var(--meter-h);
+  width: calc(var(--rg-share, 0) * 100%);
+  border-radius: 0;
+  background: var(--render-a32);
+}
+
+.rg-row.is-marked .rg-bar {
+  background: var(--render-a56);
+}
+
+.rg-passage-foot {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-row);
+  flex-wrap: wrap;
+  min-width: 0;
+}
+
+/* The resolution disclosure. Amber is OLD LIGHT: this text came from a document.
+   A quote that has travelled from the bytes says so in the question light,
+   because the distance is exactly what you do not yet know about it. */
+.rg-disclosure {
+  padding: 0 var(--pad-chip);
+  border-radius: var(--r-6);
+  border: var(--border-1) solid transparent;
+  white-space: nowrap;
+}
+
+.rg-disclosure.is-verbatim {
+  color: var(--evidence);
+  border-color: var(--evidence-a32);
+  background: var(--evidence-a06);
+}
+
+.rg-disclosure.is-resolved {
+  color: var(--curiosity);
+  border-color: var(--curiosity-a32);
+  background: var(--curiosity-a06);
+}
+
+/* The passage rung's rows breathe: it is a document, and a document has leading.
+   This is the clearest single signal in the chrome that the ontology changed. */
+.rg-passage .rg-rows {
+  gap: var(--gap-row);
+}
+
+.rg-passage .rg-row {
+  align-items: flex-start;
+}
+
+.rg-dash {
+  font-size: var(--fs-11);
+}
+
+/* =============================================================================
+   4. ATLAS MODE — the guided descent
+   ========================================================================== */
+
+/* ATLAS MODE IS A PANEL IN A COLUMN, NOT A COLUMN OF ITS OWN.
+   -----------------------------------------------------------------------------
+   It used to pin itself to the stage — `position: absolute`, its own
+   `--atlas-rail-w`, floating on top of the terrain beside the 368px rail. Two
+   columns of chrome, and the second one was standing ON the map: with it open
+   the real unobstructed terrain measured 69.3–69.7%, under the product's own
+   70% floor, while `audit()` — which measured the canvas rect and never
+   subtracted what was drawn over it — went on certifying 80.4%.
+
+   The panel costs the terrain nothing now because it is not over the terrain.
+   It renders inside the rail that already exists, at the width that column
+   already had, and the descent's occlusion probe in ./descent.ts consequently
+   measures zero overlap against the canvas — which is the true reading, not a
+   waived one.
+
+   No width, no inset and no z-index in this rule: WHERE it is mounted is the
+   shell's business (see `.shell__rail > .am`), WHAT it says is this layer's.
+   All this declares is that it is a block that fills the measure it is given
+   and does not float. */
+.am {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  max-width: 100%;
+  pointer-events: auto;
+}
+
+.am-panel {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+}
+
+.am-sub {
+  margin: 0;
+  max-width: 46ch;
+}
+
+/* ---- the altimeter ------------------------------------------------------ */
+
+.am-alt {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-row);
+  padding: var(--pad-section);
+  border: var(--border-1) solid var(--line);
+  border-radius: var(--r-10);
+  background: var(--panel-bg-2);
+  box-shadow: var(--edge-light); /* inset, top edge only */
+}
+
+.am-stops {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: var(--atlas-altimeter-h);
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.am-stop {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+
+.am-stop-btn {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-row);
+  width: 100%;
+  min-height: var(--hit-row);
+  padding: 0 var(--pad-chip);
+  border-radius: var(--r-6);
+  color: var(--ink-faint);
+  font-size: var(--fs-12-5);
+  transition: color var(--t-fast) var(--ease-ui), background var(--t-fast) var(--ease-ui);
+}
+
+.am-stop-btn:hover {
+  color: var(--ink-dim);
+  background: var(--ink-a06);
+}
+
+/* Rungs you have already passed through are penumbra: readable, not attended
+   to. Rungs below you are latent — the terrain never has holes and neither does
+   the spine. */
+.am-stop.is-above .am-stop-btn {
+  color: var(--ink-dim);
+  opacity: var(--lod-1-opacity);
+}
+
+.am-stop.is-below .am-stop-btn {
+  opacity: var(--lod-2-opacity);
+}
+
+.am-stop.is-here .am-stop-btn {
+  color: var(--ink);
+  font-weight: var(--fw-500);
+  background: var(--render-a12);
+}
+
+.am-stop-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* What a body at this rung CONTAINS. Four words down one column, and together
+   they are the ontology ladder the mode exists to demonstrate. */
+.am-stop-holds {
+  margin-left: auto;
+  font-size: var(--fs-11);
+  white-space: nowrap;
+  flex: none;
+}
+
+.am-here {
+  margin-left: auto;
+  color: var(--render);
+  white-space: nowrap;
+}
+
+/* ---- the band ----------------------------------------------------------- */
+
+.am-band {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-tight);
+  padding-top: var(--pad-section);
+  border-top: var(--border-1) solid var(--line-a40);
+}
+
+.am-band-hd {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--gap-row);
+}
+
+.am-band-track {
+  position: relative;
+  display: block;
+  height: var(--meter-h);
+  background: var(--line);
+}
+
+/* The needle. Its position is `bandPosition(zoom / anchorZoom)` in log space —
+   a measured altitude, sampled at 10Hz and eased over --t-fast so the motion
+   between samples is continuous rather than stepped. */
+.am-needle {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: var(--focus-ring-w);
+  left: calc(var(--am-pos, 0) * 100%);
+  background: var(--render);
+  transition: left var(--t-fast) linear;
+}
+
+.am-band-ends {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--gap-row);
+}
+
+.am-band-end {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--gap-tight);
+}
+
+/* ---- caption, ledger, controls ----------------------------------------- */
+
+.am-caption {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-tight);
+}
+
+.am-caption-line {
+  margin: 0;
+  color: var(--ink);
+}
+
+.am-ledger {
+  padding-top: var(--pad-section);
+  border-top: var(--border-1) solid var(--line-a40);
+}
+
+/* Docked to the bottom of the scrolling body. Thin glass over the rest of the
+   rail, exactly like the rail is thin glass over the terrain — the ledger keeps
+   moving underneath it rather than being covered by a slab. */
+.am-foot {
+  position: sticky;
+  bottom: calc(-1 * var(--pad-panel));
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-row);
+  margin: auto calc(-1 * var(--pad-panel)) calc(-1 * var(--pad-panel));
+  padding: var(--pad-section) var(--pad-panel) var(--pad-panel);
+  border-top: var(--border-1) solid var(--line);
+  background: var(--panel-bg-2);
+  -webkit-backdrop-filter: blur(var(--panel-blur));
+  backdrop-filter: blur(var(--panel-blur));
+}
+
+.am-controls {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-row);
+}
+
+.am-dwell {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+/* The corpus disclosure, in the evidence light, always on screen. It is a fact
+   about where this world came from, and a fact you have to scroll to find is a
+   fact that has been hidden. */
+.am-provenance {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  color: var(--evidence);
+}

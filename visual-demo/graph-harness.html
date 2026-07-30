@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="dark" />
+    <!-- Inline so the harness makes zero network requests of its own; a stray
+         404 in the console is a failure signal the visual-QA pass would trip on. -->
+    <link rel="icon" href="data:," />
+    <title>TLDR-G Visual Demo — terrain harness</title>
+    <meta
+      name="description"
+      content="Development harness for the knowledge-terrain renderer. Drives the real engine into every render state so the terrain can be judged by looking at it."
+    />
+  </head>
+  <body>
+    <div id="harness"></div>
+    <script type="module" src="/src/graph/harness.tsx"></script>
+  </body>
+</html>

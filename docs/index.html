@@ -5,10 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>TLDR-G — the knowledge rendering engine</title>
 <meta name="description" content="A knowledge rendering engine: it renders the context an answer needs instead of retrieving chunks. Local-first, sovereign, evidence-grade. Free engine, open SDK." />
-<!-- CLAIMS NOTICE: every quantitative claim below is marked CLAIM: and MUST pass
-     the disclosure-boundary pre-publish screen + marketing-claim-grounding 6-tuple
-     before this page goes public. Numbers use the SSOT wording; verify against a
-     result file + commit before publishing. -->
 <link rel="stylesheet" href="style.css" />
 </head>
 <body>
@@ -18,6 +14,7 @@
     <nav>
       <a href="#how">How</a>
       <a href="#proof">Proof</a>
+      <a href="/visual-demo/">Demo</a>
       <a href="#sovereign">Sovereign</a>
       <a href="#open">Open</a>
       <a href="learn/">Learn</a>
@@ -52,8 +49,6 @@
       And the context window fills with near-duplicates while the one bridging fact is missing.
     </p>
     <p class="claim">
-      <!-- CLAIM (SSOT-grounded per metrics-reference.md): legal multi-hop = parity at ~88% fewer tokens;
-           67–88% across benchmarks. Founder: final 6-tuple check before publish (marketing-claim-grounding). -->
       TLDR-G matches a full-context baseline's answer quality at roughly
       <strong>88% fewer tokens</strong> on legal multi-hop — and 67–88% fewer across benchmarks —
       because it renders what matters instead of stuffing everything.
@@ -87,8 +82,7 @@
     <h2>Proof, not adjectives</h2>
     <ul class="proof">
       <li class="claim">
-        <!-- CLAIM (SSOT): parity at ~88% fewer tokens (legal multi-hop); 67–88% across benchmarks. -->
-        Parity with a full-context baseline at ~88% fewer tokens on legal multi-hop (67–88% across benchmarks).
+          Parity with a full-context baseline at ~88% fewer tokens on legal multi-hop (67–88% across benchmarks).
       </li>
       <li>On-device, single-file (SQLite) storage — your data never has to leave the machine.</li>
       <li>Verifiable provenance: a runnable <code>verify</code> step over signed attestations.</li>
@@ -168,14 +162,7 @@
       sovereignty layer, the engineering discipline, and an honest evaluation. Leave your email and
       we'll send it over, along with the occasional launch update.
     </p>
-    <!-- EMAIL CAPTURE — native Airtable form (founder-chosen conduit; wired 2026-06-18).
-         Airtable-hosted Interface form embedded as an iframe; signups land in the
-         "Waitlist" table (Life OS base appDSTEUZRTgUVZFL / tbleRcGpAnX9YksB9), kept
-         separate from the curated TP-VRG Outreach CRM. To change the form, edit it in
-         Airtable. ⚠️ Before flip: confirm the form loads + accepts a submission when
-         NOT logged in to Airtable (test in an incognito window — Interface forms need
-         the interface shared publicly, unlike classic shr… forms).
-         Tracked: backlog [SITE-EMAIL-CAPTURE-WIRE]. -->
+    <!-- Email capture. -->
     <iframe class="airtable-embed signup-embed"
             src="https://airtable.com/embed/appDSTEUZRTgUVZFL/pagloT2rd7D50c4Jw/form"
             title="Get the whitepaper — email signup"
@@ -185,15 +172,33 @@
       occasional launch update, and you can unsubscribe anytime.</p>
   </section>
 
-  <!-- Demo section hidden until screencapture is recorded; restore by removing the HTML comment wrappers. -->
-  <!--
-  <section class="wrap demo">
-    <h2>See it render</h2>
-    <div class="video-placeholder">
-      <p>2-minute demo — coming at launch</p>
+  <!-- Receipt diptych. -->
+  <section class="wrap demo" id="see-it">
+    <h2>See the receipt</h2>
+    <p>Every answer carries a signed receipt. Anyone can verify it offline — no trust required. Here is what pass and fail look like.</p>
+    <div class="receipt-diptych" style="display:flex;gap:1.25rem;flex-wrap:wrap;justify-content:center;align-items:flex-start;margin-top:1rem;">
+      <figure style="flex:1 1 320px;max-width:520px;margin:0;">
+        <img src="receiptvalid.png" alt="A verification receipt reading VALID — the cited text is confirmed present, verbatim, in the original source." style="width:100%;height:auto;border:1px solid var(--line);border-radius:12px;" />
+        <figcaption class="fineprint" style="margin-top:.5rem;">VALID — the cited passage is confirmed verbatim in the source.</figcaption>
+      </figure>
+      <figure style="flex:1 1 320px;max-width:520px;margin:0;">
+        <img src="receiptinvalid.png" alt="A verification receipt reading INVALID — a tampered citation is detected and rejected." style="width:100%;height:auto;border:1px solid var(--line);border-radius:12px;" />
+        <figcaption class="fineprint" style="margin-top:.5rem;">INVALID — a tampered citation is caught and flagged.</figcaption>
+      </figure>
     </div>
+    <p class="fineprint" style="text-align:center;margin-top:1rem;">A 2-minute walkthrough is coming; the verify step is runnable today from the <a href="https://github.com/niclasj79/tldr-g">SDK</a>.</p>
   </section>
-  -->
+
+  <!-- Visual demo. The one interactive thing on the site: the architecture with the hood
+       up, on a deliberately synthetic corpus. Framed as a demo of the ARCHITECTURE, not of
+       product usage, and the synthetic-corpus caveat is stated here rather than left for
+       the reader to discover inside — the page it links to sits on this domain, next to
+       grounded benchmark claims, so the frame has to travel with the link. -->
+  <section class="wrap demo" id="visual-demo">
+    <h2>Open the hood</h2>
+    <p>The <a href="/visual-demo/">visual demo</a> draws a corpus as terrain you can descend — continent, island, asset, passage — where brightness is how much of a node the engine actually paid for. The question sits unrun until you press it. Then you watch the budget being spent, and afterwards you get to audit the spend: what was admitted, at what resolution, and what the engine reached and <em>declined</em> to pay for.</p>
+    <p class="fineprint">It runs in the browser — no install, no account, nothing to configure. The corpus in it is <strong>synthetic</strong>, and every figure on screen is a design concept rather than a benchmark; the demo says so on every response it returns. <a href="/visual-demo/">Open it →</a></p>
+  </section>
 </main>
 
 <footer class="wrap">
@@ -206,7 +211,6 @@
       <p class="muted">Connect</p>
       <a href="https://github.com/niclasj79/tldr-g">GitHub</a><br/>
       <a href="mailto:niclas@tldr-g.ai?subject=TLDR-G">Email — niclas@tldr-g.ai</a>
-      <!-- Founder: add X / LinkedIn links here once the handles are reserved (DP-1). -->
     </div>
     <div>
       <p class="muted">Read</p>

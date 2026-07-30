@@ -1,0 +1,44 @@
+/* =============================================================================
+   TLDR-G VISUAL DEMO — THE WORLD-MAP STRIP
+   -----------------------------------------------------------------------------
+   160×90, docked top-right INSIDE the viewport, and nearly silent. It is chrome
+   for a map, not a second map: one hairline, one glass panel, and a canvas whose
+   loudest mark is a 1px frustum rectangle.
+
+   The dock offsets are custom properties so a shell with a top bar can move the
+   strip clear of it without this file knowing that a top bar exists.
+   ============================================================================= */
+
+.ix-worldmap {
+  position: absolute;
+  top: var(--worldmap-top, var(--pad-panel));
+  right: var(--worldmap-right, var(--pad-panel));
+  z-index: var(--z-hud);
+  padding: var(--border-1);
+  background: var(--panel-bg);
+  border: var(--border-1) solid var(--line-a70);
+  border-radius: var(--r-6);
+  backdrop-filter: blur(var(--panel-blur));
+  box-shadow: var(--edge-light); /* inset — the top-edge light, never an outer shadow */
+  cursor: crosshair;
+  /* The strip is a pan control, so the browser must not claim the gesture. */
+  touch-action: none;
+}
+
+.ix-worldmap__canvas {
+  display: block;
+  border-radius: calc(var(--r-6) - var(--border-1));
+}
+
+/* The frustum is the only bright thing on it, so the panel itself steps back
+   until the pointer arrives. This is a chrome affordance, not a data signal —
+   it changes the panel's own opacity and never a mark on the canvas. */
+.ix-worldmap {
+  opacity: 0.72;
+  transition: opacity var(--t-fast) var(--ease-ui);
+}
+
+.ix-worldmap:hover,
+.ix-worldmap:focus-within {
+  opacity: 1;
+}

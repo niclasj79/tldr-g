@@ -1,0 +1,223 @@
+/* =============================================================================
+   SPECIMEN SHEET — layout only
+   -----------------------------------------------------------------------------
+   This stylesheet exists to arrange the specimen sheet and nothing else. It
+   introduces no colour, no duration and no primitive: if a rule in here started
+   styling a Panel or a Num, the specimen would stop being a specimen.
+   ============================================================================= */
+
+.sheet {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+
+/* --- masthead ------------------------------------------------------------ */
+
+.sheet-hd {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-section);
+  padding: var(--pad-section) var(--gap-panel);
+  border-bottom: var(--border-1) solid var(--line);
+  flex: none;
+}
+
+.sheet-mark {
+  display: flex;
+  align-items: baseline;
+  gap: var(--gap-row);
+}
+
+.sheet-name {
+  font-size: var(--fs-20);
+  font-weight: var(--fw-650);
+  letter-spacing: var(--tracking-tight);
+  color: var(--ink);
+}
+
+.sheet-sub {
+  font-size: var(--fs-11);
+  font-weight: var(--fw-500);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-caps);
+  color: var(--ink-faint);
+}
+
+.sheet-tagline {
+  font-size: var(--fs-11);
+  font-weight: var(--fw-500);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-caps);
+  color: var(--render);
+}
+
+.sheet-hd-right {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: var(--gap-row);
+}
+
+/* --- the column field ---------------------------------------------------- */
+
+/* An explicit four-column grid, not CSS multi-column.
+   Multi-column was the obvious choice and it was wrong twice: `column-fill:
+   balance` inside a definite-height box balances to the SHORTEST height that
+   fits, which left the bottom third of the sheet empty, and anything that then
+   did not fit overflowed sideways into columns off the right edge of the
+   viewport. Two whole panels were invisible and nothing said so.
+   Explicit columns cost a little hand-balancing and hide nothing. */
+.sheet-field {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: var(--gap-panel);
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(calc(var(--s-12) * 7), 1fr));
+  gap: var(--gap-panel);
+  align-items: start;
+}
+
+/* Columns are separated by --gap-panel; panels stacked INSIDE a column are
+   separated by --gap-section. Two different jobs, two different amounts of air:
+   the wider gutter is what stops four columns reading as one grid of boxes. */
+.sheet-col {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-section);
+  min-width: 0;
+}
+
+/* --- specimen scaffolding ------------------------------------------------ */
+
+/* A two-up grid for spec name / spec sample. Baseline-aligned so the sample
+   sits on the same line as the token that produced it. */
+.spec-grid {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  align-items: baseline;
+  gap: var(--gap-tight) var(--gap-row);
+}
+
+.spec-key {
+  font-family: var(--ff-mono);
+  font-size: var(--fs-11);
+  letter-spacing: var(--tracking-mono);
+  color: var(--ink-faint);
+  white-space: nowrap;
+}
+
+.spec-wrap {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--gap-row);
+}
+
+/* A measure, not a column width. Panels here are ~600px and 11px text set to
+   the full panel runs to 110 characters a line, which is a wall. Everything
+   that is prose gets capped; everything that is a readout does not. */
+.spec-note {
+  font-size: var(--fs-11);
+  line-height: var(--lh-ui);
+  color: var(--ink-faint);
+  max-width: calc(var(--s-12) * 10);
+}
+
+.spec-stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-tight);
+}
+
+/* --- the three lights ---------------------------------------------------- */
+
+.light {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-tight);
+}
+
+/* A swatch, not a rule. Run full-bleed across a 600px panel these read as four
+   coloured underlines competing for the column — and --alarm at 600px wide is
+   decorative red, which the token file forbids in as many words. */
+.light-bar {
+  width: calc(var(--s-12) * 2);
+  height: var(--meter-h);
+  background: var(--tone);
+}
+
+.light-name {
+  font-size: var(--fs-12-5);
+  font-weight: var(--fw-500);
+  color: var(--tone);
+}
+
+.light-job {
+  font-size: var(--fs-11);
+  line-height: var(--lh-ui);
+  color: var(--ink-dim);
+  max-width: calc(var(--s-12) * 10);
+}
+
+/* --- the focus-ring specimen --------------------------------------------- */
+
+/* A STATIC rendering of the real ring, so the sheet can show it without the
+   viewer having to guess what Tab does. The live ring beside it is the same
+   declaration coming from base.css. */
+.spec-focus {
+  outline: var(--focus-ring-w) solid var(--render);
+  outline-offset: var(--focus-ring-offset);
+}
+
+/* --- the tone matrix ----------------------------------------------------- */
+
+.tone-matrix {
+  display: grid;
+  grid-template-columns: max-content max-content minmax(0, 1fr) max-content;
+  align-items: center;
+  gap: var(--gap-row);
+}
+
+.tone-name {
+  font-family: var(--ff-mono);
+  font-size: var(--fs-11);
+  letter-spacing: var(--tracking-mono);
+  color: var(--ink-faint);
+}
+
+/* --- misc ---------------------------------------------------------------- */
+
+.spec-prose {
+  font-size: var(--fs-12-5);
+  line-height: var(--lh-body);
+  color: var(--ink-dim);
+  max-width: calc(var(--s-12) * 11);
+}
+
+/* Panel-variant specimens sit two-up so the difference between "no header",
+   "header", "header + glyph + actions" and "scrolling body" is a comparison
+   rather than four things you have to remember in sequence. */
+.spec-panels {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--gap-row);
+  align-items: stretch;
+}
+
+/* The scrolling-body specimen. Kept off .spec-scrollbox because that one adds a
+   bottom hairline, and a hairline under a panel that already has a border is
+   just a double line. */
+.spec-panel-scroll {
+  max-height: calc(var(--s-12) * 2.5);
+}
+
+/* A partially visible last row is the honest affordance for "there is more";
+   the hairline underneath is what stops it reading as a clipping bug. */
+.spec-scrollbox {
+  max-height: calc(var(--s-12) * 2.5);
+  border-bottom: var(--border-1) solid var(--line);
+}

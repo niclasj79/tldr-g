@@ -1,0 +1,156 @@
+/* =============================================================================
+   TLDR-G VISUAL DEMO — THE MOTION LAYER'S OWN SURFACE
+   =============================================================================
+   Two things live here and nothing else: the three-tier fade-up a render lands
+   in, and the overlay a trace ping draws its hairline and its evidence ring on.
+
+   IT RESTYLES NOTHING. There is no rule in this file that changes the resting
+   appearance of any component. Every selector is gated on an attribute this
+   layer sets while an animation is in flight and removes when it ends, so with
+   nothing animating the file is inert — which is the only honest shape for a
+   stylesheet owned by the motion layer.
+
+   ONLY transform, opacity AND filter ARE ANIMATED. MOTION LAW 4. Nothing here
+   transitions a width, a height, a margin or a colour: those are layout and
+   paint, they cost a frame each, and a stagger built on them stops being a
+   stagger the moment the machine is busy.
+
+   Every value comes from design-tokens.css. Zero literals.
+   ========================================================================== */
+
+/* =============================================================================
+   1. THE RENDER REVEAL
+   -----------------------------------------------------------------------------
+   `:root[data-reveal="N"]` is written by ONE timeline (src/motion/reveal.ts),
+   the same one that lights the map. N is the tier that has landed: 0 fovea,
+   1 penumbra, 2 periphery. Tiers at or below N are up; the rest are still
+   arriving.
+
+   THE TIMING IS NOT IN THIS FILE. The animation's DURATION is --t-ui, but WHEN
+   each tier starts is decided by the attribute change, i.e. by the timeline —
+   never by an animation-delay. A delay here would be a second clock, and the
+   text and the map would drift apart by exactly the amount nobody notices until
+   the product stops feeling machined.
+   ========================================================================== */
+
+:root[data-reveal] [data-reveal-tier] {
+  opacity: var(--reveal-from, var(--latent-opacity));
+  transform: translateY(var(--reveal-rise));
+}
+
+/* The periphery arrives AS A GHOST rather than out of nothing, because that is
+   what the periphery is: known, present, and barely spent on. */
+:root[data-reveal] [data-reveal-tier='2'] {
+  --reveal-from: var(--ghost-opacity);
+}
+
+:root[data-reveal='0'] [data-reveal-tier='0'],
+:root[data-reveal='1'] [data-reveal-tier='0'],
+:root[data-reveal='1'] [data-reveal-tier='1'],
+:root[data-reveal='2'] [data-reveal-tier] {
+  opacity: var(--lod-0-opacity);
+  transform: none;
+  animation: mo-rise var(--t-ui) var(--ease-ui) both;
+}
+
+@keyframes mo-rise {
+  from {
+    opacity: var(--reveal-from, var(--latent-opacity));
+    transform: translateY(var(--reveal-rise));
+  }
+  to {
+    opacity: var(--lod-0-opacity);
+    transform: none;
+  }
+}
+
+/* =============================================================================
+   2. THE TRACE PING'S OVERLAY
+   -----------------------------------------------------------------------------
+   The comet itself is drawn by the renderer, in the buffer, along the chord
+   between two real node ids. What this layer adds is what the comet LEAVES: a
+   1px --evidence hairline along the path it took, and an evidence ring on the
+   source it landed on.
+
+   Both are drawn in the DOM, over the canvas, at exactly the screen positions
+   the camera puts those two world points at — so they sit on the renderer's own
+   chord rather than near it.
+
+   NOTHING HERE OBSTRUCTS THE TERRAIN. The layer is transparent and never
+   receives a pointer event; the hairline is one pixel tall and the ring has no
+   fill. `audit()` measures obstruction off the live DOM, and it correctly finds
+   nothing to charge this layer for.
+   ========================================================================== */
+
+.mo-layer {
+  position: absolute;
+  inset: 0;
+  z-index: var(--z-edges);
+  overflow: hidden;
+  pointer-events: none;
+  /* Not a paint: the audit's occlusion probe reads background-color, and this
+     layer must never be mistaken for chrome sitting on the map. */
+  background: transparent;
+}
+
+/* One cited edge, drawn as the comet travels it and left behind after it. */
+.mo-hair {
+  position: absolute;
+  left: 0;
+  top: 0;
+  /* One stroke square in the layout. Its length is a scaleX, and the scale is
+     computed against this measured width — see `drawTraceMark`. */
+  width: var(--lod-2-stroke);
+  height: var(--lod-2-stroke);
+  background: var(--evidence);
+  transform-origin: 0 50%;
+  opacity: var(--lod-2-opacity);
+  will-change: transform, opacity;
+}
+
+/* The evidence ring the SOURCE gains when the dot lands on it. A ring, not a
+   fill: the node underneath is the engine's reading of that passage and has to
+   stay legible through it. */
+.mo-ring {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: var(--trace-ring);
+  height: var(--trace-ring);
+  margin: calc(var(--trace-ring) / -2) 0 0 calc(var(--trace-ring) / -2);
+  border: var(--lod-2-stroke) solid var(--evidence);
+  border-radius: 50%;
+  background: transparent;
+  opacity: 0;
+  will-change: transform, opacity;
+}
+
+/* =============================================================================
+   3. REDUCED MOTION
+   -----------------------------------------------------------------------------
+   The timeline has already collapsed every run to a single --t-fast step by the
+   time these rules matter, so there is exactly one thing left to say: the tiers
+   arrive together, and they arrive without travelling. The state change is not
+   removed — the answer still lands, the hairline is still drawn on the edge the
+   receipt named — only the movement is.
+   ========================================================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  :root[data-reveal] [data-reveal-tier] {
+    transform: none;
+  }
+
+  @keyframes mo-rise {
+    from {
+      opacity: var(--reveal-from, var(--latent-opacity));
+    }
+    to {
+      opacity: var(--lod-0-opacity);
+    }
+  }
+
+  .mo-hair,
+  .mo-ring {
+    transition: none;
+  }
+}

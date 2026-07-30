@@ -1,0 +1,108 @@
+/* =============================================================================
+   THE TRUST HARNESS — layout only
+   -----------------------------------------------------------------------------
+   Five columns at rail width over the void. Nothing here styles a component:
+   every panel on this page is exactly the panel the product ships, and if one of
+   them needs a tweak to look right the tweak belongs in provenance.css, not
+   here. A harness that restyles its subjects is testing the harness.
+   ============================================================================= */
+
+.th {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-section);
+  height: 100%;
+  padding: var(--gap-section);
+  background: var(--void);
+  overflow: hidden;
+}
+
+.th-hd {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: var(--gap-row) var(--gap-section);
+  flex: none;
+}
+
+.th-title {
+  font-size: var(--fs-20);
+  font-weight: var(--fw-500);
+  line-height: var(--lh-tight);
+  letter-spacing: var(--tracking-tight);
+  color: var(--ink);
+}
+
+.th-meta {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--gap-tight);
+}
+
+.th-k {
+  font-size: var(--fs-11);
+  font-weight: var(--fw-500);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-caps);
+  color: var(--ink-faint);
+}
+
+.th-note {
+  flex: 1 1 34ch;
+  max-width: 78ch;
+  color: var(--ink-faint);
+  font-size: var(--fs-11);
+  line-height: var(--lh-ui);
+}
+
+.th-pings {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--gap-row);
+  width: 100%;
+}
+
+.th-ping {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--gap-tight);
+  padding: 0 var(--pad-chip);
+  border: var(--border-1) solid var(--evidence-a32);
+  border-radius: var(--r-6);
+  font-family: var(--ff-mono);
+  font-size: var(--fs-11);
+  letter-spacing: var(--tracking-mono);
+  color: var(--evidence);
+}
+
+/* Five equal columns. `minmax(0, 1fr)` rather than `1fr`: a grid track's
+   automatic minimum is its content, so without it a long hash inside a panel
+   pushes the whole row wider than the viewport and the page scrolls sideways —
+   which the product forbids and a harness would otherwise hide. */
+.th-cols {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: var(--gap-section);
+  min-height: 0;
+  flex: 1 1 auto;
+}
+
+.th-col {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-section);
+  min-height: 0;
+  min-width: 0;
+}
+
+.th-col > .panel {
+  min-height: 0;
+}
+
+.th-fail {
+  gap: var(--gap-row);
+}
+
+.th-fail .th-title {
+  color: var(--alarm);
+}

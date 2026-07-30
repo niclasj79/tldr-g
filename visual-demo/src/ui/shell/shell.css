@@ -1,0 +1,1461 @@
+/* =============================================================================
+   TLDR-G VISUAL DEMO — THE SHELL
+   -----------------------------------------------------------------------------
+   The fixed frame, the lifecycle screens, and every instrument that floats over
+   the terrain.
+
+   ZERO hex. ZERO raw rgb(). ZERO outer shadows — elevation in this product is a
+   1px --line border plus --edge-light, an INSET highlight along a panel's upper
+   lip, as if it were catching the glow of the terrain underneath it. Panels are
+   thin glass over the void: --panel-bg is translucent on purpose so the map
+   keeps moving behind the instrumentation.
+
+   THE ONE LAYOUT LAW: the terrain owns the horizontal. There is no left rail in
+   this file, there is no element in this file docked to the left edge, and
+   `window.__atlas.audit()` looks for the shape of one at runtime in case a later
+   hand adds one under a different name.
+   ============================================================================= */
+
+/* =============================================================================
+   1. THE FRAME
+   ========================================================================== */
+
+.shell {
+  display: grid;
+  grid-template-rows: var(--shell-topbar-h) auto 1fr var(--shell-hud-h);
+  height: 100%;
+  min-height: 0;
+  background: var(--void);
+}
+
+/* EVERY BAND NAMES ITS OWN ROW.
+   Explicit rows cannot drift when a child disappears — the first time this was
+   photographed with implicit placement, an absent band handed the `1fr` row to
+   the HUD and produced a 169px terrain under a 643px instrument row.
+
+   FOUR ROWS, AND THE SECOND IS THE FAILURE INSTRUMENT. It floated over the
+   stage for one round, to keep the terrain's rect intact when a query missed.
+   That made the loudest report in the product a card lying on top of the thing
+   it reports about, and gave the one failure state in the machine less
+   structural presence than the rung legend. It is a band of the frame now, like
+   the top bar and the HUD, and `auto` means the row is exactly zero tall until
+   something has actually failed. See DegradedBar.tsx. */
+.topbar {
+  grid-row: 1;
+}
+.degraded {
+  grid-row: 2;
+}
+.shell__body {
+  grid-row: 3;
+}
+.hud {
+  grid-row: 4;
+}
+
+/* FIRST-RUN. No instruments, because nothing has been measured. */
+.shell--bare {
+  grid-template-rows: 1fr;
+}
+
+.shell__body {
+  display: flex;
+  min-height: 0;
+  min-width: 0;
+}
+
+/* -----------------------------------------------------------------------------
+   TWO UTILITIES THE PRIMITIVES DELIBERATELY DO NOT PROVIDE
+   -----------------------------------------------------------------------------
+   `.tone-*` sets `--tone` and `--tone-rgb` and PAINTS NOTHING. That is correct:
+   it lets a <Num> inside a toned Panel colour its figure without the Panel
+   tinting every word around it. But it means a span of my own that wants the
+   tone has to ask for it. One class, so the ask is visible.
+
+   `.tip-anchor` is `inline-flex`, so a Tip wrapped around block content shrinks
+   to that content and a flexible child inside it has no free space to grow into
+   — which is how the confidence gauge ended up as a 28px number with an
+   invisible track beside it.
+   -------------------------------------------------------------------------- */
+.u-tone {
+  color: var(--tone);
+}
+
+.tip-anchor.u-block {
+  display: flex;
+  width: 100%;
+}
+
+/* THE STAGE. A positioned box holding the canvas and every layer anchored to it
+   as siblings — the interaction surface measures against this rect. */
+.shell__stage {
+  position: relative;
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* THE DOCK. Every wide instrument that floats over the terrain stacks here,
+   bottom-up, in one column: the timeline, the analyst strip, the rung legend.
+   Stacking them beats positioning each one, because each is optional and any
+   two of them absolutely positioned to the same edge would overlap the moment
+   both were open.
+
+   It does not eat pointer events — the terrain underneath a gap in the column
+   is still draggable. Only the instruments themselves take the pointer. */
+.shell__dock {
+  position: absolute;
+  left: var(--shell-float-inset);
+  right: var(--shell-float-inset);
+  bottom: var(--shell-float-inset);
+  z-index: var(--z-hud);
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-row);
+  pointer-events: none;
+}
+
+.shell__dock > * {
+  pointer-events: auto;
+}
+
+/* NOTHING STEPS ASIDE FOR ATLAS MODE ANY MORE, because Atlas Mode is not over
+   the terrain any more. It used to float a 300px column on the map beside the
+   368px rail, and three rules in this file — this one, the world-map strip and
+   the alarm — existed only to get out of its way. It lives in the rail now
+   (see InspectorRail.tsx), the terrain keeps its whole rect, and the honest
+   unobstructed reading went from 69.7% to 79.5% of the window. */
+
+/* The world-map strip positions itself from these two custom properties, so a
+   shell with furniture can move it without the strip's own file knowing. */
+.shell__stage {
+  --worldmap-top: var(--shell-float-inset);
+  --worldmap-right: var(--shell-float-inset);
+}
+
+/* The legend brings its own glass. This decides how wide it may get — it is a
+   horizontal reading key with a 68ch caption, and boxing it into a column turns
+   the caption into one word per line — and WHICH CORNER it parks in.
+
+   IT PARKS RIGHT, AGAINST THE RAIL. On the left it sat on `Board Governance` in
+   seven of thirteen scenes and on two more labels at 1080p, and it shared that
+   corner with the interaction layer's own selection strip: two plates of chrome
+   stacked, on top of the map's own names. Measured across thirteen scenes at two
+   frame sizes, moving it to the right edge takes occluded labels from 8 to 2 at
+   1440p and from 10 to 2 at 1080p — and the two that are left are under the
+   timeline axis, not under this. The right edge is where the terrain runs out
+   anyway, because the rail is already there.
+
+   It stays on the BOTTOM edge deliberately: the descent's camera-framing probe
+   in `@/ui/atlas` measures this element to work out how much of the frame is
+   covered from below, and a key that moved to the top would tell it the whole
+   lower half was obstructed. */
+.shell__legend {
+  align-self: flex-end;
+  max-width: 100%;
+}
+
+/* =============================================================================
+   2. THE RAIL — right, 320px, the only place dense detail lives
+   ========================================================================== */
+
+.shell__rail {
+  flex: 0 0 var(--shell-rail-w);
+  width: var(--shell-rail-w);
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-row);
+  padding: var(--pad-section);
+  border-left: var(--panel-border);
+  background: var(--panel-bg);
+  backdrop-filter: blur(var(--panel-blur));
+  box-shadow: var(--edge-light); /* inset */
+}
+
+/* THE RAIL STEPS WITH THE FRAME.
+   A fixed 320px column is 12.3% of a 1440p window and 8% of a 4K one, so the
+   extra 2.2× pixels at 4K bought smaller type and more void rather than more
+   instrument. Two steps, both arithmetic over existing tokens, both leaving the
+   terrain far above its 70% floor: at 2560px the stage keeps 80%, at 3840px it
+   keeps 85%. Nothing is added to the rail at a step — the same panels get a
+   measure they can be read at. */
+@media (min-width: 2400px) {
+  .shell__rail {
+    flex-basis: calc(var(--shell-rail-w) + var(--s-12));
+    width: calc(var(--shell-rail-w) + var(--s-12));
+  }
+}
+
+@media (min-width: 3200px) {
+  .shell__rail {
+    flex-basis: calc(var(--shell-rail-w) + var(--s-12) * 2);
+    width: calc(var(--shell-rail-w) + var(--s-12) * 2);
+  }
+}
+
+/* THE FOOT OF THE COLUMN. The one destructive control in the product lives
+   below everything, under a rule, as far from the render button as the layout
+   allows. `margin-top: auto` only bites when the rail is short — in a scrolled
+   rail it simply follows the last panel. */
+.shell__railfoot {
+  margin-top: auto;
+  padding-top: var(--gap-row);
+  border-top: var(--border-1) solid var(--line);
+  display: flex;
+  justify-content: flex-end;
+}
+
+/* ATLAS MODE, HOSTED. Its own stylesheet pins it to the stage as a floating
+   300px column — the second column of chrome that put the honest terrain
+   reading under the 70% floor. In the rail it is a panel like any other: it
+   takes the column's width, it stacks with the rest, and it scrolls with them.
+
+   The rail is the only element that decides this, and it decides it here rather
+   than in atlas.css, because WHERE an instrument is mounted is the shell's
+   business and WHAT it says is the instrument's. */
+.shell__rail > .am {
+  position: static;
+  width: auto;
+  max-width: 100%;
+  min-height: 0;
+}
+
+/* PANELS DO NOT SHRINK — THEY SCROLL.
+   `.panel` declares `min-height: 0`, so as a flex child it will happily compress
+   below its content height rather than overflow the rail. It does not clip when
+   it does: the body spills and lands on top of the panel below it, which is what
+   Analyst Mode looked like the first time it was photographed — six panels of
+   real instrumentation printed over each other. Locking the basis to `auto` puts
+   the overflow back where `u-scroll` can deal with it. */
+.shell__rail > * {
+  flex: 0 0 auto;
+}
+
+/* The one affordance the empty inspector used to carry, without the box. */
+.shell__railhint {
+  padding: 0 var(--pad-row);
+  max-width: 100%;
+}
+
+/* -----------------------------------------------------------------------------
+   THE STAGED QUESTION LIST
+   -----------------------------------------------------------------------------
+   A menu of the corpus's own questions, at rest, in the column that used to hold
+   nothing. Each row is a real control and is styled as one — a well, not a link:
+   the question wraps to as many lines as it needs, and its declared intent sits
+   under it as a chip rather than being truncated into the same line.
+
+   IT IS NOT TINTED WHEN IT IS NOT HOVERED. Five violet wells stacked in the rail
+   would put more --curiosity on the resting frame than the command bar's own
+   intent light, and the question light means the thing you are ASKING, not the
+   things you could ask.
+   -------------------------------------------------------------------------- */
+.sq {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-tight);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* THE INTENT CHIP SITS UNDER THE QUESTION, NOT BESIDE IT.
+   Beside it, measured: the chip takes ~90px off a 368px column, the question
+   wraps from three lines to six, and the item gets TALLER than it was with the
+   chip on its own line. The column is too narrow for a two-column row and the
+   arithmetic says so. */
+.sq__item {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--gap-tight);
+  width: 100%;
+  padding: var(--pad-row);
+  border: var(--border-1) solid var(--line);
+  border-radius: var(--r-10);
+  background: none;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color var(--t-fast) var(--ease-ui), background-color var(--t-fast) var(--ease-ui);
+}
+
+.sq__item:hover:not(:disabled),
+.sq__item:focus-visible {
+  border-color: var(--curiosity);
+  background: var(--curiosity-a06);
+}
+
+/* Disabled follows the button's own convention: the ink recedes, nothing is
+   dimmed with an opacity that would take the border with it. */
+.sq__item:disabled {
+  cursor: default;
+  color: var(--ink-faint);
+}
+
+.sq__item:disabled .sq__q {
+  color: var(--ink-faint);
+}
+
+.sq__q {
+  color: var(--ink);
+  max-width: 100%;
+}
+
+/* TOUCH: a 320px column pinned to the right edge is unreachable in two hands.
+   The rail becomes a bottom sheet over the terrain — the stage keeps its full
+   rect, so the viewport floor is unaffected. */
+:root[data-density='touch'] .shell__body {
+  position: relative;
+}
+
+:root[data-density='touch'] .shell__rail {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: auto;
+  flex: none;
+  /* SIZED TO ITS CONTENT, capped. A sheet pinned to a fixed height shows a
+     half-screen of empty glass whenever the rail is holding one panel, which
+     reads as a broken layout rather than as a restrained one. */
+  height: auto;
+  max-height: var(--shell-sheet-h);
+  border-left: 0;
+  border-top: var(--panel-border);
+  border-radius: var(--r-14) var(--r-14) 0 0;
+  z-index: var(--z-overlay);
+}
+
+/* The dock clears the sheet's WORST CASE rather than its current height: the
+   sheet grows and shrinks with its content, and an instrument that moved every
+   time a panel opened would be worse than one that sits a little high. */
+:root[data-density='touch'] .shell__dock {
+  bottom: calc(var(--shell-sheet-h) + var(--shell-float-inset));
+}
+
+/* =============================================================================
+   3. THE TOP BAR
+   ========================================================================== */
+
+.topbar {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-section);
+  min-width: 0;
+  padding: 0 var(--pad-section);
+  border-bottom: var(--panel-border);
+  background: var(--panel-bg);
+  backdrop-filter: blur(var(--panel-blur));
+  box-shadow: var(--edge-light); /* inset */
+}
+
+.topbar__id {
+  display: flex;
+  align-items: baseline;
+  gap: var(--gap-row);
+  flex: none;
+}
+
+.topbar__id > .dot {
+  align-self: center;
+}
+
+.topbar__name {
+  white-space: nowrap;
+  letter-spacing: var(--tracking-tight);
+}
+
+.topbar__crumbs {
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.topbar__cmd {
+  flex: 1 1 520px;
+  min-width: 220px;
+}
+
+.topbar__right {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-section);
+  flex: none;
+}
+
+/* FIVE SWITCHES, ONE INSTRUMENT.
+   As five bare peers of the wordmark they read as a navigation bar, and this
+   product does not navigate anywhere — every one of them opens an instrument
+   over the same screen. The well is the grouping: the eye reads "panels" once
+   instead of counting to five, and the lit box inside it is still the state. */
+.topbar__panels {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-tight);
+  padding: var(--pad-chip) var(--pad-row);
+  border: var(--border-1) solid var(--line);
+  border-radius: var(--r-6);
+  background: var(--panel-bg-2);
+}
+
+/* THREE CLUSTERS, NOT NINE PEERS. A hairline between them is the same grammar
+   the command bar's readouts use, and it is cheaper than air the 48px band does
+   not have: [the panels] · [the manual] · [share and provenance]. */
+.topbar__right > * + * {
+  padding-left: var(--gap-section);
+  border-left: var(--border-1) solid var(--line-a40);
+}
+
+/* A switch is a word at rest and a box only once it is ON. The box is then doing
+   real work: it is the state, not the affordance. */
+.topbar__panels .chip:not(.is-active),
+.topbar__right > .tip-anchor .chip:not(.is-active) {
+  border-color: transparent;
+  color: var(--ink-faint);
+}
+
+.topbar__panels .chip:not(.is-active):hover,
+.topbar__right > .tip-anchor .chip:not(.is-active):hover {
+  border-color: var(--line);
+  color: var(--ink);
+}
+
+.topbar__tip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--gap-row);
+}
+
+/* THE CORPUS STAMP IS NOT EVIDENCE.
+   It wore --evidence gold on all twenty-one screens, which is how gold stopped
+   meaning "an evidence anchor" and started meaning "a chip". Gold has exactly
+   one job in this product; a permanent badge is not it. This is a stamp, in
+   ink, and it is still the first thing you can read in the corner it sits in. */
+.topbar__corpus {
+  color: var(--ink-faint);
+  padding: 0 var(--pad-chip);
+  border: var(--border-1) solid var(--line);
+  border-radius: var(--r-6);
+  white-space: nowrap;
+}
+
+/* Narrow displays give the breadcrumb up before the command bar or the
+   switches, because those are the two things the product is operated with.
+   Nothing is ever removed from the HUD. */
+@media (max-width: 1500px) {
+  .topbar__crumbs {
+    display: none;
+  }
+}
+
+/* =============================================================================
+   4. THE COMMAND BAR
+   -----------------------------------------------------------------------------
+   The underline is a five-position selector switch. Position carries WHICH
+   intent; the light carries WHERE the classification came from. --render when
+   the engine classified it while rendering, --curiosity when the corpus declares
+   it for a staged question that has not been run, unlit when nobody has
+   classified it at all.
+   ========================================================================== */
+
+.cmd {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-row);
+  min-width: 0;
+}
+
+.cmd__well {
+  position: relative;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.cmd__input {
+  width: 100%;
+  height: calc(var(--hit-min) - var(--s-1));
+  padding: 0 var(--pad-control);
+  font-size: var(--fs-12-5);
+  color: var(--ink);
+  background: var(--panel-bg-2);
+  border: var(--border-1) solid var(--line);
+  border-radius: var(--r-6) var(--r-6) 0 0;
+  border-bottom: 0;
+}
+
+.cmd__input::placeholder {
+  color: var(--ink-faint);
+}
+
+.cmd__track {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  gap: var(--border-1);
+  height: var(--lod-0-stroke);
+  align-items: flex-end;
+}
+
+.cmd__seg {
+  flex: 1 1 0;
+  height: var(--shell-intent-h);
+  background: var(--line);
+  transition:
+    height var(--t-fast) var(--ease-ui),
+    background var(--t-fast) var(--ease-ui);
+}
+
+.cmd__seg[data-lit='rendered'] {
+  height: var(--lod-0-stroke);
+  background: var(--render);
+}
+
+.cmd__seg[data-lit='declared'] {
+  height: var(--lod-0-stroke);
+  background: var(--curiosity);
+}
+
+.cmd__meta {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-row);
+  flex: none;
+  white-space: nowrap;
+}
+
+/* -----------------------------------------------------------------------------
+   THE STAGED QUESTION — in the rail, and nowhere else.
+   The floating card that used to carry this over the terrain is gone; see
+   CommandBar.tsx for why.
+   -------------------------------------------------------------------------- */
+
+/* The staged question itself. */
+.staged__q {
+  color: var(--ink);
+  line-height: var(--lh-body);
+}
+
+/* THE TEN-SECOND THESIS, under the button it is about. It is the one line of
+   explanatory copy in this rail set at reading weight rather than at footnote
+   weight, because it is the sentence the whole product turns on. */
+.staged__thesis {
+  color: var(--ink-dim);
+  line-height: var(--lh-body);
+  max-width: var(--shell-measure);
+}
+
+.staged__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--gap-tight);
+}
+
+/* =============================================================================
+   5. THE BOTTOM HUD — always on, never modal, entirely monospaced
+   ========================================================================== */
+
+.hud {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-section);
+  min-width: 0;
+  overflow: hidden;
+  padding: 0 var(--pad-section);
+  border-top: var(--panel-border);
+  background: var(--panel-bg);
+  backdrop-filter: blur(var(--panel-blur));
+  box-shadow: var(--edge-light); /* inset */
+  font-size: var(--fs-11);
+}
+
+.hud__group {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--gap-tight);
+  white-space: nowrap;
+  flex: none;
+}
+
+.hud__value {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--gap-tight);
+}
+
+.hud__sep {
+  font-family: var(--ff-mono);
+}
+
+/* THE RESOLUTION PARTITION. Five tiers, five counts, and they sum to NODES.
+   It moved down here from the rung legend, which was restating it directly
+   above a row that already carried half of it. */
+.hud--ramp {
+  gap: var(--gap-row);
+}
+
+.hud__tier {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--gap-tight);
+}
+
+.hud--descent {
+  margin-left: auto;
+  padding-left: var(--gap-section);
+  border-left: var(--border-1) solid var(--line-a40);
+}
+
+.hud__rungs {
+  display: inline-flex;
+  gap: var(--gap-tight);
+  color: var(--ink-faint);
+}
+
+.hud__rung[data-here='true'] {
+  color: var(--render);
+}
+
+/* THE ROW NEVER WRAPS AND NEVER SCROLLS: it sheds, from the least load-bearing
+   figure inward. A HUD that reflowed to two lines would change the height of the
+   frame, and the terrain has a floor. */
+@media (max-width: 2100px) {
+  .hud--xwide {
+    display: none;
+  }
+}
+
+@media (max-width: 1700px) {
+  .hud--wide {
+    display: none;
+  }
+}
+
+/* =============================================================================
+   6. THE FAILURE INSTRUMENT — ONE SEVERITY, DOCKED IN THE FRAME
+   -----------------------------------------------------------------------------
+   It takes a band of the frame, which costs the body that band's height, and
+   that is the correct trade: the machine has exactly one failure state, and an
+   interface that answers it with a card in a corner is reporting a softer
+   condition than the one the product is in. See DegradedBar.tsx for the whole
+   argument, including why the two-severity version was withdrawn.
+
+   A failure does not mean the instrument stopped: the map is still on screen at
+   the same world coordinates, the HUD is still measuring, and the previous
+   answer is still inspectable.
+   ========================================================================== */
+
+/* Not a card, not a plate, not glass over the map: furniture, in the same class
+   as the top bar and the HUD.
+
+   The top edge is a full-strength --alarm rule at twice the LOD-0 stroke, which
+   makes it the heaviest line in the product; everything else in the band is the
+   translucent wash and a hairline underneath it. One saturated line across 2560px
+   is louder than any fill, and it does not compete with the fields it is
+   introducing. */
+.degraded {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--gap-section);
+  min-width: 0;
+  padding: var(--pad-row) var(--pad-section);
+  border-top: calc(var(--lod-0-stroke) * 2) solid var(--alarm);
+  border-bottom: var(--border-1) solid var(--alarm-a56);
+  background: var(--alarm-a12);
+}
+
+.degraded__head {
+  display: flex;
+  align-items: baseline;
+  gap: var(--gap-row);
+  flex: 0 0 auto;
+  min-width: 0;
+  padding-right: var(--gap-section);
+  border-right: var(--border-1) solid var(--alarm-a56);
+}
+
+.degraded__banner {
+  color: var(--alarm);
+  padding: 0 var(--pad-chip);
+  border: var(--border-1) solid var(--alarm);
+  border-radius: var(--r-6);
+}
+
+.degraded__code {
+  color: var(--alarm);
+  font-size: var(--fs-12-5);
+}
+
+/* THE FIELDS PACK LEFT AND KEEP THEIR MEASURE.
+   `flex: 1 1 0` split the band into two ~900px cells and capped the prose inside
+   each at 58ch, which left 400px of dead amber between a sentence and the button
+   that answers it — the exact defect the remedy cell was built to fix, restored
+   by the band getting wider. The cells are content-sized now: the reading measure
+   decides the width, the band's own width decides nothing, and what is left over
+   is left over. An alert band is not a table and does not have to fill. */
+.degraded__field {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: var(--shell-measure);
+}
+
+/* The remedy cell holds its own control, so the sentence and the button that
+   performs it are one object rather than two ends of a row. */
+.degraded__field--remedy {
+  display: grid;
+  grid-template-columns: auto auto;
+  grid-template-rows: auto auto;
+  align-items: center;
+  justify-content: start;
+  column-gap: var(--gap-section);
+  max-width: calc(var(--shell-measure) + var(--s-12) * 2);
+}
+
+.degraded__field--remedy > .btn {
+  grid-row: 1 / span 2;
+  grid-column: 2;
+}
+
+/* The most important sentence on the screen is not a caption. --ink-dim is for
+   what you COULD read if you looked; what failed is what you have to read. */
+.degraded__ftext {
+  color: var(--ink);
+  max-width: var(--shell-measure);
+}
+
+.degraded__remedy {
+  color: var(--alarm);
+}
+
+/* =============================================================================
+   7. THE ANSWER
+   ========================================================================== */
+
+.answer__text {
+  color: var(--ink);
+  line-height: var(--lh-body);
+  max-width: var(--shell-measure);
+}
+
+/* ===========================================================================
+   A DISPUTED ANSWER LOOKS DISPUTED AT THUMBNAIL SIZE.
+   When the payload no longer matches its signed hash, the sentence on screen is
+   not the sentence that was signed. Struck and dimmed: still readable, because
+   you have to be able to see WHAT was altered — never presented as a claim.
+   ======================================================================== */
+.answer--disputed .answer__text[data-struck='true'] {
+  color: var(--ink-dim);
+  text-decoration: line-through;
+  text-decoration-color: var(--alarm-a56);
+  text-decoration-thickness: var(--border-1);
+}
+
+/* THE RETRACTION SITS ABOVE THE ANSWER, NOT IN A CORNER CARD BELOW IT. */
+.answer__retracted {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-tight);
+  padding: var(--pad-row);
+  border: var(--border-1) solid var(--alarm-a56);
+  border-radius: var(--r-10);
+  background: var(--alarm-a12);
+}
+
+.answer__gold {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-tight);
+  padding: var(--pad-row);
+  border: var(--border-1) solid var(--evidence-a32);
+  border-radius: var(--r-10);
+  background: var(--evidence-a06);
+}
+
+/* A BADGE THAT VOUCHES MUST STOP VOUCHING. Gold is the evidence light; a
+   by-construction row scored over bytes that have since moved is not evidence
+   of anything, so it gives the light back. */
+.answer__gold[data-disputed='true'] {
+  border-color: var(--line);
+  background: none;
+}
+
+/* The composite was measured over the payload. If the payload moved, the four
+   tracks are reading a thing that is no longer there. */
+.answer__signals[data-disputed='true'] {
+  opacity: var(--lod-2-opacity);
+}
+
+.answer__goldv {
+  font-size: var(--fs-14);
+}
+
+.answer__L {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-section);
+  width: 100%;
+}
+
+/* Two caps readouts in a panel header run together into one word. */
+.panel-actions > .tip-anchor + .tip-anchor {
+  padding-left: var(--gap-row);
+  border-left: var(--border-1) solid var(--line);
+}
+
+.answer__L > .meter {
+  flex: 1 1 auto;
+}
+
+/* FOUR GAUGES, ONE TRACK LENGTH.
+   `.tip-anchor.u-block` is a flex row, and a `.meter` inside one shrinks to the
+   width of its own header — so each track was sized to its LABEL. The result was
+   that SEMANTIC FIT · STAND-IN 0.92 drew a bar 1.8× longer than AUTHORIAL 0.90,
+   which makes the only reading a stacked column invites — comparison down the
+   column — the wrong one. One shared track, one right edge, one 0..1 domain. */
+.answer__signals {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-row);
+}
+
+.answer__signals > .tip-anchor {
+  display: flex;
+  width: 100%;
+}
+
+.answer__signal {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.answer__weight {
+  color: var(--ink-faint);
+}
+
+.answer__path {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-tight);
+}
+
+.answer__hop {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: var(--gap-tight);
+  padding: var(--pad-row);
+  border: var(--border-1) solid var(--line);
+  border-radius: var(--r-10);
+  background: var(--panel-bg-2);
+  font-size: var(--fs-12-5);
+}
+
+.answer__hopn {
+  display: inline-flex;
+  gap: var(--gap-tight);
+  flex: none;
+}
+
+.answer__node {
+  color: var(--ink);
+  border-bottom: var(--border-1) solid var(--line);
+  transition: color var(--t-fast) var(--ease-ui), border-color var(--t-fast) var(--ease-ui);
+}
+
+.answer__node:hover {
+  color: var(--render);
+  border-bottom-color: var(--render-a56);
+}
+
+.answer__family {
+  font-size: var(--fs-11);
+}
+
+/* The one hop that crosses open water. Marked by weight, not by a light: it is
+   a property of the rendered path, and the path is what teal already means on
+   the map two feet to the left. */
+.answer__strait {
+  color: var(--ink);
+}
+
+.answer__verdict {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-tight);
+  padding: var(--pad-row);
+  border: var(--border-1) solid var(--line);
+  border-radius: var(--r-10);
+}
+
+.answer__verdict[data-verdict='differs'] {
+  border-color: var(--alarm-a56);
+  background: var(--alarm-a12);
+}
+
+/* =============================================================================
+   8. ANALYST MODE
+   ========================================================================== */
+
+/* THERE IS NO `.astrip`. Analyst Mode thickens the HUD instead of stacking a
+   second bar over the terrain — see AnalystMode.tsx. */
+
+.arail {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-row);
+}
+
+.arail__families,
+.arail__density {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--gap-tight);
+}
+
+/* =============================================================================
+   9. TIMELINE MODE
+   ========================================================================== */
+
+.shell__timeline {
+  order: -1; /* the axis takes the top of the dock column; the legend keeps the floor */
+}
+
+/* AN INSTRUMENT THAT SITS ON THE MAP PAYS FOR ITS OWN HEIGHT.
+   At 206px this panel took 12.1% of the window and Timeline Mode measured 67.2%
+   unobstructed terrain — under the brief's floor, and invisible until `audit()`
+   started subtracting what floats over the canvas. The controls moved into the
+   header row (see TimelineDock.tsx) and the bands around the axis are tightened
+   here: the axis keeps every pixel it had, everything around it gives some back.
+   The one number that matters is measured, not asserted — see the report. */
+.shell__timeline .panel-hd {
+  padding-top: var(--gap-row);
+  padding-bottom: var(--gap-row);
+}
+
+.shell__timeline .panel-body {
+  padding-top: var(--gap-row);
+  padding-bottom: var(--gap-row);
+  gap: var(--gap-tight);
+}
+
+.shell__timeline .tdock__track {
+  margin-top: var(--gap-tight);
+}
+
+.tdock__head,
+.tdock__foot {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-section);
+  flex-wrap: wrap;
+  font-size: var(--fs-11);
+}
+
+.tdock__span,
+.tdock__legend {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--gap-tight);
+  white-space: nowrap;
+}
+
+/* The reading key sits at the far end of the header, away from the counts. Two
+   marks that mean different things must not look the same, so they are not both
+   grey dashes: a boundary is a full-height rule, a claim is a half-height notch,
+   and the unsampled span is the only hatched thing on the chart. */
+.tdock__keys {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--gap-section);
+  margin-left: auto;
+}
+
+.tdock__key {
+  width: var(--s-2);
+  align-self: center;
+}
+
+.tdock__key--boundary {
+  height: var(--s-2);
+  background: var(--evidence);
+}
+
+.tdock__key--claim {
+  height: var(--border-1);
+  background: var(--ink-dim);
+}
+
+.tdock__key--unsampled {
+  height: var(--border-1);
+  border-top: var(--border-1) dashed var(--warn);
+}
+
+/* The axis. Ticks are positioned by their real instant; nothing is binned —
+   except the density envelope behind them, which says so in its own comment. */
+.tdock__track {
+  position: relative;
+  height: var(--s-10);
+  margin: var(--gap-row) 0 var(--s-5);
+  cursor: ew-resize;
+}
+
+/* THE SHAPE, BEHIND THE TICKS.
+   Two hundred hairlines between two end labels is a picket fence: you cannot see
+   WHEN activity clusters, which is the only reason to have a timeline. This is
+   the same events counted into fixed bins and scaled to the busiest one. */
+.tdock__envelope {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: flex-end;
+  gap: var(--border-1);
+  pointer-events: none;
+}
+
+.tdock__bin {
+  flex: 1 1 0;
+  min-height: 0;
+  background: var(--ink-faint);
+  opacity: var(--ghost-opacity);
+}
+
+/* YEAR GRIDLINES. Positions come from the axis's own instants. */
+.tdock__gridline {
+  position: absolute;
+  top: 0;
+  bottom: calc(var(--s-5) * -1);
+  width: var(--border-1);
+  background: var(--line-a40);
+  pointer-events: none;
+}
+
+.tdock__year {
+  position: absolute;
+  bottom: 0;
+  left: var(--gap-tight);
+  font-size: var(--fs-11);
+}
+
+.tdock__axis {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: var(--border-1);
+  background: var(--line);
+}
+
+.tdock__mask {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  background: var(--void-a70);
+  pointer-events: none;
+}
+
+.tdock__tick {
+  position: absolute;
+  top: var(--s-2);
+  bottom: var(--s-2);
+  width: var(--border-1);
+  margin-left: calc(var(--border-1) * -0.5);
+}
+
+.tdock__tick[data-kind='boundary'] {
+  background: var(--evidence);
+  opacity: var(--lod-2-opacity);
+}
+
+.tdock__tick[data-kind='claim'] {
+  background: var(--ink-dim);
+  opacity: var(--ghost-opacity);
+}
+
+/* Rejected claims are on the clock and were never traversed. Latent says both. */
+.tdock__tick[data-quarantined='true'] {
+  opacity: var(--latent-opacity);
+}
+
+/* The span with no events in hand. Hatched rather than filled, because a solid
+   band would read as data of its own. It is the absence of a sample, and it is
+   marked in --warn because it is a limitation of the reading, not a failure. */
+.tdock__unsampled {
+  position: absolute;
+  top: var(--s-2);
+  bottom: var(--s-2);
+  pointer-events: none;
+  border-top: var(--border-1) dashed var(--warn);
+  background: var(--warn-a12);
+}
+
+.tdock__handle {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: var(--s-2);
+  margin-left: calc(var(--s-1) * -1);
+  background: var(--render-a32);
+  border-left: var(--lod-0-stroke) solid var(--render);
+  cursor: ew-resize;
+}
+
+/* =============================================================================
+   10. THE LIFECYCLE PLATES
+   -----------------------------------------------------------------------------
+   Every one of these is a panel floating over the stage, never a page. The
+   terrain is still underneath, at whatever resolution it currently holds.
+   ========================================================================== */
+
+.firstrun,
+.empty,
+.ingest {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  z-index: var(--z-overlay);
+}
+
+/* THE INGEST PLATE IS A MODAL, NOT A HUD.
+   Through translucent glass the finished terrain sat behind a card announcing
+   that documents were still landing, and live labels were sliced in half at its
+   edges — `Boar`, `d Portfolios`. The world behind it is dimmed (see
+   wiring.ts), and the card itself is opaque, so no label is ever half-drawn. */
+.ingest {
+  background: var(--void-a70);
+}
+
+.ingest .ingest__plate {
+  background: var(--surface);
+}
+
+.firstrun {
+  background: var(--void);
+  place-items: end start;
+}
+
+.firstrun__field,
+.empty__field {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: var(--z-terrain);
+}
+
+/* THE TITLE BLOCK. Anchored to the lower left like the title block of a
+   technical drawing, so the constellation owns the frame and the words sit
+   beside it rather than on top of it. Centring both would have put the plate
+   exactly where the strait crosses, which is the one part of the shape the
+   screen exists to show.
+
+   IT SCALES WITH THE FRAME. At a fixed 510px it was 1.5% of a 4K window and had
+   no relationship to the 2160px of void above it — chrome floating in an ocean
+   of empty pixels, which is the thing this screen is supposed to be the opposite
+   of. Width, margins and type are all bound to the viewport now, so the same
+   composition arrives at every size. */
+.firstrun__plate {
+  position: relative;
+  z-index: var(--z-hud);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--gap-row);
+  width: clamp(420px, 34vw, 900px);
+  margin: 0 0 14vh 9vw;
+  padding-left: var(--gap-section);
+  border-left: var(--lod-0-stroke) solid var(--render);
+}
+
+/* THE TYPE SCALES WITH THE FRAME.
+   Written against `.firstrun` so it beats the `t-*` size utilities the markup
+   also carries — those set the FLOOR of each step, and the clamp takes it up
+   from there as the window grows. This is the one screen in the product with no
+   instrument on it, so it is the one screen where type can be the subject. */
+.firstrun .firstrun__name {
+  color: var(--ink);
+  font-size: clamp(var(--fs-28), 3vw, calc(var(--fs-28) * 2.2));
+  line-height: var(--lh-tight);
+}
+
+.firstrun .firstrun__tagline {
+  letter-spacing: var(--tracking-tight);
+  font-size: clamp(var(--fs-16), 1.4vw, calc(var(--fs-28) * 1.2));
+}
+
+.firstrun .firstrun__body {
+  max-width: var(--shell-measure);
+  font-size: clamp(var(--fs-14), 0.86vw, var(--fs-20));
+  line-height: var(--lh-body);
+}
+
+.firstrun .firstrun__note {
+  max-width: var(--shell-measure);
+  font-size: clamp(var(--fs-12-5), 0.66vw, var(--fs-16));
+}
+
+.firstrun__corpus {
+  color: var(--ink-faint);
+  margin-top: var(--gap-section);
+}
+
+.empty__plate,
+.ingest__plate {
+  position: relative;
+  z-index: var(--z-hud);
+  width: min(560px, 80%);
+}
+
+.empty__ramp {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-row);
+}
+
+/* The phase ledger. A row with no figure has not finished — and shows no
+   figure, rather than a zero that would read as a measurement. */
+.ingest__ledger {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-tight);
+}
+
+.ingest__phase {
+  display: grid;
+  grid-template-columns: auto 8ch 7ch 1fr;
+  align-items: center;
+  gap: var(--gap-row);
+}
+
+.ingest__pname {
+  font-size: var(--fs-12-5);
+  color: var(--ink-dim);
+}
+
+.ingest__phase[data-done='true'] .ingest__pname {
+  color: var(--ink);
+}
+
+.ingest__phase--total {
+  margin-top: var(--gap-tight);
+  padding-top: var(--gap-row);
+  border-top: var(--border-1) solid var(--line);
+}
+
+/* =============================================================================
+   11. HELP AND THE GLOSSARY
+   ========================================================================== */
+
+.help {
+  width: min(1120px, 92vw);
+  max-height: 86vh;
+}
+
+.help__thesis {
+  color: var(--ink);
+  max-width: var(--shell-measure);
+  line-height: var(--lh-body);
+}
+
+.help__cols {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: var(--gap-panel);
+  margin: var(--gap-section) 0;
+}
+
+.help__col {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-tight);
+  min-width: 0;
+}
+
+.help__lights {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-tight);
+}
+
+.help__light {
+  font-size: var(--fs-12-5);
+  color: var(--ink-dim);
+  padding-left: var(--gap-row);
+  border-left: var(--lod-0-stroke) solid var(--line);
+}
+
+.help__light[data-light='render'] {
+  border-left-color: var(--render);
+}
+.help__light[data-light='evidence'] {
+  border-left-color: var(--evidence);
+}
+.help__light[data-light='curiosity'] {
+  border-left-color: var(--curiosity);
+}
+.help__light[data-light='alarm'] {
+  border-left-color: var(--alarm);
+}
+
+.help__group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-tight);
+  margin-top: var(--gap-row);
+}
+
+/* One grid for the whole group, so every key cap in it shares one column width
+   and the labels start on a single left edge. */
+.help__keys {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: var(--gap-tight) var(--gap-row);
+  align-items: baseline;
+}
+
+.help__key {
+  display: contents;
+}
+
+
+.help__glossary {
+  columns: 3 300px;
+  column-gap: var(--gap-panel);
+}
+
+.help__term {
+  break-inside: avoid;
+  margin-bottom: var(--gap-tight);
+}
+
+.help__termhd {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  min-width: 0;
+}
+
+/* =============================================================================
+   12. SHARE
+   ========================================================================== */
+
+.share {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--gap-tight);
+}
+
+.share__url {
+  width: 26ch;
+  font-size: var(--fs-11);
+  color: var(--ink-dim);
+  background: var(--panel-bg-2);
+  border: var(--border-1) solid var(--line);
+  border-radius: var(--r-6);
+  padding: 0 var(--pad-chip);
+}
+
+/* =============================================================================
+   THE WALKTHROUGH
+   -----------------------------------------------------------------------------
+   Docked bottom-centre above the HUD, never modal. The terrain stays live and
+   interactive behind it — the user is meant to keep operating the product while
+   being walked through it, so this must never take the pointer hostage.
+
+   It sits centre rather than in a corner because both lower corners are already
+   spoken for: the hover card docks bottom-left and the rung legend bottom-right.
+   ========================================================================== */
+.walk {
+  position: fixed;
+  left: 50%;
+  bottom: calc(var(--s-10) + var(--s-4));
+  transform: translateX(-50%);
+  z-index: var(--z-overlay);
+  width: min(560px, calc(100vw - var(--s-12) * 2));
+  padding: var(--pad-panel);
+  background: var(--panel-bg);
+  backdrop-filter: blur(var(--panel-blur));
+  border: var(--border-1) solid var(--panel-border);
+  border-radius: var(--r-10);
+  box-shadow: var(--edge-light); /* inset top-edge light; never an outer shadow */
+}
+
+.walk__hd {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--gap-row);
+  margin-bottom: var(--s-2);
+}
+
+.walk__count {
+  font-family: var(--ff-mono);
+  font-size: var(--fs-11);
+  letter-spacing: var(--tracking-mono);
+  color: var(--ink-faint);
+}
+
+.walk__title {
+  margin: 0 0 var(--s-2);
+  font-family: var(--ff-ui);
+  font-size: var(--fs-16);
+  font-weight: var(--fw-650);
+  line-height: var(--lh-tight);
+  color: var(--ink);
+}
+
+.walk__body {
+  margin: 0 0 var(--s-4);
+  font-size: var(--fs-12-5);
+  line-height: var(--lh-body);
+  color: var(--ink-dim);
+}
+
+.walk__ft {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--gap-row);
+}
+
+.walk__ticks {
+  display: flex;
+  gap: var(--s-1);
+}
+
+/* Ticks, not a progress bar. A bar would imply something is loading. */
+.walk__tick {
+  width: 14px;
+  height: 2px;
+  background: var(--line);
+}
+
+.walk__tick--on {
+  background: var(--render);
+}
+
+.walk__acts {
+  display: flex;
+  gap: var(--s-2);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .walk {
+    transition: none;
+  }
+}
+
+/* The legend and the walkthrough both explain the map. While the walkthrough is
+   running it owns that job, so the legend stands down rather than colliding with
+   it in the same strip — the same rule the legend already follows for Atlas and
+   Timeline mode. */
+:root[data-walkthrough='1'] .shell__legend {
+  display: none;
+}

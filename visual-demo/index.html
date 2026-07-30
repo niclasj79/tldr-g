@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="dark" />
+    <meta name="theme-color" content="#0A0D13" />
+
+    <title>TLDR-G Visual Demo — the knowledge engine with the hood up</title>
+    <meta
+      name="description"
+      content="An interactive look inside the architecture: one synthetic corpus laid out as terrain, a token budget spent in front of you, and a signed trace for every answer. Not a product tour — the workings, exposed."
+    />
+
+    <!-- Vite rewrites root-relative href/src in this file with the build's base,
+         so this resolves to /visual-demo/favicon.svg once published. -->
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+
+    <!--
+      SOCIAL CARDS.
+
+      The URLs below are ABSOLUTE and hardcoded on purpose. Vite rewrites
+      root-relative paths in href/src attributes, but it does NOT touch the
+      content attribute of a meta tag — so a value like "/og.png" would ship
+      verbatim and every scraper would resolve it against its own origin and get
+      nothing. Crawlers require absolute URLs here regardless.
+
+      If this is ever deployed anywhere other than https://tldr-g.ai/visual-demo/,
+      these four values are the ones to change.
+
+      og.png is a real screenshot of the running instrument, produced by
+      `node scripts/og.mjs` driving the app through its own scene hook. The
+      visual doctrine requires marketing assets to be reproducible from the real
+      interface rather than drawn, so re-running that script is how the card is
+      updated — it cannot drift into showing something the product does not do.
+
+      The alt text below deliberately quotes NO figures. It describes a
+      regenerable screenshot, and prose that restates a number the instrument
+      produces goes stale the first time the corpus changes.
+    -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="TLDR-G" />
+    <meta property="og:title" content="TLDR-G Visual Demo — the knowledge engine with the hood up" />
+    <meta
+      property="og:description"
+      content="An interactive look inside the architecture: one synthetic corpus laid out as terrain, a token budget spent in front of you, and a signed trace for every answer. Not a product tour — the workings, exposed."
+    />
+    <meta property="og:url" content="https://tldr-g.ai/visual-demo/" />
+    <meta property="og:image" content="https://tldr-g.ai/visual-demo/og.png" />
+    <meta property="og:image:type" content="image/png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta
+      property="og:image:alt"
+      content="The visual demo at the island rung: a dark knowledge terrain with a two-hop answer path lit in teal crossing a strait between two islands, beside a receipt panel comparing the tokens a stuffed context would have cost against the tokens actually rendered."
+    />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="TLDR-G Visual Demo — the knowledge engine with the hood up" />
+    <meta
+      name="twitter:description"
+      content="An interactive look inside the architecture: one synthetic corpus laid out as terrain, a token budget spent in front of you, and a signed trace for every answer. Not a product tour — the workings, exposed."
+    />
+    <meta name="twitter:image" content="https://tldr-g.ai/visual-demo/og.png" />
+    <meta
+      name="twitter:image:alt"
+      content="The visual demo at the island rung: a two-hop answer path lit in teal crossing a strait, beside its token receipt."
+    />
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

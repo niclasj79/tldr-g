@@ -1,0 +1,22 @@
+node_modules/
+dist/
+.vite/
+*.local
+.DS_Store
+
+# Screenshot output from scripts/shoot.mjs and the verify-* harnesses.
+shots/
+
+# Harness build output (dev entries, never shipped).
+dist-harness/
+dist-atlas-harness/
+.atlas-tmp/
+
+# Incremental typecheck state. Build output — it is machine-specific, changes on
+# every `tsc -b`, and carries absolute local paths, so it has no business in a
+# public repo.
+tsconfig.tsbuildinfo
+
+# Internal strategy material — brand doctrine and the viz lookbook.
+# Kept local deliberately: the lookbook is competitive analysis and the repo is public.
+docs/

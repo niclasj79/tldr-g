@@ -1,0 +1,755 @@
+/* =============================================================================
+   TLDR-G VISUAL DEMO — PRIMITIVES
+   -----------------------------------------------------------------------------
+   The chrome vocabulary. Sixteen parts, no variants beyond the ones declared
+   here, zero values that are not a var() from design-tokens.css.
+
+   ELEVATION: 1px --line border + --edge-light, which is an INSET highlight along
+   the top edge only. There is no light source above this UI, so there is nothing
+   that could cast a drop shadow. Every `box-shadow` in this file is that inset
+   token; `scripts/check-discipline.mjs` fails the build on an outer one.
+
+   GLOW: expressed as `filter: drop-shadow(0 0 var(--lod-0-glow) ...)`, capped at
+   6px by the token, and spent ONLY on the lod-0 fovea state. It is data. The
+   product never blooms.
+
+   TONE: every toned primitive renders exactly one `.tone-*` class, always — the
+   default is `.tone-neutral`. That is deliberate: it stops a toned Panel from
+   silently tinting every number inside it. Tone is declared where it is meant,
+   never inherited by accident.
+   ============================================================================= */
+
+/* -----------------------------------------------------------------------------
+   0. THE TONE CHANNEL
+   -----------------------------------------------------------------------------
+   Two variables, set together. `--tone` paints; `--tone-rgb` is what alpha
+   variants are mixed from. Nothing downstream may set one without the other.
+   -------------------------------------------------------------------------- */
+
+.tone-neutral {
+  --tone: var(--ink);
+  --tone-rgb: var(--ink-rgb);
+}
+.tone-dim {
+  --tone: var(--ink-dim);
+  --tone-rgb: var(--ink-dim-rgb);
+}
+.tone-faint {
+  --tone: var(--ink-faint);
+  --tone-rgb: var(--ink-faint-rgb);
+}
+.tone-render {
+  --tone: var(--render);
+  --tone-rgb: var(--render-rgb);
+}
+.tone-evidence {
+  --tone: var(--evidence);
+  --tone-rgb: var(--evidence-rgb);
+}
+.tone-curiosity {
+  --tone: var(--curiosity);
+  --tone-rgb: var(--curiosity-rgb);
+}
+.tone-ok {
+  --tone: var(--ok);
+  --tone-rgb: var(--ok-rgb);
+}
+.tone-warn {
+  --tone: var(--warn);
+  --tone-rgb: var(--warn-rgb);
+}
+.tone-alarm {
+  --tone: var(--alarm);
+  --tone-rgb: var(--alarm-rgb);
+}
+
+/* =============================================================================
+   1. PANEL — thin glass over the void
+   -----------------------------------------------------------------------------
+   Not a card and not a slab. --panel-bg is translucent on purpose so the terrain
+   keeps moving underneath the instrumentation; the blur is what makes it read as
+   glass rather than as a hole. The title is 11px uppercase --ink-faint with wide
+   tracking, because a panel title is a section marker, not a headline.
+   ========================================================================== */
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  min-width: 0;
+  background: var(--panel-bg);
+  -webkit-backdrop-filter: blur(var(--panel-blur));
+  backdrop-filter: blur(var(--panel-blur));
+  border: var(--panel-border);
+  border-radius: var(--r-14);
+  box-shadow: var(--edge-light); /* inset, top edge only */
+  color: var(--ink);
+}
+
+.panel-hd {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-row);
+  min-height: var(--hit-min);
+  padding: var(--pad-section) var(--pad-panel);
+  border-bottom: var(--border-1) solid var(--line-a40);
+}
+
+.panel-title {
+  font-size: var(--fs-11);
+  font-weight: var(--fw-500);
+  line-height: var(--lh-ui);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-caps);
+  color: var(--ink-faint);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.panel-glyph {
+  color: var(--tone);
+  font-size: var(--fs-12-5);
+  line-height: 1;
+  flex: none;
+}
+
+.panel-actions {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: var(--gap-tight);
+  flex: none;
+}
+
+.panel-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-row);
+  padding: var(--pad-panel);
+  min-height: 0;
+}
+
+.panel-body.is-scroll {
+  overflow: auto;
+}
+
+/* =============================================================================
+   2. NUM — the mono numeric primitive
+   -----------------------------------------------------------------------------
+   THE CREDIBILITY ENGINE. Every measured number in the product renders through
+   this and nothing else. Tabular figures so a column of readouts is a column;
+   the unit set smaller and in --ink-faint so the FIGURE dominates and the unit
+   recedes to where a unit belongs.
+   ========================================================================== */
+
+.num {
+  /* The hairline that separates thousands. A styled gap, not a character, so it
+     cannot depend on whether the mono face happens to ship U+2009 — and so the
+     figure copies to the clipboard as `21044`. */
+  --num-sep-w: 0.34em;
+
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.3em;
+  font-family: var(--ff-mono);
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1, 'zero' 1;
+  letter-spacing: var(--tracking-mono);
+  color: var(--tone);
+  white-space: nowrap;
+}
+
+.num-f {
+  font-weight: var(--fw-500);
+}
+
+.num-sep {
+  display: inline-block;
+  width: var(--num-sep-w);
+}
+
+.num-u {
+  font-size: 0.72em;
+  font-weight: var(--fw-400);
+  color: var(--ink-faint);
+  letter-spacing: var(--tracking-caps);
+}
+
+/* Count animation locks its own width in advance, in `ch` of the mono face, so
+   nothing on the row reflows while the figure is moving. */
+.num.is-counting .num-f {
+  display: inline-block;
+  text-align: right;
+}
+
+/* A number the engine did not supply is an em dash, never a zero and never a
+   placeholder that looks like a reading. */
+.num.is-nil {
+  color: var(--ink-faint);
+}
+
+/* =============================================================================
+   3. HASH — a checkable thing, in old light
+   -----------------------------------------------------------------------------
+   Amber because a content hash is evidence: its authority predates this session.
+   Truncated for the eye, complete in the title attribute, complete on the
+   clipboard. The dotted underline is the affordance that says "this is meant to
+   be taken away and checked".
+   ========================================================================== */
+
+.hash {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.6ch;
+  font-family: var(--ff-mono);
+  font-size: var(--fs-12-5);
+  letter-spacing: var(--tracking-mono);
+  color: var(--evidence);
+  background: none;
+  max-width: 100%;
+}
+
+.hash-label {
+  font-family: var(--ff-ui);
+  font-size: var(--fs-11);
+  font-weight: var(--fw-500);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-caps);
+  color: var(--ink-faint);
+  flex: none;
+}
+
+/* The algorithm scheme is context, not the value being compared. It is set back
+   so the eye lands on the first characters of the digest itself. */
+.hash-prefix {
+  color: var(--ink-faint);
+  flex: none;
+  margin-right: calc(var(--s-1) * -0.5);
+}
+
+.hash-v {
+  border-bottom: var(--border-1) dotted var(--evidence-a32);
+  transition: border-color var(--t-fast) var(--ease-ui), color var(--t-fast) var(--ease-ui);
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+button.hash:hover .hash-v {
+  border-bottom-color: var(--evidence-a80);
+}
+
+.hash-ell {
+  color: var(--ink-faint);
+  flex: none;
+}
+
+.hash.is-copied .hash-v {
+  color: var(--ok);
+  border-bottom-color: transparent;
+}
+
+.hash-copied {
+  color: var(--ok);
+  font-family: var(--ff-ui);
+  font-size: var(--fs-11);
+  letter-spacing: var(--tracking-caps);
+  text-transform: uppercase;
+}
+
+/* =============================================================================
+   4. CHIP — a filter state you can see from across the room
+   ========================================================================== */
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--gap-tight);
+  min-height: var(--hit-icon);
+  padding: 0 var(--pad-control);
+  border: var(--border-1) solid var(--line);
+  border-radius: var(--r-6);
+  background: none;
+  color: var(--ink-dim);
+  font-size: var(--fs-12-5);
+  font-weight: var(--fw-400);
+  line-height: 1;
+  white-space: nowrap;
+  transition: color var(--t-fast) var(--ease-ui), border-color var(--t-fast) var(--ease-ui),
+    background-color var(--t-fast) var(--ease-ui);
+}
+
+button.chip:hover {
+  color: var(--ink);
+  border-color: var(--ink-a20);
+}
+
+.chip.is-active {
+  color: var(--tone);
+  border-color: rgb(var(--tone-rgb) / 0.4);
+  background: rgb(var(--tone-rgb) / 0.12);
+}
+
+/* The count is a <Num>; it brings its own mono rail and its own tone. All this
+   rule does is size it down so it reads as an annotation on the label. */
+.chip-count {
+  font-size: var(--fs-11);
+}
+
+/* =============================================================================
+   5. BTN — three weights of intent, none of them loud
+   ========================================================================== */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--gap-tight);
+  min-height: var(--hit-min);
+  padding: 0 var(--s-3);
+  border: var(--border-1) solid transparent;
+  border-radius: var(--r-6);
+  font-size: var(--fs-12-5);
+  font-weight: var(--fw-500);
+  line-height: 1;
+  color: var(--ink-dim);
+  white-space: nowrap;
+  transition: color var(--t-fast) var(--ease-ui), border-color var(--t-fast) var(--ease-ui),
+    background-color var(--t-fast) var(--ease-ui);
+}
+
+.btn-sm {
+  min-height: var(--hit-icon);
+  padding: 0 var(--s-2);
+  font-size: var(--fs-11);
+}
+
+.btn-ghost:hover:not(:disabled) {
+  color: var(--ink);
+  background: var(--ink-a06);
+}
+
+.btn-quiet {
+  color: var(--ink);
+  background: var(--panel-bg-2);
+  border-color: var(--line);
+  box-shadow: var(--edge-light); /* inset, top edge only */
+}
+
+.btn-quiet:hover:not(:disabled) {
+  border-color: var(--ink-a20);
+}
+
+.btn-primary {
+  color: var(--tone);
+  background: rgb(var(--tone-rgb) / 0.12);
+  border-color: rgb(var(--tone-rgb) / 0.4);
+  box-shadow: var(--edge-light); /* inset, top edge only */
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: rgb(var(--tone-rgb) / 0.2);
+  border-color: rgb(var(--tone-rgb) / 0.56);
+}
+
+.btn:disabled {
+  color: var(--ink-faint);
+  background: none;
+  border-color: var(--line);
+}
+
+/* =============================================================================
+   6. METER — an instrument bar, never a progress toy
+   -----------------------------------------------------------------------------
+   3px tall, square ends, --line track, tone fill. The fill transitions only when
+   the number behind it changes; there is no mount animation, because a bar that
+   sweeps up on first paint is telling you about a page load, not about a value.
+   ========================================================================== */
+
+.meter {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-tight);
+  min-width: 0;
+}
+
+.meter-hd {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--gap-row);
+}
+
+.meter-label {
+  font-size: var(--fs-11);
+  font-weight: var(--fw-500);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-caps);
+  color: var(--ink-faint);
+}
+
+.meter-track {
+  position: relative;
+  height: var(--meter-h);
+  background: var(--line);
+  border-radius: 0;
+  overflow: hidden;
+}
+
+.meter-fill {
+  height: 100%;
+  background: var(--tone);
+  border-radius: 0;
+  transition: width var(--t-ui) var(--ease-ui);
+}
+
+/* =============================================================================
+   7. GLYPH — the rung, readable without a word
+   -----------------------------------------------------------------------------
+   The four marks have wildly different optical sizes at the same font-size, so
+   each is tuned to occupy the same box. ◆ ⬢ ▮ · must line up in a breadcrumb.
+   ========================================================================== */
+
+.glyph {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.2em;
+  height: 1.2em;
+  line-height: 1;
+  color: var(--tone);
+  flex: none;
+}
+
+/* Optical size correction by TRANSFORM, not by font-size.
+   font-size scaled the 1.2em box along with the mark, so `·` at 1.7em claimed a
+   box twice the width of `◆` and opened a visible hole before its label. A
+   transform leaves the layout box identical for all four, which is the entire
+   point of having a glyph component. */
+.glyph-continent {
+  transform: scale(0.92);
+}
+.glyph-island {
+  transform: scale(0.86);
+}
+.glyph-asset {
+  transform: scale(0.8);
+}
+.glyph-passage {
+  transform: scale(1.7);
+}
+
+/* =============================================================================
+   8. STATEDOT — machine condition, four states, no motion
+   -----------------------------------------------------------------------------
+   `pending` is a ring rather than a pulse. A pulsing dot is decorative motion
+   dressed up as information: it tells you nothing the ring does not, and it
+   moves forever whether or not anything is happening.
+   ========================================================================== */
+
+.dot {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--gap-tight);
+  font-size: var(--fs-11);
+  line-height: var(--lh-ui);
+  color: var(--ink-dim);
+  white-space: nowrap;
+}
+
+.dot-mark {
+  width: var(--s-2);
+  height: var(--s-2);
+  border-radius: var(--r-full);
+  background: var(--tone);
+  flex: none;
+}
+
+.dot-off .dot-mark {
+  background: var(--ink-a20);
+}
+
+.dot-pending .dot-mark {
+  background: none;
+  border: var(--border-1) solid var(--tone);
+}
+
+.dot-fail .dot-mark {
+  background: var(--alarm);
+}
+
+.dot-label {
+  color: var(--ink-dim);
+}
+
+/* =============================================================================
+   9. KEYHINT — the keyboard is a first-class input here
+   ========================================================================== */
+
+.keys {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-1);
+}
+
+.key {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: var(--s-5);
+  height: var(--s-5);
+  padding: 0 var(--s-1);
+  font-family: var(--ff-mono);
+  font-size: var(--fs-11);
+  line-height: 1;
+  color: var(--ink-dim);
+  background: var(--panel-bg-2);
+  border: var(--border-1) solid var(--line);
+  border-radius: var(--r-6);
+  box-shadow: var(--edge-light); /* inset, top edge only */
+}
+
+/* =============================================================================
+   10. ROW — label left, value right, hairline between
+   ========================================================================== */
+
+.row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: baseline;
+  gap: var(--gap-row);
+  min-height: var(--hit-row);
+  padding: var(--pad-row) 0;
+}
+
+.row + .row {
+  border-top: var(--border-1) solid var(--line-a40);
+}
+
+.row-l {
+  color: var(--ink-dim);
+  font-size: var(--fs-12-5);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.row-v {
+  color: var(--tone);
+  font-size: var(--fs-12-5);
+  text-align: right;
+  min-width: 0;
+}
+
+.row-v.is-mono {
+  font-family: var(--ff-mono);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: var(--tracking-mono);
+}
+
+/* =============================================================================
+   11. SECTIONLABEL / DIVIDER
+   ========================================================================== */
+
+.section-label {
+  display: block;
+  font-size: var(--fs-11);
+  font-weight: var(--fw-500);
+  line-height: var(--lh-ui);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-caps);
+  color: var(--ink-faint);
+}
+
+.divider {
+  flex: none;
+  width: 100%;
+  height: var(--border-1);
+  background: var(--line);
+  border: 0;
+}
+
+.divider.is-vert {
+  width: var(--border-1);
+  height: auto;
+  align-self: stretch;
+}
+
+/* =============================================================================
+   12. DISCLOSURE — progressive detail, native semantics
+   ========================================================================== */
+
+.disc {
+  min-width: 0;
+}
+
+.disc-sum {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-row);
+  min-height: var(--hit-row);
+  color: var(--ink-dim);
+  font-size: var(--fs-12-5);
+  border-radius: var(--r-6);
+  transition: color var(--t-fast) var(--ease-ui);
+}
+
+.disc-sum:hover {
+  color: var(--ink);
+}
+
+.disc-caret {
+  display: inline-block;
+  color: var(--ink-faint);
+  font-size: var(--fs-12-5);
+  line-height: 1;
+  transition: transform var(--t-fast) var(--ease-ui);
+}
+
+.disc[open] > .disc-sum .disc-caret {
+  transform: rotate(90deg);
+}
+
+.disc-body {
+  padding: var(--pad-row) 0 var(--pad-section) var(--s-4);
+  color: var(--ink-dim);
+  font-size: var(--fs-12-5);
+  line-height: var(--lh-body);
+}
+
+/* =============================================================================
+   13. TIP — a tooltip, never a modal
+   ========================================================================== */
+
+.tip-anchor {
+  display: inline-flex;
+  max-width: 100%;
+}
+
+.tip-pop {
+  position: fixed;
+  z-index: var(--z-overlay);
+  max-width: calc(var(--s-12) * 5);
+  padding: var(--pad-row) var(--pad-control);
+  background: var(--panel-bg-2);
+  -webkit-backdrop-filter: blur(var(--panel-blur));
+  backdrop-filter: blur(var(--panel-blur));
+  border: var(--border-1) solid var(--line);
+  border-radius: var(--r-6);
+  box-shadow: var(--edge-light); /* inset, top edge only */
+  color: var(--ink);
+  font-size: var(--fs-11);
+  line-height: var(--lh-ui);
+  pointer-events: none;
+  opacity: 0;
+  transform: translateY(calc(var(--s-1) * -0.5));
+  transition: opacity var(--t-fast) var(--ease-ui), transform var(--t-fast) var(--ease-ui);
+}
+
+.tip-pop[data-shown='1'] {
+  opacity: 1;
+  transform: none;
+}
+
+/* =============================================================================
+   14. SPARKLINE — small, no axes, no grid, no legend
+   ========================================================================== */
+
+.spark {
+  display: block;
+  color: var(--tone);
+  overflow: visible;
+}
+
+.spark-line {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+
+.spark-base {
+  stroke: var(--line);
+  stroke-width: 1;
+}
+
+/* =============================================================================
+   15. SCRIMOVERLAY — the rare full-bleed state
+   ========================================================================== */
+
+.scrim {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-modal);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--gap-panel);
+  background: var(--scrim);
+  -webkit-backdrop-filter: blur(var(--panel-blur));
+  backdrop-filter: blur(var(--panel-blur));
+}
+
+/* =============================================================================
+   16. LODCHIP — the resolution ramp, as DOM
+   -----------------------------------------------------------------------------
+   The terrain renders the five-state ramp in WebGL; legends, receipts and
+   admission tables need the same five states in the DOM, and they must be the
+   SAME five states or the instrument contradicts itself. This is the canonical
+   DOM rendering: opacity, stroke weight and the 6px fovea glow all read straight
+   off the ramp tokens.
+
+   `latent` is not decoration. It is how the product says "this exists and I
+   chose not to spend on it" — the reason the terrain never has holes.
+   ========================================================================== */
+
+.lodchip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--gap-tight);
+  min-height: var(--hit-icon);
+  padding: 0 var(--pad-control);
+  border-radius: var(--r-6);
+  font-family: var(--ff-mono);
+  font-size: var(--fs-11);
+  letter-spacing: var(--tracking-mono);
+  color: var(--tone);
+  border: var(--lod-2-stroke) solid rgb(var(--tone-rgb) / 0.4);
+  background: rgb(var(--tone-rgb) / 0.06);
+  white-space: nowrap;
+}
+
+.lodchip-lod-0 {
+  opacity: var(--lod-0-opacity);
+  border-width: var(--lod-0-stroke);
+  border-color: rgb(var(--tone-rgb) / 0.8);
+  background: rgb(var(--tone-rgb) / 0.12);
+  /* Glow is data. 6px, capped by the token, earned by being the fovea. */
+  filter: drop-shadow(0 0 var(--lod-0-glow) rgb(var(--tone-rgb) / 0.56));
+}
+
+.lodchip-lod-1 {
+  opacity: var(--lod-1-opacity);
+  border-width: var(--lod-1-stroke);
+  border-color: rgb(var(--tone-rgb) / 0.56);
+}
+
+.lodchip-lod-2 {
+  opacity: var(--lod-2-opacity);
+  border-width: var(--lod-2-stroke);
+}
+
+.lodchip-ghost {
+  opacity: var(--ghost-opacity);
+  border-width: var(--ghost-stroke);
+  filter: blur(var(--ghost-blur));
+}
+
+.lodchip-latent {
+  opacity: var(--latent-opacity);
+  border-width: var(--latent-stroke);
+  background: none;
+}

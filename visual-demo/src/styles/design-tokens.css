@@ -1,0 +1,884 @@
+/* =============================================================================
+   TLDR-G VISUAL DEMO — DESIGN TOKENS
+   -----------------------------------------------------------------------------
+   This file is authoritative. Any new value lands here first.
+   Zero hardcoded hex is permitted anywhere else in the repo.
+   -----------------------------------------------------------------------------
+   If you are about to type a `#` followed by six characters in a .tsx, .ts or
+   .css file that is not this one: stop. Add the value here, give it a name that
+   says WHY it exists, and read it back through `@/styles/tokens.ts`.
+
+   The Atlas is an INSTRUMENT, not a poster. Its visual language is built from a
+   small number of LIGHTS, each of which means exactly one thing. A viewer who
+   learns the lights can read the terrain without reading a single label. That
+   only works if the lights are never spent on decoration.
+   ============================================================================= */
+
+:root {
+  /* ===========================================================================
+     1. GROUND — the void and the surfaces that float over it
+     ---------------------------------------------------------------------------
+     The Atlas is rendered on a near-black ground because the terrain is made of
+     LIGHT. Anything emissive has to have somewhere dark to be emissive against.
+     The surfaces are not "cards" — they are thin glass panels over the void.
+     Their job is to be legible without ever competing with the terrain.
+     =========================================================================== */
+  --void: #0A0D13;        /* the ground. Everything is drawn onto this.        */
+  --surface: #11151E;     /* panel body, one step up from the void.           */
+  --surface-2: #161B27;   /* nested surface: rows inside panels, inputs, wells */
+  --line: #232B3D;        /* the ONLY border colour. 1px. Never thicker.      */
+
+  --void-rgb: 10 13 19;
+  --surface-rgb: 17 21 30;
+  --surface-2-rgb: 22 27 39;
+  --line-rgb: 35 43 61;
+
+  /* ===========================================================================
+     2. INK — the three-step text ramp
+     ---------------------------------------------------------------------------
+     Three steps, no more. --ink is what you are reading. --ink-dim is what you
+     could read if you looked. --ink-faint is structure: units, separators,
+     chrome that must be present but must never pull the eye.
+     =========================================================================== */
+  --ink: #E8EBF4;
+  --ink-dim: #8A93AB;
+  --ink-faint: #525B73;
+
+  --ink-rgb: 232 235 244;
+  --ink-dim-rgb: 138 147 171;
+  --ink-faint-rgb: 82 91 115;
+
+  /* ===========================================================================
+     3. THE THREE LIGHTS — the semantic core of the whole product
+     ---------------------------------------------------------------------------
+     Every non-neutral colour in the Atlas is one of these three, or a community
+     hue. If a new colour is being reached for, the real problem is that the
+     meaning has not been decided yet.
+     =========================================================================== */
+
+  /* --- RENDER LIGHT ---------------------------------------------------------
+     Cyan is THE ENGINE'S ATTENTION. It marks what the renderer is currently
+     spending resolution on: the selected node, the active edges, the focused
+     path, the fovea of the resolution ramp. It is cool and forward-lit because
+     it is being generated RIGHT NOW, in front of you, by the machine.
+     Rule: if the engine is not attending to it, it is not --render.          */
+  --render: #2EE6D0;
+  --render-deep: #0E8A7D;   /* the same attention, receding: trails, rails,
+                               inactive-but-related, the far end of a bundle. */
+  --render-rgb: 46 230 208;
+  --render-deep-rgb: 14 138 125;
+
+  /* --- EVIDENCE LIGHT -------------------------------------------------------
+     Amber is OLD LIGHT. It comes from the sources, not from the model.
+     Citations, provenance traces, content hashes, receipts, signatures,
+     verbatim spans — everything whose authority predates this session.
+     It is warm because it has travelled: it left the document a long time ago
+     and is only now arriving on screen. When amber and cyan appear together
+     you are looking at the engine attending to something it can prove.       */
+  --evidence: #E8C268;
+  --evidence-rgb: 232 194 104;
+
+  /* --- QUESTION LIGHT -------------------------------------------------------
+     Violet is what is NOT known. Knowledge gaps, unresolved coreferences,
+     suggested follow-up questions, the frontier where the terrain stops.
+     It is the only light that points outward. Use it to mark absence — never
+     to mark a feature you happen to think is interesting.                    */
+  --curiosity: #A78BFA;
+  --curiosity-rgb: 167 139 250;
+
+  /* ===========================================================================
+     4. INSTRUMENT STATES
+     ---------------------------------------------------------------------------
+     These are gauge colours, not brand colours. They report machine condition.
+     --alarm is RESERVED FOR FAIL-LOUD and is NEVER decorative. If the product
+     shows red, something is actually wrong and the UI must say exactly what
+     failed and exactly what remedies it. Red as an accent is a bug.
+     =========================================================================== */
+  --ok: #4ADE80;
+  --warn: #F5B14C;
+  --alarm: #F06A6A;
+
+  --ok-rgb: 74 222 128;
+  --warn-rgb: 245 177 76;
+  --alarm-rgb: 240 106 106;
+
+  /* ===========================================================================
+     5. COMMUNITY PALETTE — 8 hue families
+     ---------------------------------------------------------------------------
+     Assigned by STABLE HASH of community id (see tokens.ts::hueForCommunity) so
+     a community keeps its colour across re-bakes. This is spatial memory: the
+     user learns "the orange island" and that must survive a re-layout.
+
+     Communities are HUE FAMILIES, not flat colours:
+       continent  -> the hue as a low-saturation region wash   (~10% alpha)
+       island     -> the hue at mid strength                   (~45% alpha)
+       asset      -> the hue at full strength                  (100%)
+     Reading the hue tells you WHERE YOU ARE without reading a label.
+     Desaturated-luminous by design: eight of these must coexist on one screen
+     without any one of them shouting.
+     =========================================================================== */
+  /* cool blue */
+  --hue-0: #5CA8FF;
+  --hue-0-rgb: 92 168 255;
+  /* warm orange */
+  --hue-1: #FF9D5C;
+  --hue-1-rgb: 255 157 92;
+  /* spring green */
+  --hue-2: #5CE08A;
+  --hue-2-rgb: 92 224 138;
+  /* orchid */
+  --hue-3: #D97AF5;
+  --hue-3-rgb: 217 122 245;
+  /* gold */
+  --hue-4: #FFD75C;
+  --hue-4-rgb: 255 215 92;
+  /* rose */
+  --hue-5: #FF7A9D;
+  --hue-5-rgb: 255 122 157;
+  /* cyan-blue */
+  --hue-6: #4CC3E8;
+  --hue-6-rgb: 76 195 232;
+  /* citron */
+  --hue-7: #C9E05C;
+  --hue-7-rgb: 201 224 92;
+
+  --hue-count: 8;
+
+  /* Region-wash strengths for the containment spine. Defined once, here, so
+     that a continent wash is the SAME weight everywhere it is drawn.          */
+  --wash-continent: 0.10;
+  --wash-island: 0.45;
+  --wash-asset: 1;
+
+  /* ===========================================================================
+     6. ALPHA VARIANTS
+     ---------------------------------------------------------------------------
+     Downstream code must never construct a colour from a hex literal. Use the
+     -rgb triples above with rgb(... / a), or use these named steps when the
+     value is a shared design decision rather than a one-off.
+
+     Naming: --<light>-a<NN> where NN is alpha * 100.
+     =========================================================================== */
+  --render-a06: rgb(var(--render-rgb) / 0.06);   /* barely-there field tint    */
+  --render-a12: rgb(var(--render-rgb) / 0.12);   /* selection fill             */
+  --render-a20: rgb(var(--render-rgb) / 0.20);   /* hover fill                 */
+  --render-a32: rgb(var(--render-rgb) / 0.32);   /* inactive edge stroke       */
+  --render-a56: rgb(var(--render-rgb) / 0.56);   /* active edge stroke         */
+  --render-a80: rgb(var(--render-rgb) / 0.80);   /* focus ring                 */
+  --render-deep-a32: rgb(var(--render-deep-rgb) / 0.32);
+  --render-deep-a56: rgb(var(--render-deep-rgb) / 0.56);
+
+  --evidence-a06: rgb(var(--evidence-rgb) / 0.06);
+  --evidence-a12: rgb(var(--evidence-rgb) / 0.12);  /* citation row wash       */
+  --evidence-a20: rgb(var(--evidence-rgb) / 0.20);
+  --evidence-a32: rgb(var(--evidence-rgb) / 0.32);  /* verbatim span underline */
+  --evidence-a56: rgb(var(--evidence-rgb) / 0.56);
+  --evidence-a80: rgb(var(--evidence-rgb) / 0.80);
+
+  --curiosity-a06: rgb(var(--curiosity-rgb) / 0.06);
+  --curiosity-a12: rgb(var(--curiosity-rgb) / 0.12);
+  --curiosity-a20: rgb(var(--curiosity-rgb) / 0.20);
+  --curiosity-a32: rgb(var(--curiosity-rgb) / 0.32);
+  --curiosity-a56: rgb(var(--curiosity-rgb) / 0.56);
+
+  --ink-a06: rgb(var(--ink-rgb) / 0.06);         /* the top-edge inner light   */
+  --ink-a12: rgb(var(--ink-rgb) / 0.12);
+  --ink-a20: rgb(var(--ink-rgb) / 0.20);
+
+  --line-a40: rgb(var(--line-rgb) / 0.40);       /* hairline over glass        */
+  --line-a70: rgb(var(--line-rgb) / 0.70);
+
+  --ok-a12: rgb(var(--ok-rgb) / 0.12);
+  --warn-a12: rgb(var(--warn-rgb) / 0.12);
+  --alarm-a12: rgb(var(--alarm-rgb) / 0.12);
+  --alarm-a56: rgb(var(--alarm-rgb) / 0.56);
+
+  --void-a70: rgb(var(--void-rgb) / 0.70);
+  --void-a90: rgb(var(--void-rgb) / 0.90);
+
+  /* ===========================================================================
+     7. RESOLUTION RAMP — a five-state visual state machine
+     ---------------------------------------------------------------------------
+     This is the single most load-bearing idea in the visual system. Every node
+     on screen is in exactly one of five resolution states, and the state is
+     legible from across the room:
+
+       lod-0  verbatim / fovea    100%  + 6px --render glow + 1.5px crisp stroke
+       lod-1  summary / penumbra   85%  crisp, NO glow
+       lod-2  label / periphery    55%  1px stroke
+       ghost                       28%  blur(1px), label on hover only
+       latent                      12%  outline only
+
+     `latent` is LOAD-BEARING, not a leftover. It exists so the terrain NEVER
+     has holes. Content the engine chose not to render is still present as
+     topology — you can see that it is there, and you can see that it was not
+     spent on. "Omitted" is a rendering decision, not a deletion.
+     =========================================================================== */
+  --lod-0-opacity: 1;
+  --lod-1-opacity: .85;
+  --lod-2-opacity: .55;
+  --ghost-opacity: .28;
+  --latent-opacity: .12;
+
+  --lod-0-glow: 6px;      /* HARD CEILING. Glow is data, and it is earned by
+                             selection. The product NEVER blooms.             */
+  --lod-0-stroke: 1.5px;
+  --lod-1-stroke: 1.5px;
+  --lod-2-stroke: 1px;
+  --ghost-stroke: 1px;
+  --latent-stroke: 1px;
+  --ghost-blur: 1px;
+
+  /* ===========================================================================
+     8. MOTION
+     ---------------------------------------------------------------------------
+     Three durations. That is the whole budget.
+       --t-fast   state flips the eye should not have to track (hover, ticks)
+       --t-ui     panels, rows, disclosure
+       --t-scene  camera moves and rung transitions — the only slow thing,
+                  because descending a rung is a place change and the user's
+                  spatial memory needs the travel to stay oriented.
+     =========================================================================== */
+  --t-fast: 120ms;
+  --t-ui: 240ms;
+  --t-scene: 700ms;
+
+  --ease-ui: cubic-bezier(.2, .8, .2, 1);
+  --ease-camera: cubic-bezier(.16, 1, .3, 1);
+
+  /* ===========================================================================
+     9. TYPOGRAPHY
+     ---------------------------------------------------------------------------
+     Inter for UI at three weights ONLY — 400 / 500 / 650. Anything heavier
+     reads as marketing. Tight tracking above 20px.
+
+     JetBrains Mono for EVERY NUMBER THAT MEASURES: token counts, latency,
+     hashes, IDs, signatures, degrees, centralities, percentages. The rule is
+     mechanical — if the number came out of the engine, it is monospaced. This
+     is what makes the readouts read as instrumentation rather than as copy.
+     =========================================================================== */
+  --ff-ui: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --ff-mono: 'JetBrains Mono', ui-monospace, 'SFMono-Regular', 'Cascadia Mono',
+             'Roboto Mono', Menlo, Consolas, monospace;
+
+  --fs-11: 11px;      /* micro-labels, axis ticks, unit suffixes              */
+  --fs-12-5: 12.5px;  /* the workhorse: table rows, readouts, secondary UI    */
+  --fs-14: 14px;      /* body, panel content                                  */
+  --fs-16: 16px;      /* panel titles, the answer line                        */
+  --fs-20: 20px;      /* section headers — tracking tightens from here up     */
+  --fs-28: 28px;      /* the single hero number per view. One. Not two.       */
+
+  --lh-tight: 1.15;
+  --lh-ui: 1.35;
+  --lh-body: 1.55;
+
+  --fw-400: 400;
+  --fw-500: 500;
+  --fw-650: 650;
+
+  --tracking-tight: -0.015em;  /* apply at >= --fs-20 */
+  --tracking-normal: 0;
+  --tracking-mono: 0.01em;     /* mono digits breathe slightly better         */
+  --tracking-caps: 0.08em;     /* the only place caps are allowed: unit chips */
+
+  /* ===========================================================================
+     10. STRUCTURE — 4px base unit
+     ---------------------------------------------------------------------------
+     --s-N is the immutable grid ruler: N * 4px. It does NOT change with
+     density. Density changes the DERIVED padding / gap / hit-target tokens in
+     section 12, which are the only spacing values components should consume
+     for chrome. Use --s-N when you need a true geometric constant.
+     =========================================================================== */
+  --s-base: 4px;
+  --s-1: 4px;
+  --s-2: 8px;
+  --s-3: 12px;
+  --s-4: 16px;
+  --s-5: 20px;
+  --s-6: 24px;
+  --s-7: 28px;
+  --s-8: 32px;
+  --s-9: 36px;
+  --s-10: 40px;
+  --s-11: 44px;
+  --s-12: 48px;
+
+  --r-6: 6px;    /* chips, inputs, small controls   */
+  --r-10: 10px;  /* rows, wells, cards              */
+  --r-14: 14px;  /* panels, sheets, the HUD shell   */
+  --r-full: 999px;
+
+  --border-1: 1px;
+
+  /* ===========================================================================
+     11. ELEVATION — border + faint top-edge inner light. NOTHING ELSE.
+     ---------------------------------------------------------------------------
+     ***  DROP SHADOWS ARE FORBIDDEN IN THIS PRODUCT.  ***
+     There is no light source above the UI, so there is nothing to cast one.
+     Depth is communicated by (a) a 1px --line border and (b) --edge-light, an
+     INSET highlight along the top edge, as if the panel's own upper lip is
+     catching the glow of the terrain underneath it. Panels are thin glass over
+     the void, never opaque slabs — --panel-bg is deliberately translucent so
+     the terrain keeps moving behind the instrumentation.
+     If you find yourself writing `box-shadow: 0 Npx ...` with a non-zero
+     y-offset and no `inset`, you are doing it wrong.
+     =========================================================================== */
+  --edge-light: inset 0 1px 0 0 var(--ink-a06);
+  --edge-light-strong: inset 0 1px 0 0 var(--ink-a12);
+  --panel-bg: rgb(var(--surface-rgb) / 0.72);
+  --panel-bg-2: rgb(var(--surface-2-rgb) / 0.78);
+  --panel-border: var(--border-1) solid var(--line);
+  --panel-blur: 12px;                   /* backdrop-filter on glass panels    */
+  --scrim: var(--void-a70);             /* modal ground, never pure black     */
+
+  /* Selection glow. The ONLY emissive shadow permitted, capped at --lod-0-glow
+     and only on nodes the engine is actually attending to.                    */
+  --glow-render: 0 0 var(--lod-0-glow) var(--render-a56);
+  --glow-evidence: 0 0 var(--lod-0-glow) var(--evidence-a56);
+  --glow-alarm: 0 0 var(--lod-0-glow) var(--alarm-a56);
+
+  /* ===========================================================================
+     12. DENSITY-SENSITIVE SPACING + HIT TARGETS
+     ---------------------------------------------------------------------------
+     These are the values the density modes override. Colour NEVER changes
+     across densities — only the amount of air and the size of the targets.
+     Base values below are the `comfortable` defaults.
+     =========================================================================== */
+  --density-pad-scale: 1;     /* multiplier applied to every padding token    */
+  --density-hit-scale: 1;     /* multiplier applied to every hit-target token */
+
+  --pad-panel: calc(var(--s-4) * var(--density-pad-scale));    /* 16px */
+  --pad-section: calc(var(--s-3) * var(--density-pad-scale));  /* 12px */
+  --pad-row: calc(var(--s-2) * var(--density-pad-scale));      /*  8px */
+  --pad-control: calc(var(--s-2) * var(--density-pad-scale));  /*  8px */
+  --pad-chip: calc(var(--s-1) * var(--density-pad-scale));     /*  4px */
+
+  --gap-tight: calc(var(--s-1) * var(--density-pad-scale));    /*  4px */
+  --gap-row: calc(var(--s-2) * var(--density-pad-scale));      /*  8px */
+  --gap-section: calc(var(--s-4) * var(--density-pad-scale));  /* 16px */
+  --gap-panel: calc(var(--s-6) * var(--density-pad-scale));    /* 24px */
+
+  --hit-min: calc(var(--s-8) * var(--density-hit-scale));      /* 32px */
+  --hit-row: calc(var(--s-7) * var(--density-hit-scale));      /* 28px */
+  --hit-icon: calc(var(--s-6) * var(--density-hit-scale));     /* 24px */
+
+  /* Node hit-slop in the terrain: pointer picking radius padding, in px.
+     Touch mode needs this to grow or the graph is unusable with a thumb.     */
+  --hit-slop-node: calc(6px * var(--density-hit-scale));
+
+  /* ===========================================================================
+     13. Z-INDEX — one ladder, declared once
+     =========================================================================== */
+  --z-terrain: 0;    /* the WebGL canvas                    */
+  --z-edges: 10;     /* 2D edge overlays / bundles          */
+  --z-nodes: 20;
+  --z-labels: 30;    /* DOM label layer over the canvas     */
+  --z-hud: 100;      /* docked instrument panels            */
+  --z-overlay: 200;  /* transient inspectors, popovers      */
+  --z-modal: 300;
+  --z-toast: 400;
+  --z-cursor: 500;   /* crosshair / measurement readout     */
+
+  /* ===========================================================================
+     14. PRIMITIVE GEOMETRY  [appended by VISUAL — additive only]
+     ---------------------------------------------------------------------------
+     Four geometric constants that are shared design decisions rather than
+     one-offs, and that every agent's chrome has to agree on or the instrument
+     stops looking machined. They are dimensions, not colours and not durations.
+
+     The focus ring is declared here rather than in base.css because it is a
+     PRODUCT-WIDE PROMISE: a 1px --render hairline held 2px off the control, on
+     every focusable thing, in every panel, forever. Keyboard users get the same
+     instrument the mouse gets.
+
+     --meter-h is 3px because a --Meter is a gauge, not a progress toy: three
+     pixels is enough to read a fill against a track and not enough to read as a
+     button. Never round its ends.
+     =========================================================================== */
+  --focus-ring-w: 1px;
+  --focus-ring-offset: 2px;
+  --scrollbar-w: 6px;
+  --meter-h: 3px;
+}
+
+/* =============================================================================
+   DENSITY MODES
+   -----------------------------------------------------------------------------
+   Set on <html data-density="...">. These blocks override SPACING and
+   HIT-TARGET tokens only. No colour token, no motion token, no type token and
+   no LOD token may appear inside them — density is about reach and air, and if
+   density starts changing meaning the instrument has stopped being readable.
+   ============================================================================= */
+
+/* comfortable — the default. Reading a terrain is a slow activity. */
+:root[data-density='comfortable'] {
+  --density-pad-scale: 1;
+  --density-hit-scale: 1;
+}
+
+/* compact — paddings at -20% for dense analysis sessions on large displays.
+   Hit targets are NOT reduced: shrinking targets to fit more rows is how
+   instruments become unusable.                                              */
+:root[data-density='compact'] {
+  --density-pad-scale: 0.8;
+  --density-hit-scale: 1;
+}
+
+/* touch — hit targets at +40% for finger input. Padding stays comfortable,
+   because the problem on touch is accuracy, not information density.        */
+:root[data-density='touch'] {
+  --density-pad-scale: 1;
+  --density-hit-scale: 1.4;
+}
+
+/* =============================================================================
+   REDUCED MOTION
+   -----------------------------------------------------------------------------
+   Camera flights and rung transitions collapse to --t-fast. Nothing is removed
+   from the screen and nothing is disabled: the terrain still moves you to the
+   right place, it just gets there immediately.
+
+   NOTE: INSTRUMENT READOUTS ALREADY UPDATE INSTANTLY IN EVERY MODE.
+   Token counts, latency, hashes, integrity numbers and LOD states are never
+   animated, tweened, count-up'd or eased under any preference — a gauge that
+   lies for 240ms is a broken gauge. Reduced motion changes camera and panel
+   choreography only.
+   ============================================================================= */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --t-ui: 120ms;
+    --t-scene: 120ms;
+    /* --t-fast is already 120ms and stays put. */
+  }
+}
+
+/* =============================================================================
+   14. TERRAIN GEOMETRY  — appended by the graph renderer (src/graph/**)
+   -----------------------------------------------------------------------------
+   The WebGL terrain draws in CSS pixels, not in arbitrary shader constants. Its
+   glyph sizes, stroke budgets, dash periods and coastline thresholds are design
+   decisions exactly like a panel's padding is, so they live here and are read
+   back through @/graph/palette.ts. Nothing in src/graph/ is permitted to invent
+   one of these numbers inline.
+
+   These are APPENDED values only. No existing token above was changed.
+   ============================================================================= */
+:root {
+  /* --- node glyphs -------------------------------------------------------- */
+  /* A leaf node (passage / entity / source) is a disc whose world radius comes
+     from the bake. These bound it in screen space so it never vanishes into a
+     starfield at low altitude nor swells into a blob at high altitude.        */
+  --node-dot-min: 1.15px;
+  --node-dot-max: 9px;
+  /* A region node (continent / island / asset) is drawn as its BOUNDARY plus a
+     small filled capital at the centroid. This is the capital — the size a
+     region gets when it is NOT the rung you are standing on.                  */
+  --node-capital: 2.6px;
+  /* THE RUNG'S OWN BODIES. A continent seen from the continent rung is not a
+     dot with a label next to it, it is the subject of the screen. These bound
+     the filled body a region draws when it belongs to the current rung, scaled
+     between them by how much of the world that region contains.               */
+  --node-body-min: 5px;
+  --node-body-max: 14px;
+  /* The terminal of the answer path. The largest mark the terrain ever draws,
+     because it is the one thing the whole query was asked to find. It has to
+     clear --node-dot-max, or the answer is drawn exactly the same size as the
+     twenty-three context entities around it and rank stops existing.          */
+  --node-answer: 16px;
+  /* The rest of the answer path: the bridge entity and the hop endpoints.
+     Between a context node and the answer, because that is where they rank.   */
+  --node-path: 11px;
+
+  /* --- the reading spine (the passage rung) -------------------------------- */
+  /* At the passage rung the subject is ONE DOCUMENT, and a document has a
+     direction: it is read from its first byte to its last. So the spans are
+     marks on that axis at their true char offsets, inside the boundary their
+     document declared. This is how much of the document's own containment
+     radius the axis occupies — under 1 so the spans sit inside the edge rather
+     than on it.                                                               */
+  /* A DIAMETER OF THE DECLARED BOUNDARY, at 1: the first byte of the document is
+     at one edge of it and the last byte is at the other, so the axis states the
+     document's extent as well as its order. Below 1 the axis floats inside a
+     boundary it never reaches, which reads as an arbitrary line on a disc.     */
+  --spine-span: 1;
+  /* The axis itself: a hairline in ink under the marks, at this alpha. It is
+     the document, not a relation, so it carries no σ-class and no light.      */
+  --spine-alpha: 0.30;
+
+  /* --- edges -------------------------------------------------------------- */
+  --edge-hairline: 0.8px;     /* the thinnest a relation may be stroked        */
+  --edge-route-max: 3px;      /* the heaviest a trade-route corridor may be    */
+  --edge-dash: 7px;           /* dash period for the temporal / episodic classes */
+  /* The receipted answer path. Road-on-a-map: a dark casing under a bright
+     core, so it survives crossing a landmass and reads as the strongest line
+     in the frame — which, in a product about one answer, it is.               */
+  --edge-answer: 3.4px;
+  --edge-answer-casing: 3px;  /* added to --edge-answer, each side included    */
+  /* How far a route stops SHORT of the nodes it joins, in display pixels. A
+     relation runs between two things, not through them, and the disc it has to
+     clear is a screen-space quantity — so this is too.                        */
+  --edge-trim: 6px;
+
+  /* THE STROKE BUDGET, PER RUNG. The engine ships a pre-filtered candidate set;
+     these are how many of those candidates the terrain is willing to actually
+     draw. A skeleton that strokes 97% of its candidates is not a skeleton, it
+     is the hairball with extra steps, so the coarse rungs keep only the heaviest
+     corridors and bundle them into trunk routes.                              */
+  --edge-budget-continent: 16;
+  --edge-budget-island: 38;
+  --edge-budget-asset: 30;
+  --edge-budget-passage: 20;
+
+  /* HOW A CORRIDOR MEETS ITS REGION, and how far it will detour to stay at sea.
+     A trade route does not start at a capital's town square, it starts at the
+     COAST; and between two land masses it runs through the water rather than
+     straight over the interior of everything in between. Both are cartographic
+     facts about a flow map, not decoration — and together they are what stops
+     every corridor converging on the middle of the terrain.
+       --corridor-coast  how far along the region's own containment radius the
+                         stroke begins, as a fraction of it.
+       --corridor-sea    how hard the routed channel is pushed off the land it
+                         does not serve. 0 restores straight chords.            */
+  --corridor-coast: 0.86;
+  --corridor-sea: 0.62;
+
+  /* THE HORIZON. A relation whose far endpoint is off-camera used to run to a
+     hard cut at the frame edge and read as a loose wire. This is how many
+     display pixels of margin it fades out over instead: the stroke leaves the
+     picture the way a road leaves a map, not the way a cable is severed.      */
+  --edge-horizon: 108px;
+
+  /* --- the region wash ---------------------------------------------------- */
+  /* Density thresholds on the community field. Between these two the coast
+     happens; below the first there is shallow water, then void.               */
+  --coast-outer: 0.20;
+  --coast-inner: 0.55;
+  /* THE COASTLINE IS A SCREEN-SPACE WIDTH, not a world-space one. A wash whose
+     edge softness is fixed in world units defocuses as you approach it, so
+     zooming in removes resolution instead of adding it. This is how wide the
+     land/water transition is allowed to be on the display, at any altitude.   */
+  --coast-px: 1.5px;
+  /* Past this magnification one field texel covers this many display pixels and
+     the density field has nothing left to say. It fades out rather than filling
+     the screen with a flat colour it did not measure.
+
+     THE FADE HAS TO FINISH. At 2.6x it was still painting 43% of a wash at the
+     asset rung, where one texel covers twenty display pixels — a soft violet
+     gradient with no coastline in it, which is the least honest thing a map can
+     put on the ground. --field-texel-fade is the multiple of --field-texel-max
+     at which the wash is fully gone, so below its own resolution the field says
+     nothing rather than saying something it never measured.                    */
+  --field-texel-max: 9px;
+  --field-texel-fade: 1.7;
+  /* HOW LAND IS MADE OUT OF ISLANDS. Communities of the SAME hue family that lie
+     within this fraction of the world's long axis fuse into one landmass with a
+     low isthmus between them; different families never fuse, so the gap between
+     two regions reads as water and a strait stays a strait.                   */
+  --field-merge: 0.032;
+  /* How much of that fused shelf is allowed to become land. Below 1 the isthmus
+     sits lower than the cores it joins, which is what makes the seam visible. */
+  --field-merge-lift: 0.66;
+  /* Exponent on the shelf before it is allowed to make land. Above 1 it CUTS the
+     tail: only the places a family really is become its landmass, instead of a
+     faint everywhere-halo swelling into one world-spanning continent.         */
+  --field-shelf-cut: 1.45;
+  /* Darkening along an internal seam — the join where two communities meet
+     inside one landmass. This is the line that stops a continent reading as a
+     single flat sticker.                                                      */
+  --field-seam: 0.42;
+  /* Amplitude of the world-locked mottling that keeps a landmass from reading
+     as a flat sticker. Also scales the 8-bit dither that kills wash banding.  */
+  --field-grain: 0.55;
+  /* Out-of-scope regions on a descent. The parent you descended into keeps its
+     full hue; its siblings drop to this multiple of it, so the descent has a
+     locus instead of being a label swap.                                      */
+  --field-out-of-scope: 0.26;
+
+  /* --- fog of war --------------------------------------------------------- */
+  /* What is left of the unattended world once the engine has rendered an answer.
+     Nothing disappears — the sea, the peripheral nodes and their relations are
+     all still there, at these fractions of themselves.
+
+     FOG TAKES THE FILL AND LEAVES THE GEOGRAPHY. Scaling the whole wash was
+     what emptied the flagship frame: a 10% wash at 46% is a two-percent
+     difference from the void, so the answer ended up floating in black water
+     with no islands under it and the strait it crosses — the single best
+     argument this product has — was not in the picture at all. So the two terms
+     move in opposite directions. The interior SINKS to the ghost tier, and the
+     COASTLINE STRENGTHENS: an unattended region becomes a drawn outline instead
+     of a filled mass, which is exactly what "the engine did not spend here, but
+     it is still there" should look like.                                      */
+  --fog-sea: 0.30;
+  --fog-coast-gain: 2.6;
+  /* LANDFALL. The islands the answer path actually touches keep their fill —
+     slightly more than they had before the fog, because the whole point of the
+     frame is which ground the answer stands on and what it crossed to get
+     there. Everything else is coastline.                                      */
+  --fog-landfall: 1.0;
+  /* An unattended NODE drops this far along the resolution ramp — it is demoted,
+     not dimmed by an invented constant, and `latent` (12%) is the floor. That is
+     what "peripheral nodes remain as ghost context, nothing relevant ever fully
+     disappears" means in the one place that can enforce it.                    */
+  --fog-demote: 1.35;
+  --fog-edge: 0.10;
+
+  /* --- the label layer ---------------------------------------------------- */
+  --label-offset: 7px;        /* gap between a node's edge and its label       */
+  --label-cell: 8px;          /* collision-grid cell; labels never overlap      */
+  --label-max: 40;            /* hard ceiling on labels on screen at any zoom   */
+  --label-max-width: 232px;   /* a name wider than this is a paragraph          */
+  /* A constellation is 26 nodes. Twenty-six names in one corner is the label
+     storm the layer exists to prevent, so only the ranked few are named: the
+     answer, the bridge, the path endpoints, then whatever still fits.         */
+  --label-constellation-max: 8;
+}
+
+/* =============================================================================
+   15. INPUT + DIRECT MANIPULATION — appended by the interaction layer
+        (src/interaction/**, src/ui/WorldMapStrip.tsx)
+   -----------------------------------------------------------------------------
+   How the instrument feels in the hand is a design decision exactly like a
+   panel's padding is, so the constants that decide it live here rather than as
+   magic numbers inside an event handler. They are read back through
+   `@/interaction/tuning.ts` — the same pattern `@/graph/palette.ts` uses for the
+   terrain's geometry tokens.
+
+   These are APPENDED values only. No existing token above was changed.
+   ============================================================================= */
+:root {
+  /* --- wheel / trackpad zoom ---------------------------------------------- */
+  /* ln(zoom) gained per CSS pixel of wheel travel. A 100px mouse notch is
+     e^0.22 ≈ 1.25×; small enough that ten notches is a considered move rather
+     than a teleport, large enough that the wheel does not feel geared down. */
+  --zoom-wheel-rate: 0.0022;
+  /* A trackpad pinch arrives as ctrl+wheel with much smaller deltas, so it needs
+     its own rate or a pinch barely moves the altitude. */
+  --zoom-pinch-rate: 0.0125;
+  /* Per-event travel ceiling. A flicked wheel can deliver 600px in one event and
+     the terrain would jump a decade of scale between two frames. */
+  --zoom-step-max: 260px;
+
+  /* --- drag, and the momentum that follows it ---------------------------- */
+  /* Movement before a press becomes a drag rather than a click. */
+  --drag-threshold: 3px;
+  /* Momentum decays as e^(-t / --fling-tau). One time constant, honestly
+     integrated — there is no ease curve faked on top of it. */
+  --fling-tau: 340ms;
+  /* CSS px per ms. Below this the fling has stopped and the loop stops with it,
+     rather than crawling for another second at a speed nobody can see. */
+  --fling-min-speed: 0.02;
+  /* CSS px per ms. A ceiling on the measured release velocity, so one anomalous
+     pair of pointer samples cannot throw the terrain across the world. */
+  --fling-max-speed: 6;
+  /* The trailing window the release velocity is measured over. Longer than a
+     single sample pair, because one pair is noise. */
+  --fling-window: 100ms;
+  /* A hand that rested this long before letting go did not throw anything. */
+  --fling-release: 140ms;
+
+  /* --- the hard clamp ----------------------------------------------------- */
+  /* The camera centre may travel this many HALF-FRUSTUMS past the world edge and
+     no further. At 0.5 the world still occupies a quarter of the viewport at the
+     extreme, so there is no gesture that loses the terrain in empty space. */
+  --pan-overscroll: 0.5;
+
+  /* --- hover -------------------------------------------------------------- */
+  /* A fast sweep across the terrain must not become a request storm. The pick
+     and the card are immediate; only the neighbourhood fetch waits this long,
+     and an in-flight one is aborted when the pointer moves on. */
+  --hover-request-debounce: 140ms;
+
+  /* --- semantic zoom ------------------------------------------------------ */
+  /* Multiples of the zoom that framed the current rung. Past --rung-zoom-in the
+     ontology changes: you are not looking at bigger islands, you are looking at
+     assets. Past --rung-zoom-out you have left the rung upwards. */
+  --rung-zoom-in: 2.75;
+  --rung-zoom-out: 0.42;
+  /* Refractory period after a rung change, so a continuing gesture cannot
+     descend two rungs on one flick. */
+  --rung-zoom-cooldown: 900ms;
+
+  /* --- the world-map strip ------------------------------------------------ */
+  --worldmap-w: 160px;
+  --worldmap-h: 90px;
+  --worldmap-dot: 1px;
+
+  /* --- reported caps ------------------------------------------------------ */
+  /* Both are shown on screen as measured numbers when they bind, never applied
+     silently.
+
+     The rubber band was capped at 256 until the shots were looked at. Every one
+     of those nodes respects the 6px glow ceiling on its own, and 256 of them
+     overlapping in a dense region render as one undifferentiated luminous mass —
+     which is the bloom the product forbids, arrived at by addition rather than by
+     a post-process. A selection you cannot count is also not a selection. 64 is
+     still a generous grab, and the readout says what was caught either way. */
+  --marquee-max: 64;
+  --search-results-max: 40;
+}
+
+/* =============================================================================
+   16. THE RUNG ATLAS — appended by the descent layer (src/ui/atlas/**)
+   -----------------------------------------------------------------------------
+   Six values. Four are geometry, one is a READING time — a different kind of
+   thing from the three-duration motion budget in §8, named so that the
+   difference is visible rather than smuggled — and one is a NAMING BUDGET,
+   which is what makes the four rungs four kinds of place rather than one point
+   cloud at four scales.
+
+   These are APPENDED values only. No existing token above was changed.
+   ============================================================================= */
+:root {
+  /* --- the descent choreography ------------------------------------------ */
+  /* The interval between successive waves of the fovea-outward resolve. The
+     children of the rung you descend into do not all sharpen at once: they
+     resolve from the centroid outward, one ring per interval, because that is
+     the order the resolution ramp itself names — fovea, then penumbra, then
+     periphery. The number of waves is DERIVED (--t-scene / --rung-stagger), so
+     the whole choreography still fits inside the one scene duration and still
+     collapses with it under prefers-reduced-motion. */
+  --rung-stagger: 60ms;
+
+  /* --- Atlas Mode --------------------------------------------------------- */
+  /* How long the guided descent rests on a rung before moving to the next one.
+     This is a READING PAUSE, not a transition: it is how long one calm line of
+     copy takes to read, and it is the only value in the file measured in the
+     user's attention rather than in the interface's motion. It is why it is not
+     a fourth entry in the motion budget. Taking manual control cancels it. */
+  --atlas-dwell: 2400ms;
+
+  /* The docked rail. Wide enough for a four-rung ledger row and a caption at a
+     comfortable measure, narrow enough that the terrain still owns the frame. */
+  --atlas-rail-w: 300px;
+  /* The altimeter column: four rung stops with room to read between them. */
+  --atlas-altimeter-h: 168px;
+
+  /* --- the naming budget, and why it is part of the ontology --------------- */
+  /* AT ALTITUDE YOU NAME PLACES; UP CLOSE YOU NAME THINGS.
+
+     The region rungs spend their whole budget on their own bodies and nothing
+     else: six continents get six names, and a continent with four thousand
+     dot-labels over it is a label storm rather than a map.
+
+     The fine rungs are where the cross-cutting entity layer becomes visible in
+     place, so the candidate set jumps from six to sixty-four — twenty-four
+     documents plus forty entities extracted inside them — and naming all of it
+     produced exactly the frame the brief bans: forty names stacked in a column,
+     several of them the same truncated string four times over. This is the
+     ceiling at those two rungs. It is a CEILING, not a target: the label layer
+     places the highest-ranked candidates that fit without colliding, and the
+     analyst readout reports placed-against-possible, so the budget is a stated
+     policy rather than a silent crop. */
+  --atlas-label-fine: 14;
+
+  /* At the top of the world the subject is the LAND, not the six dots at the
+     centroids of it. The camera therefore opens its frame from the continents'
+     centres out toward their containment radii — their coastlines — which is
+     the only framing under which "the hue is the region" is a claim the picture
+     makes rather than one the rail asserts.
+
+     THIS IS THE CEILING ON THAT EXPANSION AND ON THIS CORPUS IT BINDS. The
+     containment radii reach past the coast into the low-density fringe the wash
+     draws as water, so following them all the way out leaves the world small in
+     a large void — the ocean-of-empty-pixels failure, arrived at by being too
+     literal. 1.3 puts the whole world and a margin of sea in shot and still
+     lands the continent rung a clear step above the island rung it descends
+     into, which is the altitude change the descent has to be legible as. */
+  --atlas-world-scale-max: 1.3;
+}
+
+/* =============================================================================
+   17. THE SHELL — appended by the analyst workspace (src/ui/shell/**)
+   -----------------------------------------------------------------------------
+   The frame is FIXED, so its dimensions are constants rather than opinions and
+   they belong here with every other constant. Eight values, all geometry: not
+   one colour, not one duration.
+
+   The top bar and the HUD are deliberately thin. Their job is to be permanently
+   present without ever being the thing you are looking at — 48px is enough for
+   an identity, a breadcrumb and a command bar at --fs-12-5, and 40px is enough
+   for one row of --fs-11 mono. Anything taller starts competing with the terrain
+   for the frame, and the terrain has to keep at least 70% of it.
+
+   These are APPENDED values only. No existing token above was changed.
+   ============================================================================= */
+:root {
+  /* --- the fixed frame ---------------------------------------------------- */
+  --shell-topbar-h: 48px;
+  --shell-hud-h: 40px;
+  /* The ONLY place dense detail lives. Right, always — a left rail would take
+     the horizontal away from the terrain, and `npm run check` fails on one. */
+  --shell-rail-w: 320px;
+  /* Touch turns the rail into a bottom sheet. A finger cannot reach a 320px
+     column on a tablet held in two hands; it can always reach the bottom.
+     This is the sheet's CEILING, not its height — it grows with its content and
+     the terrain furniture above it clears this worst case, so an instrument
+     never has to move because a panel opened. */
+  --shell-sheet-h: 38vh;
+
+  /* --- floating instruments over the terrain ------------------------------ */
+  /* The timeline dock: one axis, its ticks, and a window readout under them. */
+  --shell-timeline-h: 132px;
+  /* How far a floating panel is held off the edge of the stage it floats over. */
+  --shell-float-inset: var(--s-3);
+
+  /* --- the reading measure ------------------------------------------------ */
+  /* Prose in this product is explanatory, never marketing. Past this width a
+     line stops being read and starts being skimmed. */
+  --shell-measure: 58ch;
+
+  /* --- the intent selector ------------------------------------------------ */
+  /* The command bar's underline is a five-position selector switch, one segment
+     per QueryIntent, and the engine's classification lights exactly one of them.
+     This is the height of an unlit segment; the lit one is --lod-0-stroke. */
+  --shell-intent-h: 1px;
+}
+
+/* =============================================================================
+   18. THE MOTION LAYER — appended by src/motion/**
+   -----------------------------------------------------------------------------
+   Five values, and not one of them is a duration the motion budget in §8 already
+   owns. The five signature animations all run for --t-fast / --t-ui / --t-scene:
+   what is declared here is the SHAPE those durations are spent in — how far
+   apart two waves of one arrival are, how far a sentence rises as it lands, how
+   wide the evidence ring around a cited source is, and how a settle decelerates.
+
+   THE ONE LAW THESE SERVE. Motion in this product depicts a state transition and
+   nothing else, so every value here answers a question about a transition that
+   really happened — never about how long something should look busy for.
+
+   These are APPENDED values only. No existing token above was changed.
+   ============================================================================= */
+:root {
+  /* --- the render reveal --------------------------------------------------- */
+  /* The interval between the three tiers of one arriving render: fovea, then
+     penumbra, then periphery. It is ONE --t-fast, deliberately — the shortest
+     interval the eye reads as sequence rather than as simultaneity — and it is
+     stated as the token rather than as 120ms so the two can never drift apart.
+
+     THE SAME NUMBER DRIVES THE TEXT AND THE MAP, because they are the same
+     render landing in two places. One timeline writes both; see src/motion. */
+  --reveal-step: var(--t-fast);
+  /* How far a sentence rises as it fades up. Two pixels: enough that the eye
+     registers arrival, small enough that nothing on the row appears to move. */
+  --reveal-rise: 2px;
+
+  /* --- the trace ping ------------------------------------------------------ */
+  /* The evidence ring a cited SOURCE gains when the dot lands on it. A ring, not
+     a fill: the node underneath is the engine's reading of the passage and must
+     stay legible through it. Sized to clear --node-body-max at rest. */
+  --trace-ring: 22px;
+
+  /* --- ingest settling ----------------------------------------------------- */
+  /* How long the corpus takes to stop arriving. Longer than a scene because it
+     is not one transition, it is four thousand of them overlapping — and it is
+     the only motion in the product a user watches without having asked for it.
+     It is gated on real work either way: SETTLING ends when this resolves. */
+  --ingest-settle: 1120ms;
+  /* The angular frequency of the CRITICALLY DAMPED spring the settle arrives on:
+     p(t) = 1 - (1 + wt)e^(-wt), with t in seconds. Critically damped, never
+     under: an overshoot would carry a node PAST the resolution the engine
+     admitted it at, which is the interface lying about the engine for two
+     frames. This decelerates; it does not bounce. */
+  --ingest-spring: 6;
+}

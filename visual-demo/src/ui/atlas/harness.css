@@ -1,0 +1,68 @@
+/* =============================================================================
+   RUNG ATLAS HARNESS — development chrome only, never shipped.
+   Every value is a var() from design-tokens.css; the harness holds itself to the
+   same rules as the product, or it would be photographing a different product.
+   ============================================================================= */
+
+/* base.css gives height to #root; this rig mounts on #harness. Without this the
+   flex column has no height to distribute, the stage collapses to zero and the
+   terrain is a black rectangle. Caught by looking at the first screenshot. */
+#harness {
+  height: 100%;
+}
+
+.ax {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: var(--void);
+}
+
+.ax-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-section);
+  padding: var(--pad-row) var(--pad-panel);
+  border-bottom: var(--border-1) solid var(--line);
+  flex: none;
+}
+
+.ax-brand {
+  color: var(--ink-faint);
+  flex: none;
+}
+
+.ax-crumbs {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.ax-readouts {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-section);
+  flex: none;
+}
+
+.ax-ro {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+/* The stage. The Atlas rail docks itself to the right edge of THIS box, which is
+   why it has to be the positioned parent of the canvas. */
+.ax-stage {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.ax-legend {
+  position: absolute;
+  top: var(--s-4);
+  left: var(--s-4);
+  right: calc(var(--atlas-rail-w) + var(--s-8));
+  z-index: var(--z-hud);
+}

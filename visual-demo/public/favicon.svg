@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="TLDR-G Visual Demo">
+  <!--
+    The continent glyph on the void.
+
+    ◆ is the demo's own mark for the coarsest rung, so the favicon is a piece of
+    the product's vocabulary rather than a logo invented for the tab strip. One
+    body, lit, on a dark ground: the whole thesis at 16 pixels.
+
+    Colours are the token values (--void #0A0D13, --render #2EE6D0,
+    --render-deep #0E8A7D). They are written literally ONLY because an SVG in
+    public/ is served as a static file and cannot read CSS custom properties.
+    design-tokens.css remains the source of truth; if a light changes there,
+    change it here to match.
+  -->
+  <rect width="32" height="32" rx="7" fill="#0A0D13"/>
+  <path d="M16 7.5 24.5 16 16 24.5 7.5 16Z" fill="#0E8A7D"/>
+  <path d="M16 10.5 21.5 16 16 21.5 10.5 16Z" fill="#2EE6D0"/>
+</svg>
