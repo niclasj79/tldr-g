@@ -33,7 +33,7 @@
  * =============================================================================
  */
 
-import { COPY, intentCopy, modeCopy } from '@/copy';
+import { COPY, dual, intentCopy, modeCopy, plain } from '@/copy';
 import { useAtlas, useAtlasStore } from '@/state';
 import { Btn, Chip, KeyHint, Panel, Tip } from '@/ui/primitives';
 import { keyHintFor } from '@/state';
@@ -77,7 +77,7 @@ export function StagedPanel({ className }: StagedPanelProps): JSX.Element | null
       )}
 
       {declared === null ? (
-        <p className="t-11 ink-faint" data-prose>
+        <p className="t-12-5 ink-dim" data-prose>
           {COPY.command.freeText.note}
         </p>
       ) : (
@@ -91,12 +91,19 @@ export function StagedPanel({ className }: StagedPanelProps): JSX.Element | null
             <Tip content={modeCopy(declared.mode).long}>
               <Chip tone="dim">{modeCopy(declared.mode).label}</Chip>
             </Tip>
-            {/* The staging disclosure, as a mark rather than as a paragraph. */}
-            <Tip content={COPY.provenance.staged}>
-              <Chip tone="dim">{COPY.answer.goldLabel}</Chip>
+            {/* The staging disclosure, as a mark rather than as a paragraph.
+
+                THE PLAIN NAME LEADS HERE, because this is a FIRST-USE SURFACE:
+                it is on screen before anything has been asked, next to the
+                button that asks it. `By construction` is the right term and it
+                is the receipt's term; it is not the first four words a stranger
+                should have to decode. The pair is one hover away and the tip
+                names it. */}
+            <Tip content={`${dual('byConstruction')} — ${COPY.provenance.staged}`}>
+              <Chip tone="dim">{plain('byConstruction')}</Chip>
             </Tip>
           </div>
-          <span className="caps ink-faint">{COPY.command.menu.why}</span>
+          <span className="caps ink-dim">{COPY.command.menu.why}</span>
           <p className="t-12-5 ink-dim" data-prose>
             {declared.why}
           </p>

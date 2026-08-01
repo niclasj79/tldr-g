@@ -68,6 +68,45 @@ export function humaniseCode(code: string): string {
 }
 
 /* =============================================================================
+ * 1b. THE DUAL LAYER — plain name leads, technical term follows
+ * -----------------------------------------------------------------------------
+ * This product's vocabulary is accurate and expensive. Provenance, by
+ * construction, bake, latent, LOD, σ-class, strait, admitted, withheld,
+ * deterministic mode: ten precise words, every one of them the right word, and a
+ * first-time reader meets all ten before they have asked anything.
+ *
+ * The rule is ORDER, NOT REPLACEMENT. Deleting the technical term would be worse
+ * than keeping it — it is what the receipt says, what the engine calls it, and
+ * what you would search for. So the plain name leads and the technical term
+ * follows it, and a reader who does not need the second half stops at the
+ * interpunct.
+ *
+ * IT IS A FUNCTION SO THAT IT CANNOT DRIFT. Six surfaces render `Evidence trail`
+ * and `Provenance` together; six hand-written concatenations are six chances for
+ * one of them to say something slightly different, which is precisely how a
+ * compound label gets minted. One table, one joiner, one order.
+ * ========================================================================== */
+
+/** Every term with a plain-language name and a technical one. */
+export type DualTerm = keyof Copy['vocabulary'];
+
+/** `Evidence trail · Provenance`. For labels with room for both. */
+export function dual(term: DualTerm): string {
+  const t = COPY.vocabulary[term];
+  return `${t.plain} · ${t.technical}`;
+}
+
+/** Just the plain name. For a first-use surface with no room for the pair. */
+export function plain(term: DualTerm): string {
+  return COPY.vocabulary[term].plain;
+}
+
+/** Just the technical term. For expert surfaces — the receipt, the analyst rail. */
+export function technical(term: DualTerm): string {
+  return COPY.vocabulary[term].technical;
+}
+
+/* =============================================================================
  * 2. TYPED ACCESSORS
  * -----------------------------------------------------------------------------
  * Thin, but they stop a component from indexing the deck with a loose string and

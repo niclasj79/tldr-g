@@ -1,32 +1,58 @@
 /**
  * =============================================================================
- * TLDR-G VISUAL DEMO — THE ANSWER
+ * TLDR-G VISUAL DEMO — THE ANSWER TAB
  * =============================================================================
  *
- * What the render produced, what it is worth, and how to disagree with it.
- *
- * The panel is ordered by how sceptical a reader should be, most sceptical
- * first: the answer, then whether it matches the by-construction answer the
- * corpus holds, then the engine's own confidence AND its decomposition, then the
- * chain of hops that carried it, then the control that re-derives that chain
- * independently and tells you when the two disagree.
+ * What the render actually produced, arranged the way the QUESTION was asked, and
+ * what that arrangement is worth.
  *
  * -----------------------------------------------------------------------------
- * THE GOLD ROW IS A DISCLOSURE, NOT A SCORE
+ * WHAT LEFT THIS PANEL, AND WHY IT IS NOT DUPLICATED HERE
  * -----------------------------------------------------------------------------
- * `gold` is present only for staged questions. Its presence says "this question
- * was set up in advance", which is exactly why the engine can be scored against
- * it rather than believed. So the row states the staging first and the verdict
- * second — a green tick with no explanation of where the truth came from is a
- * worse artifact than no tick at all.
+ * The answer SENTENCE and the trust state are pinned in the task header above
+ * every tab now, because a verification verdict is a property of the ANSWER and
+ * has to travel with it onto every surface the answer appears on. Reprinting the
+ * sentence here would put the same string on screen twice, forty pixels apart,
+ * and give a reader two things to reconcile before they can start reading — which
+ * is the failure this panel is being cut down to end, not one to reproduce.
+ *
+ * So this tab is now four things, in order of how sceptical a reader should be:
+ *
+ *   1  THE INTENT VIEW    the answer laid out as the kind of answer it is
+ *   2  BY CONSTRUCTION    whether it matches the answer the corpus itself holds
+ *   3  CONFIDENCE         the composite, with its decomposition folded
+ *   4  RE-DERIVATION      an independent traversal, and whether the two agree
  *
  * -----------------------------------------------------------------------------
- * CONFIDENCE IS SHOWN WITH ITS COMPOSITE, NEVER ALONE
+ * THE FIVE INTENTS STOPPED SHARING ONE LAYOUT
  * -----------------------------------------------------------------------------
- * A high L over a thin composite is the single case a reader most needs to see,
- * so the four signals sit next to the gauge rather than behind a disclosure. The
- * semantic signal is a lexical stand-in in this build and says so, because a
- * substitute figure that does not announce itself is an invented one.
+ * Every intent used to render the same three things: the sentence, a numbered
+ * list of hops, a gauge. The chip in the panel header said `Timeline` or
+ * `Compare`, and nothing else on the screen did. That made the Timeline answer a
+ * paragraph opening on `2019-03-04 -> 2020-01-11 -> …` with its four sessions
+ * appearing nowhere as four things, and the Compare answer a restatement that two
+ * subjects share a regulator, twice, with nothing distinguishing them.
+ *
+ * `./intents` holds one view per `QueryIntent`. Each one derives its structure
+ * from what the render returned — the path, the citations, the node payloads —
+ * and each one carries a sentence saying so. Read that directory's barrel for the
+ * argument; the short version is that this is a visual demo of the architecture,
+ * the interface is allowed to compose a reading of the trace, and it is obliged
+ * to say when it has.
+ *
+ * -----------------------------------------------------------------------------
+ * A RE-DERIVATION DISAGREEMENT IS A DISPUTE, WHETHER OR NOT THE APP IS DEGRADED
+ * -----------------------------------------------------------------------------
+ * `explain.verdict === 'differs'` used to reach this panel only through the app's
+ * DEGRADED state, and DEGRADED is dismissible: pressing `Recover` cleared the
+ * alarm band and left this panel printing `0.87` in render teal under a green
+ * `Matches the by-construction answer` badge, over an answer the product had just
+ * proved two of its own surfaces disagree about. The dismissal was of the BAND;
+ * the contradiction was still in `explain`, and nothing here read it.
+ *
+ * It is read directly now. `differs` is a dispute on its own terms, it survives
+ * dismissing the band, and it is only resolved by re-rendering clean or by
+ * discarding the result — which is exactly the contract the pinned header states.
  * =============================================================================
  */
 
@@ -34,18 +60,39 @@ import { useEffect, useRef, useState } from 'react';
 
 import { COPY, intentCopy, modeCopy } from '@/copy';
 import { engine } from '@/engine';
-import type { PathStep } from '@/engine';
+import type { GraphNode, PathStep, QueryRenderResponse } from '@/engine';
 import { useAtlas, useAtlasStore } from '@/state';
-import { Chip, Meter, Num, Panel, Row, SectionLabel, Tip } from '@/ui/primitives';
+import { Disclosure, Meter, Num, Panel, Row, SectionLabel, Tip } from '@/ui/primitives';
+
+import {
+  BridgeView,
+  CompareView,
+  LookupView,
+  SummariseView,
+  TimelineView,
+  type IntentViewProps,
+} from './intents';
+
+/** A stable empty path, so the resolver's effect does not re-fire on every render. */
+const NO_PATH: readonly PathStep[] = Object.freeze([]);
 
 /* -----------------------------------------------------------------------------
- * Labels for the path's endpoints. The view usually has them; anything it does
- * not is fetched through the client, which is already cached by bake.
+ * THE NODES THE ANSWER IS MADE OF, RESOLVED ONCE.
+ *
+ * This used to resolve LABELS, because a list of hops needs nothing else. The
+ * intent views need the payloads: a comparison reads `entity_type`, `island_ids`,
+ * `degree` and `mentions` off them, and a chronology reads `boundary_declared_at`
+ * and `entity_ids`. Resolving them here rather than in five views means there is
+ * exactly one answer to "what happens when a fetch fails" — the id stays in the
+ * map's place, the views fall back to it, and nothing invents a label.
  * -------------------------------------------------------------------------- */
 
-function usePathLabels(path: readonly PathStep[]): Map<string, string> {
+function useAnswerNodes(active: QueryRenderResponse | null): ReadonlyMap<string, GraphNode> {
   const viewNodes = useAtlasStore((s) => s.view?.nodes ?? null);
-  const [labels, setLabels] = useState<Map<string, string>>(new Map());
+  const [nodes, setNodes] = useState<ReadonlyMap<string, GraphNode>>(() => new Map());
+
+  const path = active?.constellation.path ?? NO_PATH;
+  const bridgeId = active?.constellation.bridge_entity_id ?? null;
 
   useEffect(() => {
     const ids = new Set<string>();
@@ -53,35 +100,82 @@ function usePathLabels(path: readonly PathStep[]): Map<string, string> {
       ids.add(step.from_id);
       ids.add(step.to_id);
     }
-    const known = new Map<string, string>();
+    if (bridgeId !== null) ids.add(bridgeId);
+
+    /* The current view already holds most of them and is free. Only what it does
+       not hold costs a call, and the client's cache has usually served it once
+       already for the terrain. */
+    const known = new Map<string, GraphNode>();
     for (const node of viewNodes ?? []) {
-      if (ids.has(node.id)) known.set(node.id, node.label);
+      if (ids.has(node.id)) known.set(node.id, node);
     }
     const missing = [...ids].filter((id) => !known.has(id));
     if (missing.length === 0) {
-      setLabels(known);
+      setNodes(known);
       return;
     }
+
     let live = true;
     void Promise.all(
       missing.map((id) =>
         engine
           .getNode(id)
-          .then((n) => [id, n.label] as const)
-          .catch(() => [id, id] as const),
+          .then((n) => n)
+          .catch(() => null),
       ),
-    ).then((pairs) => {
+    ).then((fetched) => {
       if (!live) return;
       const next = new Map(known);
-      for (const [id, label] of pairs) next.set(id, label);
-      setLabels(next);
+      for (const node of fetched) if (node !== null) next.set(node.id, node);
+      setNodes(next);
     });
     return () => {
       live = false;
     };
-  }, [path, viewNodes]);
+  }, [path, bridgeId, viewNodes]);
 
-  return labels;
+  return nodes;
+}
+
+/**
+ * The view for this intent.
+ *
+ * AN EXHAUSTIVE SWITCH, NOT A LOOKUP WITH A DEFAULT. A sixth intent added to the
+ * engine's union must fail to compile here rather than quietly rendering the
+ * bridge layout — which is precisely how five intents came to share one layout in
+ * the first place.
+ *
+ * AND A STATED FALLBACK UNDERNEATH IT, because the compile-time guarantee was
+ * being bought with a runtime crash. `QueryIntent` is enforced at the type level
+ * only: `checkProvenance` does not validate the intent field on the wire, so a
+ * value outside the union is reachable, and a switch with no default returns
+ * `undefined` — which React turns into `Nothing was returned from render`,
+ * taking the entire Answer tab down with it, including the failure banner that
+ * would have said why. The `never` binding keeps the build failing on a sixth
+ * union member; the paragraph after it keeps a malformed wire response to a
+ * degraded render instead of a blank tab.
+ */
+function IntentView(props: IntentViewProps): JSX.Element {
+  const intent = props.active.intent;
+  switch (intent) {
+    case 'lookup':
+      return <LookupView {...props} />;
+    case 'bridge':
+      return <BridgeView {...props} />;
+    case 'compare':
+      return <CompareView {...props} />;
+    case 'timeline':
+      return <TimelineView {...props} />;
+    case 'summarize':
+      return <SummariseView {...props} />;
+  }
+  const unmodelled: never = intent;
+  return (
+    <p className="t-12-5 tone-alarm u-tone" data-prose>
+      {COPY.intentViews.answerTab.unmodelledIntent}{' '}
+      <span className="mono">{String(unmodelled)}</span>
+    </p>
+  );
 }
 
 /* =============================================================================
@@ -93,30 +187,27 @@ export interface AnswerPanelProps {
 }
 
 export function AnswerPanel({ className }: AnswerPanelProps): JSX.Element | null {
-  const { active, explain, verify, tampered } = useAtlasStore((s) => ({
+  const { active, explain, verify, tampered, trace } = useAtlasStore((s) => ({
     active: s.query.active,
     explain: s.explain,
     verify: s.verify,
     tampered: s.tampered,
+    trace: s.trace,
   }));
 
-  const labels = usePathLabels(active?.constellation.path ?? []);
+  const nodes = useAnswerNodes(active);
 
   /* THE VERDICT ARRIVES UNCLICKED.
      The strongest trust claim in the product — an independent re-traversal
      between the answer's own endpoints agreeing with the receipt — used to be
      three lines of past-tense prose above a button, which reads either as work
-     that did not happen or as a result being kept behind a click. It is a local
-     graph walk, it costs nothing, and it either agrees or it does not: so it
-     runs when the answer lands and the panel prints what it found. The button
-     that used to gate it is gone; `Explain the path` still exists as the scene
-     the interaction layer drives, and it now expands what is already stated. */
+     that did not happen or as a result being kept behind a click. `runQuery` now
+     runs it where the render is, so this effect is the safety net for the one
+     case that does not go through a render: a view RESTORED FROM A LINK, which
+     re-seats the same query_id with a null verdict. */
   const queryId = active?.query_id ?? null;
   const asked = useRef<string | null>(null);
   useEffect(() => {
-    // A verdict in hand clears the latch, so a view RESTORED FROM A LINK — which
-    // re-seats the same query_id with a null verdict — re-derives rather than
-    // printing `not run` under the heading that promises a comparison.
     if (explain !== null) {
       asked.current = null;
       return;
@@ -137,25 +228,15 @@ export function AnswerPanel({ className }: AnswerPanelProps): JSX.Element | null
   }
 
   const stats = active.render_stats;
-  const path = active.constellation.path;
-  const matches = active.gold !== undefined && active.answer.includes(active.gold);
 
   /* ===========================================================================
-   * A FAILED VERIFICATION INVALIDATES THE PRESENTATION. IT DOES NOT ANNOTATE IT.
+   * THREE THINGS INVALIDATE A RESULT, AND ALL THREE REACH THIS PANEL DIRECTLY
    * ---------------------------------------------------------------------------
-   * `verify-valid` and `verify-invalid` used to be the same picture apart from
-   * one 210px card in the corner: the answer stayed at full luminance, the
-   * confidence gauge kept reading 0.87 in --render teal, and a green badge kept
-   * saying `Matches the by-construction answer` — over bytes the product had
-   * just proved were edited after signing. That is worse than having no
-   * verification at all, because the frame actively vouches for a payload it has
-   * disproved.
-   *
-   * A payload-hash failure means the answer, the confidence and the path are
-   * exactly the things that can no longer be trusted, so they are exactly what
-   * changes: the sentence is struck, the composite is withdrawn to an em dash —
-   * not measured, because it was measured over bytes that are gone — and the
-   * by-construction row stops vouching and starts naming which half failed.
+   * A broken signature, edited payload bytes, and an independent re-traversal
+   * that contradicts the receipt. The third used to arrive only as the app's
+   * DEGRADED state — which is dismissible — so dismissing the band restored a
+   * fully-vouching panel over a contradicted answer. It is read from `explain`
+   * now and cannot be dismissed, only resolved.
    * ======================================================================== */
   const failure =
     verify !== null && !verify.valid
@@ -163,11 +244,10 @@ export function AnswerPanel({ className }: AnswerPanelProps): JSX.Element | null
         ? COPY.trust.verify.invalidSignature
         : COPY.trust.verify.invalidPayload
       : null;
-  const disputed = failure !== null || tampered;
-  /* The signature half can fail while the payload is intact. Then the CONTENT is
-     still the content the engine rendered — it simply cannot be attributed to
-     that engine — so the answer is not struck, only the attribution is. */
-  const payloadMoved = tampered || (verify !== null && !verify.payload_hash_matches);
+  const disagrees = explain?.verdict === 'differs';
+  const disputed = failure !== null || tampered || disagrees;
+
+  const matches = active.gold !== undefined && active.answer.includes(active.gold);
 
   const signals = [
     { key: 'semantic', value: stats.composite.semantic, copy: COPY.receipt.confidence.signals.semantic, standIn: true },
@@ -175,6 +255,18 @@ export function AnswerPanel({ className }: AnswerPanelProps): JSX.Element | null
     { key: 'temporal', value: stats.composite.temporal, copy: COPY.receipt.confidence.signals.temporal, standIn: false },
     { key: 'authorial', value: stats.composite.authorial, copy: COPY.receipt.confidence.signals.authorial, standIn: false },
   ] as const;
+
+  /* WHY THE BY-CONSTRUCTION ROW STOPS VOUCHING, IN THE FAILURE'S OWN WORDS.
+     Three different things can silence it and they are three different
+     sentences: bytes edited by the tamper control, a receipt that no longer
+     verifies, and two engine surfaces contradicting each other. One generic
+     `disputed` string for all three would tell the reader something happened and
+     nothing about what. */
+  const disputeLine = tampered
+    ? COPY.trust.tamper.tampered
+    : failure !== null
+      ? failure.title
+      : COPY.intentViews.answerTab.disputedByPath;
 
   return (
     <Panel
@@ -208,21 +300,25 @@ export function AnswerPanel({ className }: AnswerPanelProps): JSX.Element | null
           THE RENDER LANDS IN THREE TIERS, AND THESE ARE THE TIERS.
 
           `data-reveal-tier` is read by ONE timeline in `@/motion` — the same one
-          that lights the map — so the answer sentence resolves in the rail on
-          the same frame the fovea resolves on the terrain. The attribute is
-          inert at rest: nothing in this panel is styled by it unless a render is
-          actually landing.
+          that lights the map — so the answer's own shape resolves in the rail on
+          the same frame the fovea resolves on the terrain. The attribute is inert
+          at rest: nothing here is styled by it unless a render is landing.
 
-            0  fovea      the answer itself, and the by-construction check
-            1  penumbra   what it is worth, and the chain that carried it
+            0  fovea      the answer as the kind of answer it is
+            1  penumbra   what it is worth
             2  periphery  the independent re-derivation
-
-          The order is the resolution ramp read as a sequence, which is why it is
-          this order and not "most important first" — they are the same list.
           -------------------------------------------------------------------- */}
-      <p className="answer__text t-16" data-prose data-struck={payloadMoved} data-reveal-tier="0">
-        {active.answer}
-      </p>
+      {/* THE DISPUTE REACHES THE FOVEA, NOT JUST THE TIERS BELOW IT.
+          This panel withdrew L and stopped the gold row vouching, and passed the
+          intent view nothing — so the answer's own structural claim was
+          byte-identical either way: the route, the evidence chips, the citation
+          counts and the table verdicts all kept vouching at full luminance over
+          a result two engine surfaces disagree about. That is the same defect
+          this panel's header names, one level down. `disputed` is a REQUIRED
+          prop on `IntentViewProps`, so no view can be added that forgets it. */}
+      <div data-reveal-tier="0">
+        <IntentView active={active} nodes={nodes} trace={trace} disputed={disputed} />
+      </div>
 
       {active.gold === undefined ? null : (
         <div className="answer__gold" data-disputed={disputed} data-reveal-tier="0">
@@ -234,12 +330,12 @@ export function AnswerPanel({ className }: AnswerPanelProps): JSX.Element | null
           <span className={`answer__goldv mono u-tone ${disputed ? 'tone-dim' : 'tone-evidence'}`}>
             {active.gold}
           </span>
-          {/* IT STOPS VOUCHING. The comparison was scored against bytes that have
-              since moved, so the verdict it produced is not a verdict any more. */}
+          {/* IT STOPS VOUCHING. The comparison was scored before the dispute was
+              known, so the verdict it produced is not a verdict any more. */}
           {disputed ? (
             <Tip content={COPY.trust.verify.separately}>
               <span className="t-11 tone-alarm u-tone" data-prose>
-                {failure === null ? COPY.trust.tamper.tampered : failure.title}
+                {disputeLine}
               </span>
             </Tip>
           ) : (
@@ -252,148 +348,86 @@ export function AnswerPanel({ className }: AnswerPanelProps): JSX.Element | null
         </div>
       )}
 
-      {/* ---- confidence, with its decomposition beside it ------------------ */}
+      {/* ---- confidence, with its decomposition folded --------------------- */}
       <SectionLabel>{COPY.receipt.confidence.title}</SectionLabel>
       {/* ONE HERO FIGURE, and a bare track beside it. The meter carries no label
           and no derived percentage on purpose: `0.87` and `87.0 %` next to each
           other are the same measurement printed twice, and a reader has to stop
           and check that they agree before they can move on.
 
-          WITHDRAWN WHEN THE PAYLOAD MOVED. L is a composite over the answer, the
-          citations and the admissions. If those bytes changed, the figure was
-          measured over something that is no longer on screen, and an em dash is
-          the only honest reading. */}
+          WITHDRAWN WHENEVER THE RESULT IS DISPUTED. L is the ENGINE'S claim about
+          its own render. If the payload moved, it was measured over bytes that
+          are gone; if the signature does not verify, the claim cannot be
+          attributed to the engine that made it; and if an independent traversal
+          contradicts the receipt, the render it was measured over is the thing in
+          dispute. An em dash is the only honest reading in all three, and a
+          `0.00` would be a measurement nobody took. */}
       <Tip content={COPY.receipt.confidence.L.tip} className="u-block">
         <div className="answer__L" data-reveal-tier="1">
           <Num
-            value={payloadMoved ? Number.NaN : stats.render_confidence_L}
+            value={disputed ? Number.NaN : stats.render_confidence_L}
             format="float2"
-            tone={payloadMoved ? 'alarm' : 'render'}
+            tone={disputed ? 'alarm' : 'render'}
             className="t-28"
           />
           <Meter
-            value={payloadMoved ? 0 : stats.render_confidence_L}
+            value={disputed ? 0 : stats.render_confidence_L}
             max={1}
-            tone={payloadMoved ? 'alarm' : 'render'}
+            tone={disputed ? 'alarm' : 'render'}
           />
         </div>
       </Tip>
-      {/* THE WEIGHTS LIVE ON THE RECEIPT, NOT HERE. Printing signal, value and
-          weight on one 320px row wrapped every label onto two lines and turned
-          four gauges into eight rules. The receipt is the panel whose job is the
-          full arithmetic; this one only has to show that the composite is thin
-          or thick, which four labelled tracks do at a glance. */}
-      {/* FOUR GAUGES IN A COLUMN INVITE EXACTLY ONE READING: down the column.
-          They used to be sized to their own label text — the STAND-IN signal,
-          the weakest-evidence proxy in the set, drew a track 1.8× longer than a
-          component of the same value — which makes the only reading the layout
-          invites the wrong one. One shared track, one 0..1 domain, one right
-          edge; the CSS beside this file is what enforces it. */}
-      <div className="answer__signals" data-disputed={payloadMoved} data-reveal-tier="1">
-        {signals.map((s) => (
-          <Tip key={s.key} content={`${s.copy.tip} ${COPY.receipt.confidence.note}`} className="u-block">
-            <Meter
-              className="answer__signal"
-              value={payloadMoved ? 0 : s.value}
-              max={1}
-              tone="dim"
-              label={
-                <>
-                  {s.copy.label}
-                  {s.standIn ? <> · {COPY.common.standIn}</> : null}
-                </>
-              }
-              readout={<Num value={payloadMoved ? Number.NaN : s.value} format="float2" tone="dim" />}
-            />
+
+      {/* THE DECOMPOSITION IS FOLDED NOW, AND THAT IS A REVERSAL.
+          The deck's older note argues the four signals belong beside the gauge
+          rather than behind a click, and it is right about the stake: a high L
+          over a thin composite is exactly the case worth seeing. It was wrong
+          about the cost. On the rebuilt rail those four tracks sit between the
+          answer and its verification, so every reader pays for a decomposition
+          most of them never asked for, on every result, before reaching the thing
+          they came for. Folded is not hidden — the summary names the case it
+          exists for, and it is one press with native semantics behind it. */}
+      <Disclosure
+        summary={
+          <Tip content={COPY.intentViews.answerTab.decomposition.title}>
+            <span>{COPY.intentViews.answerTab.decomposition.label}</span>
           </Tip>
-        ))}
-      </div>
-
-      {/* ---- the chain ------------------------------------------------------ */}
-      <SectionLabel>{COPY.answer.path.title}</SectionLabel>
-      {path.length === 0 ? (
-        <p className="t-12-5 ink-dim" data-prose>
-          {COPY.answer.path.empty}
+        }
+        className="answer__fold"
+      >
+        <p className="t-11 ink-dim" data-prose>
+          {COPY.intentViews.answerTab.decompositionNote}
         </p>
-      ) : (
-        <ol className="answer__path" data-reveal-tier="1">
-          {path.map((step) => (
-            <li key={step.edge_id} className="answer__hop">
-              <span className="answer__hopn caps ink-faint">
-                {COPY.answer.path.hop}
-                <Num value={step.index + 1} format="int" tone="faint" />
-              </span>
-              <button
-                type="button"
-                className="answer__node"
-                onClick={() => useAtlas.getState().selectNode(step.from_id, false)}
-              >
-                {labels.get(step.from_id) ?? step.from_id}
-              </button>
-              {/* THE FAMILY IS A CLASSIFICATION, NOT A LIGHT. It wore --render
-                  on every hop of every answer, which put two or three teal
-                  machine codes in the rail beside the one teal thing the frame
-                  is about — the path itself, on the map. The relation between
-                  two nodes is named in ink; what is lit is where the engine
-                  went. */}
-              <span className="answer__family mono ink-dim">{step.family}</span>
-              <button
-                type="button"
-                className="answer__node"
-                onClick={() => useAtlas.getState().selectNode(step.to_id, false)}
-              >
-                {labels.get(step.to_id) ?? step.to_id}
-              </button>
-              {step.crosses_strait ? (
-                <Tip content={COPY.answer.path.straitTip}>
-                  {/* A STRAIT CROSSING IS NOT A GAP. Violet in this product
-                      means the question and what is not known — staged and
-                      unspent, omitted but connected. This is the opposite: it
-                      is the strongest thing the answer says about itself, and
-                      it was wearing the light for absence. It stands out by
-                      LUMINANCE now, against the faint labels either side of
-                      it, which is the same move the failure sentence makes. */}
-                  <span className="answer__strait caps">{COPY.answer.path.strait}</span>
-                </Tip>
-              ) : null}
-              {step.evidence_passage_ids.length === 0 ? (
-                <span className="caps tone-alarm u-tone">{COPY.answer.path.noEvidence}</span>
-              ) : (
-                <Tip content={COPY.answer.path.evidence}>
-                  <Chip
-                    tone="evidence"
-                    count={step.evidence_passage_ids.length}
-                    onClick={() => void useAtlas.getState().openPassage(step.evidence_passage_ids[0])}
-                  >
-                    {COPY.answer.path.evidence}
-                  </Chip>
-                </Tip>
-              )}
-            </li>
-          ))}
-        </ol>
-      )}
-
-      {active.constellation.bridge_entity_id === null ? null : (
-        <Tip content={COPY.answer.bridge.tip} className="u-block">
-          <Row
-            label={COPY.answer.bridge.label}
-            value={
-              <button
-                type="button"
-                className="answer__node"
-                onClick={() =>
-                  useAtlas.getState().selectNode(active.constellation.bridge_entity_id as string, false)
+        {/* FOUR GAUGES IN A COLUMN INVITE EXACTLY ONE READING: down the column.
+            They used to be sized to their own label text — the STAND-IN signal,
+            the weakest-evidence proxy in the set, drew a track 1.8× longer than a
+            component of the same value — which makes the only reading the layout
+            invites the wrong one. One shared track, one 0..1 domain, one right
+            edge; the CSS beside this file is what enforces it. */}
+        <div className="answer__signals" data-disputed={disputed}>
+          {signals.map((s) => (
+            <Tip
+              key={s.key}
+              content={`${s.copy.tip} ${disputed ? COPY.intentViews.answerTab.withheldTip : ''}`.trim()}
+              className="u-block"
+            >
+              <Meter
+                className="answer__signal"
+                value={disputed ? 0 : s.value}
+                max={1}
+                tone="dim"
+                label={
+                  <>
+                    {s.copy.label}
+                    {s.standIn ? <> · {COPY.common.standIn}</> : null}
+                  </>
                 }
-              >
-                {labels.get(active.constellation.bridge_entity_id) ??
-                  active.constellation.bridge_entity_id}
-              </button>
-            }
-            tone="curiosity"
-          />
-        </Tip>
-      )}
+                readout={<Num value={disputed ? Number.NaN : s.value} format="float2" tone="dim" />}
+              />
+            </Tip>
+          ))}
+        </div>
+      </Disclosure>
 
       {/* ---- the independent re-derivation, already run ---------------------- */}
       <Tip content={COPY.answer.explain.note}>

@@ -1,4 +1,18 @@
 /* =============================================================================
+   THE CONTRAST RE-POINTING (2026-07-31)
+   -----------------------------------------------------------------------------
+   Six rules moved off --ink-faint, which is now decoration-only at 3:1. Every
+   one of them either states a fact (the hover card's footer), labels a control
+   (the search field's placeholder), or is the ONLY text on screen in its state
+   (the palette's empty result). The palette's secondary row line was 11px AND
+   faint, compounding both defects on the surface the review called the product's
+   best discovery tool.
+
+   `.ix-path__arrow` stayed faint on purpose: an arrow between two hops is
+   punctuation, and punctuation is exactly what the third ink step is for.
+   ========================================================================== */
+
+/* =============================================================================
    TLDR-G VISUAL DEMO — INTERACTION
    -----------------------------------------------------------------------------
    The input surface, the hover card, the rubber band, the command palette, the
@@ -183,7 +197,7 @@
   padding-top: var(--pad-row);
   border-top: var(--border-1) solid var(--line-a40);
   font-size: var(--fs-11);
-  color: var(--ink-faint);
+  color: var(--ink-dim);
 }
 
 /* -----------------------------------------------------------------------------
@@ -230,7 +244,7 @@
 }
 
 .ix-palette__input::placeholder {
-  color: var(--ink-faint);
+  color: var(--ink-dim);
 }
 
 .ix-palette__list {
@@ -266,7 +280,7 @@
   flex: none;
   width: var(--s-4);
   text-align: center;
-  color: var(--ink-faint);
+  color: var(--ink-dim);
 }
 
 .ix-palette__main {
@@ -283,8 +297,8 @@
 }
 
 .ix-palette__sub {
-  font-size: var(--fs-11);
-  color: var(--ink-faint);
+  font-size: var(--fs-12-5);
+  color: var(--ink-dim);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -299,7 +313,7 @@
 .ix-palette__empty {
   padding: var(--pad-panel);
   font-size: var(--fs-12-5);
-  color: var(--ink-faint);
+  color: var(--ink-dim);
   max-width: 56ch;
 }
 
@@ -475,7 +489,7 @@
 
 .ix-picker__glyph {
   flex: none;
-  color: var(--ink-faint);
+  color: var(--ink-dim);
 }
 
 .ix-picker__input {

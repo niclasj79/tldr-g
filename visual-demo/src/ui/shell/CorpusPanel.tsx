@@ -123,7 +123,7 @@ export function CorpusPanel({ className }: CorpusPanelProps): JSX.Element | null
       ))}
 
       {/* Why there is no fifth row. */}
-      <p className="t-11 ink-faint" data-prose>
+      <p className="t-12-5 ink-dim" data-prose>
         {COPY.rungs.entityNote}
       </p>
 
@@ -198,7 +198,7 @@ export function StagedQuestions({ className }: StagedQuestionsProps): JSX.Elemen
 
   return (
     <Panel title={COPY.command.menu.title} tone="curiosity" className={className}>
-      <p className="t-11 ink-faint" data-prose>
+      <p className="t-12-5 ink-dim" data-prose>
         {COPY.command.menu.note}
       </p>
 

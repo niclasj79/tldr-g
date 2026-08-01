@@ -1,0 +1,630 @@
+/* =============================================================================
+   TLDR-G VISUAL DEMO — THE INTENT VIEWS
+   -----------------------------------------------------------------------------
+   Five layouts for five kinds of question, and the atoms all five are built from.
+
+   A separate stylesheet for the same reason `result.css` is: `shell.css` owns the
+   FRAME, `result.css` owns what the rail does inside it, and this owns what one
+   tab of the rail does inside THAT. One file every surface edits is the file where
+   two unrelated revisions meet.
+
+   Nothing here invents a colour, a duration or a radius. Every value is a token.
+   ========================================================================== */
+
+/* =============================================================================
+   1. THE HIT TARGET THAT WAS NEVER THERE
+   -----------------------------------------------------------------------------
+   `.answer__node` is the clickable node name inside a claim row. It is roughly
+   17px tall, has no padding, and until this pass carried NO hit rule of any kind
+   — the smallest interactive element in the product, and the one a reader uses
+   most, because every route through the terrain starts by pressing a name in the
+   answer.
+
+   It cannot be padded to the 36px floor without becoming a button inside a
+   sentence, which is what `.u-hitslop` exists for: the element keeps its painted
+   size and gains pressable area it does not paint, out to `--hit-floor`.
+
+   THE SLOP IS VERTICAL ONLY, AND THAT IS DELIBERATE. The generic utility insets
+   horizontally as well, which is right for an isolated control and wrong here: a
+   claim row sets two or three names four pixels apart, and overlapping horizontal
+   slop means one name quietly answers for presses aimed at its neighbour. A name
+   is already exactly as wide as its own text; the axis that needs help is the
+   short one.
+
+   `shell.css` owns `.answer__node` and this pass does not, so the rule is scoped
+   to the intent views rather than reaching into that file.
+   ========================================================================== */
+
+.iv .answer__node.u-hitslop::before {
+  inset: calc(var(--hit-slop) * -1) 0;
+}
+
+/* INTERACTIVE TEXT DOES NOT SHRINK BECAUSE OF WHERE IT IS HOSTED.
+   `.row-v` (primitives.css) sets --fs-12-5, which is right for a readout and
+   below the --fs-13 control floor for a name you press. Two node names are set
+   in a Row value — the summarise view's busiest node and the bridge entity —
+   and both measured 12.5px / 17.9px tall while every other node name on the
+   same surface measured 13px. The host decides the row; the control floor
+   decides the control.
+
+   `.iv .row-v .answer__node` is (0,3,0) so it clears `.row-v` (0,1,0) whatever
+   the bundle's stylesheet order turns out to be — this file is emitted BEFORE
+   the shared ones, so a single-class rule here would lose the tie. */
+.iv .row-v .answer__node {
+  font-size: var(--fs-13);
+}
+
+/* A HEADING IS A BOX, AND THIS ONE CARRIES NO TYPE OF ITS OWN.
+   The five view titles and the σ-group names became real `<h3>`/`<h4>` elements
+   — `.iv h1,.iv h2,.iv h3,.iv h4,[role="heading"]` returned ZERO before, so the
+   layout built to make five intents structurally different exposed no structure
+   at all to a reader navigating the document rather than looking at it. The
+   element is here for the outline; `SectionLabel` inside it is still what sets
+   the size, the weight and the tracking. */
+.iv__title,
+.iv-sum__title {
+  font-size: inherit;
+  font-weight: inherit;
+  min-width: 0;
+}
+
+/* THE HASH IS THIS VIEW'S ONLY CONTROL, AND IT IS NOT INLINE IN A SENTENCE.
+   `button.hash` floors at --hit-floor (24px, the WCAG 2.2 minimum) because a
+   digest set inline beside a label on a receipt row cannot be padded to 36
+   without becoming a button. In the lookup view it has its own row under the
+   quote, so the product's own --hit-row applies. Measured 159.5 x 24 before.
+   `align-items: baseline` inside `.hash` keeps the type exactly where it was. */
+.iv .hash {
+  min-height: var(--hit-row);
+}
+
+/* =============================================================================
+   1b. THE CONFIDENCE FOLD
+   -----------------------------------------------------------------------------
+   The four-signal decomposition moved behind a disclosure in the same pass that
+   split these views out, and the fold needs one rule: separation from the gauge
+   above it, so the summary reads as a way IN to something rather than as a fifth
+   readout in the stack.
+
+   It lives here rather than in `shell.css` for the same reason the hit-slop rule
+   does — that file owns the `.answer__*` block and this pass does not own that
+   file. Both rules are scoped tightly enough that they cannot reach anything the
+   answer panel did not ask for.
+   ========================================================================== */
+
+.answer__fold {
+  margin-top: calc(var(--gap-tight) * -1);
+}
+
+/* =============================================================================
+   2. THE SHARED SHELL — every view opens the same way
+   ========================================================================== */
+
+.iv {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-row);
+  min-width: 0;
+}
+
+.iv__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--gap-row);
+  min-width: 0;
+}
+
+.iv__aside {
+  display: flex;
+  align-items: baseline;
+  gap: var(--gap-tight);
+  flex: none;
+}
+
+/* THE DISCLOSURE LINE. Quiet, last, and hairline-separated from the view above
+   it — it is a statement ABOUT the arrangement, not part of it. --ink-dim rather
+   than --ink-faint: it is the only text stating where this layout came from, and
+   the decorative step is for decoration. */
+.iv__derived {
+  margin: 0;
+  padding-top: var(--pad-row);
+  border-top: var(--border-1) solid var(--line);
+  max-width: var(--shell-measure);
+}
+
+/* A view telling the reader which of two shapes it is showing. Never an error
+   tone: "these hops are not a route" is a fact about the answer. */
+.iv__note {
+  margin: 0;
+  max-width: var(--shell-measure);
+}
+
+/* THE DISPUTE LINE. It IS an error tone, and it is the one thing on this surface
+   that is: the panel above has already proved something about this result is
+   wrong, and the layout below it is still drawing a route. */
+.iv__disputed {
+  margin: 0;
+  max-width: var(--shell-measure);
+}
+
+/* The half of the evidence figure the chip is not allowed to absorb. Violet is
+   already what this product spends on omitted-but-connected, and a passage the
+   render's budget stopped before admitting is exactly that. */
+.iv__unadmitted {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--gap-tight);
+}
+
+/* =============================================================================
+   3. THE CLAIM ROW — subject, relation, object, evidence
+   -----------------------------------------------------------------------------
+   The fallback shape every view drops to when its own premise does not hold, and
+   the body of the summary groups.
+
+   13px, not the 12.5px the old hop row used: it carries two interactive labels,
+   and the control size is 13.
+   ========================================================================== */
+
+.iv__claims {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-tight);
+  min-width: 0;
+}
+
+.iv__claim {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: var(--gap-tight);
+  padding: var(--pad-row);
+  border: var(--border-1) solid var(--line);
+  border-radius: var(--r-10);
+  background: var(--panel-bg-2);
+  font-size: var(--fs-13);
+  line-height: var(--lh-ui);
+  min-width: 0;
+}
+
+/* =============================================================================
+   4. BRIDGE — the route
+   -----------------------------------------------------------------------------
+   Each node once, in traversal order, joined by a rail. The rail is the thing
+   that makes it a route rather than a list, and it is drawn in the render colour
+   because the path is the one thing on the terrain wearing that colour too — the
+   rail in the panel and the lit edges on the map are the same object.
+   ========================================================================== */
+
+.iv-br__chain {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.iv-br__stop {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-tight);
+  min-width: 0;
+}
+
+.iv-br__node {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: var(--gap-tight);
+  font-size: var(--fs-13);
+  line-height: var(--lh-ui);
+}
+
+/* THE MARKER IS A RING, NOT A DOT. An outline reads as "a stop on a route"; a
+   filled dot reads as a bullet, and a bullet in front of a chain says list. */
+.iv-br__node::before {
+  content: '';
+  flex: none;
+  width: var(--s-2);
+  height: var(--s-2);
+  border: var(--border-1) solid var(--render-a56);
+  border-radius: var(--r-full);
+  align-self: center;
+}
+
+.iv-br__stop[data-bridge='true'] .iv-br__node::before {
+  border-color: var(--curiosity);
+}
+
+/* The relation, sitting ON the rail between two stops. The left margin lines the
+   rail up with the centre of the ring above it. */
+.iv-br__link {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: var(--gap-tight);
+  margin-left: var(--s-1);
+  padding: var(--gap-tight) 0 var(--gap-tight) var(--pad-section);
+  border-left: var(--border-1) solid var(--render-a32);
+  font-size: var(--fs-12-5);
+  line-height: var(--lh-ui);
+}
+
+.iv-br__mark {
+  color: var(--curiosity);
+}
+
+/* =============================================================================
+   5. LOOKUP — one claim, one source
+   ========================================================================== */
+
+.iv-lk__claim {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-row);
+  padding: var(--pad-section);
+  border: var(--border-1) solid var(--line);
+  border-radius: var(--r-10);
+  background: var(--panel-bg-2);
+  min-width: 0;
+}
+
+/* THE CLAIM IS THE SENTENCE, so it is set at reading size and wraps like one.
+   The names inside it stay interactive at 14px, which clears the control floor
+   rather than fighting it. */
+.iv-lk__stmt {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: var(--gap-tight);
+  margin: 0;
+  color: var(--ink);
+  max-width: var(--shell-measure);
+}
+
+.iv-lk__ev {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--gap-tight);
+  min-width: 0;
+}
+
+/* The one quote, marked as a quotation by a rail in the evidence colour — the
+   same colour the evidence trail and every citation count wears. */
+.iv-lk__quote {
+  margin: 0;
+  padding-left: var(--pad-section);
+  border-left: var(--border-1) solid var(--evidence-a32);
+  color: var(--ink-dim);
+  line-height: var(--lh-body);
+  max-width: var(--shell-measure);
+}
+
+.iv-lk__meta {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: var(--gap-row);
+  min-width: 0;
+}
+
+/* =============================================================================
+   6. COMPARE — the three-verdict table
+   -----------------------------------------------------------------------------
+   A four-column table (facet, A, B, verdict) does not survive the rail's width,
+   and horizontal scroll inside a comparison is the worst possible place for it:
+   the two things being compared end up never on screen together, which is the
+   entire point of the layout.
+
+   So each row is a block — the facet and its verdict on one line, the two values
+   in two columns beneath — and the two column HEADINGS are stated once at the
+   top. The columns hold their positions all the way down, which is what makes it
+   a table rather than a stack of pairs.
+   ========================================================================== */
+
+.iv-cmp__subjects,
+.iv-cmp__cells {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--gap-row);
+  min-width: 0;
+}
+
+.iv-cmp__subjects {
+  padding: var(--pad-row);
+  border-bottom: var(--border-1) solid var(--line);
+}
+
+.iv-cmp__subject {
+  display: flex;
+  align-items: baseline;
+  gap: var(--gap-tight);
+  font-size: var(--fs-13);
+  line-height: var(--lh-ui);
+  min-width: 0;
+}
+
+/* The fork itself: the node both columns reach. Evidence-lit, because it is the
+   only cell in the table that is true by construction rather than by comparison. */
+.iv-cmp__shared {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: var(--gap-row);
+  padding: var(--pad-row);
+  border: var(--border-1) solid var(--evidence-a32);
+  border-radius: var(--r-10);
+  background: var(--evidence-a06);
+  font-size: var(--fs-13);
+  line-height: var(--lh-ui);
+}
+
+.iv-cmp__rows {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.iv-cmp__row {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-tight);
+  padding: var(--pad-row);
+  border-top: var(--border-1) solid var(--line);
+  min-width: 0;
+}
+
+/* AN UNFILLED ROW IS TINTED, NOT GREYED. Greying it would say "less important";
+   the violet wash says "this is the part nobody looked at", which is the reading
+   the rest of the product already gives that colour. */
+.iv-cmp__row[data-verdict='unknown'] {
+  background: var(--curiosity-a06);
+}
+
+.iv-cmp__rowhead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--gap-row);
+  min-width: 0;
+}
+
+.iv-cmp__facet {
+  line-height: var(--lh-ui);
+  min-width: 0;
+}
+
+.iv-cmp__v {
+  flex: none;
+}
+
+/* PROSE DOES NOT GO IN A 144px COLUMN. The rail is 320px, so the two value
+   columns are about 144px each — right for a word, a figure or a token, and
+   hostile to a sentence, which would set as ten lines of four words in each
+   column with a reader expected to compare across them. A row carrying a gloss
+   stacks instead, and restates whose cell is whose, because the column position
+   was the attribution and stacking spends it. */
+.iv-cmp__cells[data-wide='true'] {
+  grid-template-columns: 1fr;
+}
+
+.iv-cmp__cell {
+  display: flex;
+  align-items: baseline;
+  gap: var(--gap-tight);
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.iv-cmp__cells[data-wide='true'] .iv-cmp__cell {
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.iv-cmp__whose {
+  color: var(--ink-dim);
+}
+
+.iv-cmp__val {
+  color: var(--ink);
+  line-height: var(--lh-ui);
+}
+
+/* `not returned` is the honest cell and it must not look like a value. Italic
+   rather than dimmer: it is already at the floor, and a second dimming step is
+   how a disclosure becomes invisible. */
+.iv-cmp__absent {
+  font-style: italic;
+  line-height: var(--lh-ui);
+}
+
+.iv-cmp__unk,
+/* The subjects on the fork that the two columns do not hold. Same shape as the
+   Unknown count and the same violet, because it is the same idea: a figure
+   naming what is not on screen. */
+.iv-cmp__more {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--gap-tight);
+}
+
+/* =============================================================================
+   7. TIMELINE — the cards, and what changed between them
+   ========================================================================== */
+
+.iv-tl__cards {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-row);
+  min-width: 0;
+}
+
+.iv-tl__card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-tight);
+  padding: var(--pad-section);
+  border: var(--border-1) solid var(--line);
+  border-radius: var(--r-10);
+  background: var(--panel-bg-2);
+  min-width: 0;
+}
+
+.iv-tl__head {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: var(--gap-row);
+  font-size: var(--fs-13);
+  line-height: var(--lh-ui);
+  min-width: 0;
+}
+
+.iv-tl__n {
+  flex: none;
+}
+
+/* The declared boundary. Full ink: it is the fact the card is organised around,
+   and every other date in this product that mattered was on the mono rail. */
+.iv-tl__when {
+  color: var(--ink);
+  font-size: var(--fs-12-5);
+}
+
+.iv-tl__kind {
+  flex: none;
+}
+
+.iv-tl__summary {
+  margin: 0;
+  max-width: var(--shell-measure);
+}
+
+/* WHAT CHANGED IS SET APART FROM WHAT IT IS. The top of the card describes the
+   session; this block describes the STEP from the previous one, and running the
+   two together is how a chronology turns back into a paragraph. */
+.iv-tl__changed {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-tight);
+  padding-top: var(--pad-row);
+  border-top: var(--border-1) solid var(--line);
+  min-width: 0;
+}
+
+.iv-tl__clabel {
+  line-height: var(--lh-ui);
+}
+
+.iv-tl__deltas {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-tight);
+  min-width: 0;
+}
+
+.iv-tl__delta {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: var(--gap-tight);
+  line-height: var(--lh-ui);
+  max-width: var(--shell-measure);
+}
+
+/* =============================================================================
+   8. SUMMARISE — findings grouped by the class the engine filed them under
+   ========================================================================== */
+
+.iv-sum__groups {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-section);
+  min-width: 0;
+}
+
+.iv-sum__group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-tight);
+  min-width: 0;
+}
+
+.iv-sum__grouphead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--gap-row);
+  padding-bottom: var(--gap-tight);
+  border-bottom: var(--border-1) solid var(--line);
+  min-width: 0;
+}
+
+.iv-sum__theme {
+  line-height: var(--lh-ui);
+}
+
+.iv-sum__gloss {
+  margin: 0;
+  max-width: var(--shell-measure);
+}
+
+.iv-sum__subject {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--gap-row);
+}
+
+/* =============================================================================
+   9. A DISPUTED RESULT DOES NOT GET TO KEEP THE LIGHTS
+   -----------------------------------------------------------------------------
+   THE FOVEA WAS BYTE-IDENTICAL EITHER WAY. The panel above withdraws L to an em
+   dash and stops the by-construction row vouching, and passed this tier nothing
+   — so with `explain.verdict === 'differs'` and the alarm band dismissed, the
+   route still drew in render teal, the source rails still drew in evidence
+   amber, and every `Same` verdict still drew in --ok, over an answer the product
+   had just proved two of its own surfaces disagree about. The one CSS backstop
+   that used to cover part of this — `.answer--disputed .answer__text` — has no
+   renderer left.
+
+   THE ARRANGEMENT IS NOT WITHDRAWN, THE VOUCHING IS. The render did return these
+   hops and these citations; that is still true and it is still what a reader has
+   to see in order to judge the dispute. What stops is the three lights: --render
+   (the engine's attention), --evidence (authority that predates this session)
+   and --ok (an agreement that was checked). All three collapse to ink.
+
+   --curiosity IS DELIBERATELY LEFT ALONE. It means "the question, and what is
+   not known", and an Unknown row is exactly as unknown during a dispute as
+   outside one — dimming it would be withdrawing an honesty mark for being
+   honest.
+
+   Every selector here is (0,3,0) or heavier, so it beats the single-class rules
+   in primitives.css and shell.css whichever order the bundle emits them in.
+   ========================================================================== */
+
+.iv[data-disputed='true'] .tone-render,
+.iv[data-disputed='true'] .tone-evidence,
+.iv[data-disputed='true'] .tone-ok {
+  --tone: var(--ink-dim);
+  --tone-rgb: var(--ink-dim-rgb);
+}
+
+/* The rails and washes that paint a token directly rather than through --tone:
+   the route's rings and spine, the fork's evidence-lit box, the quote's rule. */
+.iv[data-disputed='true'] .iv-br__node::before,
+.iv[data-disputed='true'] .iv-br__link,
+.iv[data-disputed='true'] .iv-lk__quote,
+.iv[data-disputed='true'] .iv-cmp__shared {
+  border-color: var(--line);
+}
+
+.iv[data-disputed='true'] .iv-cmp__shared {
+  background: none;
+}
+
+/* The strait mark is full ink on purpose — "by luminance, not by hue", because
+   it is the strongest thing the answer says about itself. Which is precisely why
+   it steps back to --ink-dim when the answer is in dispute. */
+.iv[data-disputed='true'] .answer__strait {
+  color: var(--ink-dim);
+}

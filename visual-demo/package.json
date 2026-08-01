@@ -3,7 +3,7 @@
   "private": true,
   "version": "0.1.0",
   "type": "module",
-  "description": "TLDR-G Visual Demo — an interactive four-rung knowledge terrain: the engine's architecture with the hood up, on a synthetic corpus.",
+  "description": "TLDR-G Visual Demo \u2014 an interactive four-rung knowledge terrain: the engine's architecture with the hood up, on a synthetic corpus.",
   "scripts": {
     "dev": "vite",
     "build": "tsc -b --noEmit && vite build",
@@ -11,6 +11,8 @@
     "preview": "vite preview --port 4173 --strictPort",
     "typecheck": "tsc -b --noEmit",
     "check": "node scripts/check-discipline.mjs",
+    "verify:questions": "node scripts/verify-questions.mjs",
+    "verify:shell": "node scripts/verify-shell.mjs",
     "shots": "node scripts/shoot.mjs"
   },
   "dependencies": {

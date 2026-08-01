@@ -89,7 +89,7 @@ export function SigmaFilters({ className }: SigmaFiltersProps): JSX.Element | nu
 
   return (
     <div className={className ? `ix-filters ${className}` : 'ix-filters'}>
-      <span className="caps ink-faint ix-filters__label" title={COPY.analyst.sigmaFilter.note}>
+      <span className="caps ink-dim ix-filters__label" title={COPY.analyst.sigmaFilter.note}>
         {COPY.analyst.sigmaFilter.title}
       </span>
 
@@ -122,10 +122,10 @@ export function SigmaFilters({ className }: SigmaFiltersProps): JSX.Element | nu
       </Chip>
 
       <span className="ix-filters__withheld" title={COPY.analyst.readouts.withheld.tip}>
-        <span className="caps ink-faint">{COPY.analyst.readouts.withheld.label}</span>
+        <span className="caps ink-dim">{COPY.analyst.readouts.withheld.label}</span>
         <Num value={withheld} format="int" tone={withheld > 0 ? 'warn' : 'faint'} />
         <span className="ink-faint">{COPY.common.ofLabel}</span>
-        <Num value={counts.total} format="int" tone="faint" />
+        <Num value={counts.total} format="int" tone="dim" />
       </span>
 
       {active.size === SIGMA_CLASSES.length ? null : (

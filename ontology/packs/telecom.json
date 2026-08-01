@@ -1,0 +1,44 @@
+{
+  "pack": "telecom",
+  "version": 1,
+  "extends": "core",
+  "description": "Telecom / 3GPP / RAN domain relations, seeded from the closure test's telecom gap clusters (deployment events, handover, bearer/slice configuration, spectrum allocation). Fork this for your own operator/vendor domain. The lean core (../edge-ontology-reference.md) already covers ~96% of telecom prose; this pack names the register-specific residue.",
+  "families": {
+    "deploys_launches": {
+      "description": "an operator or vendor launches, deploys, rolls out, or first-offers a network service, technology, or release in a market or at a time",
+      "head_types": ["organization", "product"],
+      "tail_types": ["product", "concept", "location", "date"],
+      "tier": "semantic", "sigma_family": "episodic"
+    },
+    "hands_over": {
+      "description": "a network node hands over or transfers a session, call, or user to another node or cell",
+      "head_types": ["organization", "product"],
+      "tail_types": ["organization", "product", "concept"],
+      "tier": "semantic", "sigma_family": "episodic"
+    },
+    "configures": {
+      "description": "a network function configures, establishes, provisions, or sets up a bearer, slice, channel, session, or connection",
+      "head_types": ["organization", "product"],
+      "tail_types": ["concept", "product"],
+      "tier": "semantic", "sigma_family": "factual"
+    },
+    "allocates": {
+      "description": "a system allocates, assigns, schedules, or grants spectrum, resources, capacity, or identifiers",
+      "head_types": ["organization", "product"],
+      "tail_types": ["concept", "product"],
+      "tier": "semantic", "sigma_family": "factual"
+    },
+    "interfaces_with": {
+      "description": "a network element interfaces, connects, or communicates with another over a defined reference point or interface",
+      "head_types": ["organization", "product"],
+      "tail_types": ["organization", "product"],
+      "tier": "semantic", "sigma_family": "factual"
+    },
+    "serves": {
+      "description": "a network node serves, covers, or provides service to a cell, area, session, or set of users",
+      "head_types": ["organization", "product"],
+      "tail_types": ["organization", "product", "location", "concept"],
+      "tier": "semantic", "sigma_family": "factual"
+    }
+  }
+}

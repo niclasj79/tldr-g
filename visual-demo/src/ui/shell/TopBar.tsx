@@ -3,8 +3,8 @@
  * TLDR-G VISUAL DEMO — THE TOP BAR
  * =============================================================================
  *
- * 48px, and FOUR THINGS. Who this is, where you are, what you are asking, and
- * which instruments are open.
+ * 48px, and FOUR THINGS. Who this is, where you are, which workspace you are in,
+ * and the manual.
  *
  * It is deliberately the least interesting band on the screen. Everything in it
  * is either a name, a place or a switch; not one number lives here, because a
@@ -12,27 +12,40 @@
  * as chrome.
  *
  * -----------------------------------------------------------------------------
- * WHAT WAS TAKEN OUT, AND WHY
+ * THE FIVE SWITCHES WERE NOT FIVE OF THE SAME THING
  * -----------------------------------------------------------------------------
- * This row carried fourteen controls at equal rank and read as a toolbar. Four
- * things left it and the difference is the whole point of the band:
+ * This row used to carry Atlas · Inspector · Provenance · Timeline · Analyst as
+ * five independent toggles at equal rank, any subset of which could be lit at
+ * once. They were never peers:
  *
- *   the tagline      a claim about mechanism, and it belongs where there is room
- *                    to make it: FIRST-RUN and the help overlay. Beside a
- *                    wordmark at 11px it was a byline nobody read twice. It
- *                    survives as the wordmark's own tooltip.
- *   the key hints    `/` and `Q` printed next to the control they operate is a
- *                    tutorial pinned to the instrument. The help overlay is
- *                    generated from the same KEYMAP and is one keystroke away.
- *   the latency      a measurement. The HUD prints it, once.
- *   Close corpus     a destructive-sounding control in the highest-value pixel
- *                    row of the product. It moved to the foot of the rail,
- *                    under a rule, where a destructive control belongs.
+ *   Atlas, Analyst   WORKSPACES you enter
+ *   Timeline         a LENS over the same data
+ *   Provenance       detail about a RESULT
+ *   Inspector        detail about a SELECTION
  *
- * The five panel switches are now ONE GROUP in a bordered well rather than five
- * peers of the wordmark, so the eye reads "panels" once instead of counting to
- * five. `?` sits outside it because it is not a panel over the terrain, it is
- * the manual.
+ * Presenting four different kinds of thing as one row of switches made operating
+ * the instrument a task the user had to complete before asking their question,
+ * and it let the rail grow to six thousand pixels because every switch appended
+ * rather than replaced. So the row now carries the one kind that genuinely
+ * belongs in a global chrome band — WHICH WORKSPACE YOU ARE IN — as a segmented
+ * control with exactly one segment lit, and the two detail surfaces moved into
+ * the rail as tabs over the result they describe.
+ *
+ * -----------------------------------------------------------------------------
+ * THE COMPOSER LEFT THIS ROW, AND THAT IS WHAT MADE THE ROOM
+ * -----------------------------------------------------------------------------
+ * The question used to be an input flexing between 520px and a 220px floor in the
+ * middle of this bar. At 1280px it truncated heavily; near 1024px it was
+ * effectively gone — the single most important thing on the screen, squeezed out
+ * by the chrome around it, at exactly the widths where a user most needs to see
+ * what they asked. It lives at the top of the rail now, sticky, at full width,
+ * and it never has to compete with a wordmark again.
+ *
+ * WHAT THAT BOUGHT: the breadcrumb no longer disappears below 1500px. It used to
+ * be the first thing cut, which meant orientation was withdrawn at exactly the
+ * viewport where orientation was hardest. It is now permanent, in two forms — the
+ * full ancestry when there is room, a compact scope-and-level readout when there
+ * is not — and it is never absent.
  *
  * THE STATUS DOT IS NOT DECORATION. It maps onto `AppState` and nothing else:
  * off before there is a corpus, pending while real work is in flight, on when
@@ -44,12 +57,11 @@
 import { COPY } from '@/copy';
 import type { AppState } from '@/engine';
 import { Breadcrumb } from '@/ui/atlas';
-import { keyHintFor, useAtlas, useAtlasStore } from '@/state';
-import type { UiPanel } from '@/state';
-import { Chip, KeyHint, StateDot, Tip } from '@/ui/primitives';
+import { keyHintFor, useAtlas, useAtlasStore, LENSES } from '@/state';
+import type { KeyActionId, Lens } from '@/state';
+import { KeyHint, StateDot, Tip } from '@/ui/primitives';
 import type { DotState } from '@/ui/primitives';
 
-import { CommandBar } from './CommandBar';
 import { ShareControl } from './ShareControl';
 
 /* The dot is a function of the machine, so it is written as one. */
@@ -63,71 +75,67 @@ const DOT: Readonly<Record<AppState, DotState>> = {
   DEGRADED: 'fail',
 };
 
-/** The panels the top bar switches, in the order the keyboard map lists them. */
-const SWITCHES: readonly { panel: UiPanel; label: string; key: Parameters<typeof keyHintFor>[0] }[] = [
-  { panel: 'atlas', label: COPY.atlas.title, key: 'atlas' },
-  { panel: 'inspector', label: COPY.inspector.title, key: 'inspector' },
-  { panel: 'receipt', label: COPY.receipt.keyHintLabel, key: 'receipt' },
-  { panel: 'timeline', label: COPY.timeline.title, key: 'timeline' },
-  { panel: 'analyst', label: COPY.analyst.title, key: 'analyst' },
-];
+/** The three workspaces, with the binding each one is reached by. */
+const LENS_KEY: Readonly<Record<Lens, KeyActionId>> = {
+  explore: 'lens-explore',
+  timeline: 'lens-timeline',
+  analyze: 'lens-analyze',
+};
 
 export interface TopBarProps {
   className?: string;
 }
 
 export function TopBar({ className }: TopBarProps): JSX.Element {
-  const ui = useAtlasStore((s) => s.ui);
-  const app = useAtlasStore((s) => s.app);
+  const { help, app, lens } = useAtlasStore((s) => ({
+    help: s.ui.help,
+    app: s.app,
+    lens: s.lens,
+  }));
 
   return (
     <header className={['topbar', className].filter(Boolean).join(' ')}>
       <div className="topbar__id">
         <StateDot state={DOT[app]} />
         <Tip content={COPY.product.taglineGloss}>
-          <span className="topbar__name t-12-5 w-650">{COPY.product.name}</span>
+          <span className="topbar__name t-13 w-650">{COPY.product.name}</span>
         </Tip>
       </div>
 
+      {/* WHERE YOU ARE. Permanent at every width — see the header. */}
       <Breadcrumb className="topbar__crumbs" />
 
-      <CommandBar className="topbar__cmd" />
-
       <div className="topbar__right">
-        {/* ONE GROUP, NOT FIVE PEERS. The well is the grouping; the lit box
-            inside it is the state. */}
-        <div className="topbar__panels" role="group" aria-label={COPY.topbar.panels.label}>
-          {SWITCHES.map((s) => (
+        {/* ONE SEGMENTED CONTROL, ONE LIT SEGMENT.
+            `radiogroup` rather than a group of toggle buttons, because that is
+            what mutual exclusion IS — and it means a screen reader announces
+            "2 of 3" rather than three independent pressed states, which is the
+            same correction the visual design is making. */}
+        <div
+          className="topbar__lenses"
+          role="radiogroup"
+          aria-label={COPY.topbar.lenses.label}
+        >
+          {LENSES.map((l) => (
             <Tip
-              key={s.panel}
+              key={l}
               content={
                 <span className="topbar__tip">
-                  {s.label}
-                  <KeyHint keys={keyHintFor(s.key)} />
+                  {COPY.lenses[l].long}
+                  <KeyHint keys={keyHintFor(LENS_KEY[l])} />
                 </span>
               }
             >
-              {/* A PANEL SWITCH IS NOT THE RENDER CONTROL.
-                  These five wore --render when lit, which put up to five teal
-                  boxes in the top bar of a capture. Teal has one job here —
-                  the engine's attention: the rendered path, the active
-                  selection, the button that spends tokens — and a row of teal
-                  chips for "is the timeline open" is how that stops being
-                  legible. Active is still unmistakable: `.chip.is-active`
-                  fills and outlines in whatever tone it is given, and in ink
-                  the box is doing the work rather than the colour. */}
-              <Chip
-                active={ui[s.panel]}
-                tone={ui[s.panel] ? 'neutral' : 'dim'}
-                onClick={() => {
-                  useAtlas.getState().toggle(s.panel);
-                  if (s.panel === 'timeline' && useAtlas.getState().timeline === null) {
-                    void useAtlas.getState().loadTimeline();
-                  }
-                }}
+              <button
+                type="button"
+                className="topbar__lens"
+                role="radio"
+                aria-checked={lens === l}
+                data-active={lens === l}
+                onClick={() => void useAtlas.getState().setLens(l)}
               >
-                {s.label}
-              </Chip>
+                {COPY.lenses[l].label}
+              </button>
             </Tip>
           ))}
         </div>
@@ -140,13 +148,15 @@ export function TopBar({ className }: TopBarProps): JSX.Element {
             </span>
           }
         >
-          <Chip
-            active={ui.help}
-            tone={ui.help ? 'neutral' : 'dim'}
+          <button
+            type="button"
+            className="topbar__aux"
+            aria-expanded={help}
+            data-active={help}
             onClick={() => useAtlas.getState().toggle('help')}
           >
-            {keyHintFor('help')[0]}
-          </Chip>
+            {COPY.help.label}
+          </button>
         </Tip>
 
         <ShareControl />

@@ -23,25 +23,45 @@
 import { RUNGS } from '@/engine';
 import type { Rung } from '@/engine';
 
-/** Every action the keyboard can reach. Stable ids — the copy deck keys off these. */
+/**
+ * Every action the keyboard can reach. Stable ids — the copy deck keys off these.
+ *
+ * THE IDS WERE RENAMED WHEN THE TAXONOMY WAS FIXED, and the rename is the point.
+ * `atlas`, `inspector`, `receipt`, `timeline` and `analyst` were five ids at one
+ * rank that stood for two workspaces, a lens, a result surface and a selection
+ * surface. An id that does not say which kind of thing it is is an id that lets
+ * the interface forget — so they are now `lens-*` and `tab-*`, and the shape of
+ * this union alone tells you the product has three places and three details.
+ */
 export type KeyActionId =
   | 'search'
-  | 'atlas'
-  | 'inspector'
-  | 'receipt'
-  | 'timeline'
+  | 'lens-explore'
+  | 'lens-timeline'
+  | 'lens-analyze'
+  | 'tab-answer'
+  | 'tab-evidence'
+  | 'tab-inspect'
   | 'clear-focus'
   | 'run-query'
-  | 'analyst'
   | 'help'
   | 'rung-continent'
   | 'rung-island'
   | 'rung-asset'
   | 'rung-passage'
-  | 'ascend';
+  | 'ascend'
+  | 'back'
+  | 'home'
+  | 'return-to-result';
 
-/** The three groups the help overlay renders as columns. */
-export type KeyGroup = 'navigate' | 'panels' | 'query';
+/**
+ * The groups the help overlay renders as columns.
+ *
+ * `panels` became `lenses` + `result` when the five equal-rank switches were
+ * split into the two different KINDS of thing they always were: places you go,
+ * and detail about what is on screen. The group names are the taxonomy, so
+ * teaching it costs nothing extra — the shortcut list is already grouped by it.
+ */
+export type KeyGroup = 'navigate' | 'lenses' | 'result' | 'query';
 
 export interface KeyBinding {
   id: KeyActionId;
@@ -72,32 +92,42 @@ export interface KeyBinding {
  * the product: move around, open things, ask something.
  */
 export const KEYMAP: readonly KeyBinding[] = Object.freeze([
-  /* ---- navigate ------------------------------------------------------- */
-  { id: 'rung-continent', keys: ['1'], codes: ['1'], label: 'jump to the continent rung', group: 'navigate', rung: RUNGS[0] },
-  { id: 'rung-island', keys: ['2'], codes: ['2'], label: 'jump to the island rung', group: 'navigate', rung: RUNGS[1] },
-  { id: 'rung-asset', keys: ['3'], codes: ['3'], label: 'jump to the asset rung', group: 'navigate', rung: RUNGS[2] },
-  { id: 'rung-passage', keys: ['4'], codes: ['4'], label: 'jump to the passage rung', group: 'navigate', rung: RUNGS[3] },
-  { id: 'ascend', keys: ['Backspace'], codes: ['backspace'], label: 'ascend one rung', group: 'navigate', rung: null },
-  { id: 'clear-focus', keys: ['Esc'], codes: ['escape'], label: 'clear focus and selection', group: 'navigate', rung: null },
-  { id: 'atlas', keys: ['A'], codes: ['a'], label: 'Atlas Mode — all four rungs at once', group: 'navigate', rung: null },
+  /* ---- navigate — where you are, and how to undo getting there --------- */
+  { id: 'rung-continent', keys: ['1'], codes: ['1'], label: 'detail level: continents', group: 'navigate', rung: RUNGS[0] },
+  { id: 'rung-island', keys: ['2'], codes: ['2'], label: 'detail level: islands', group: 'navigate', rung: RUNGS[1] },
+  { id: 'rung-asset', keys: ['3'], codes: ['3'], label: 'detail level: documents', group: 'navigate', rung: RUNGS[2] },
+  { id: 'rung-passage', keys: ['4'], codes: ['4'], label: 'detail level: passages', group: 'navigate', rung: RUNGS[3] },
+  { id: 'ascend', keys: ['Backspace'], codes: ['backspace'], label: 'up one level', group: 'navigate', rung: null },
+  /* THE THREE REVERSE ACTIONS. Every move in this product now has one, and all
+     three are on the keyboard because the whole point of a reverse action is
+     that it is available the moment you realise you need it. */
+  { id: 'back', keys: ['B'], codes: ['b'], label: 'back to the previous view', group: 'navigate', rung: null },
+  { id: 'return-to-result', keys: ['R'], codes: ['r'], label: 'back to the result', group: 'navigate', rung: null },
+  { id: 'home', keys: ['H'], codes: ['h'], label: 'home — the whole map, nothing held', group: 'navigate', rung: null },
+  { id: 'clear-focus', keys: ['Esc'], codes: ['escape'], label: 'clear the selection', group: 'navigate', rung: null },
 
-  /* ---- panels --------------------------------------------------------- */
-  { id: 'inspector', keys: ['I'], codes: ['i'], label: 'Inspector', group: 'panels', rung: null },
-  { id: 'receipt', keys: ['P'], codes: ['p'], label: 'Provenance — the render trace', group: 'panels', rung: null },
-  { id: 'timeline', keys: ['T'], codes: ['t'], label: 'Timeline', group: 'panels', rung: null },
-  { id: 'analyst', keys: ['G'], codes: ['g'], label: 'Analyst Mode', group: 'panels', rung: null },
-  { id: 'help', keys: ['?'], codes: ['?'], label: 'this list, and the glossary', group: 'panels', rung: null },
+  /* ---- lenses — mutually exclusive workspaces -------------------------- */
+  { id: 'lens-explore', keys: ['E'], codes: ['e'], label: 'Explore — the map and its detail levels', group: 'lenses', rung: null },
+  { id: 'lens-timeline', keys: ['T'], codes: ['t'], label: 'Timeline — the same map, read by date', group: 'lenses', rung: null },
+  { id: 'lens-analyze', keys: ['G'], codes: ['g'], label: 'Analyze — filters and engine internals', group: 'lenses', rung: null },
+
+  /* ---- result — detail about what is on screen ------------------------- */
+  { id: 'tab-answer', keys: ['A'], codes: ['a'], label: 'Answer — the claim and how it was reached', group: 'result', rung: null },
+  { id: 'tab-evidence', keys: ['P'], codes: ['p'], label: 'Evidence trail — the sources and the receipt', group: 'result', rung: null },
+  { id: 'tab-inspect', keys: ['I'], codes: ['i'], label: 'Inspect — whatever is selected', group: 'result', rung: null },
+  { id: 'help', keys: ['?'], codes: ['?'], label: 'help, and the glossary', group: 'result', rung: null },
 
   /* ---- query ---------------------------------------------------------- */
-  { id: 'search', keys: ['/'], codes: ['/'], label: 'command search', group: 'query', rung: null },
+  { id: 'search', keys: ['/'], codes: ['/'], label: 'search questions, places and commands', group: 'query', rung: null },
   { id: 'run-query', keys: ['Q'], codes: ['q'], label: 'render the staged question', group: 'query', rung: null },
 ] as const);
 
 /** Group ids with their headings, in overlay order. */
 export const KEY_GROUPS: readonly { id: KeyGroup; label: string }[] = Object.freeze([
-  { id: 'navigate', label: 'Navigate' },
-  { id: 'panels', label: 'Panels' },
-  { id: 'query', label: 'Query' },
+  { id: 'navigate', label: 'Move around' },
+  { id: 'lenses', label: 'Workspaces' },
+  { id: 'result', label: 'Result detail' },
+  { id: 'query', label: 'Ask' },
 ] as const);
 
 /** O(1) lookup by action id. */

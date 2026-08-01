@@ -1,0 +1,1461 @@
+{
+ "ontology": "tldr-g-edge-ontology",
+ "version": 1,
+ "families": {
+  "founded": {
+   "description": "a person or organization founded an organization or institution",
+   "head_types": [
+    "person",
+    "organization"
+   ],
+   "tail_types": [
+    "organization"
+   ],
+   "tier": "semantic",
+   "sigma_family": "authorial"
+  },
+  "founded_by": {
+   "description": "an organization was founded by a person",
+   "head_types": [
+    "organization"
+   ],
+   "tail_types": [
+    "person"
+   ],
+   "tier": "semantic",
+   "sigma_family": "authorial"
+  },
+  "ceo_of": {
+   "description": "a person is or was the chief executive or leader of an organization",
+   "head_types": [
+    "person"
+   ],
+   "tail_types": [
+    "organization"
+   ],
+   "tier": "semantic",
+   "sigma_family": "factual"
+  },
+  "works_at": {
+   "description": "a person is employed by or works at an organization",
+   "head_types": [
+    "person"
+   ],
+   "tail_types": [
+    "organization"
+   ],
+   "tier": "semantic",
+   "sigma_family": "factual"
+  },
+  "member_of": {
+   "description": "a person or organization is a member of a group or organization",
+   "head_types": [
+    "person",
+    "organization"
+   ],
+   "tail_types": [
+    "organization"
+   ],
+   "tier": "semantic",
+   "sigma_family": "factual"
+  },
+  "subsidiary_of": {
+   "description": "an organization is a subsidiary or division of another organization",
+   "head_types": [
+    "organization"
+   ],
+   "tail_types": [
+    "organization"
+   ],
+   "tier": "semantic",
+   "sigma_family": "factual"
+  },
+  "owns": {
+   "description": "a person or organization owns an asset, product, or organization",
+   "head_types": [
+    "person",
+    "organization"
+   ],
+   "tail_types": [
+    "organization",
+    "product"
+   ],
+   "tier": "semantic",
+   "sigma_family": "factual"
+  },
+  "acquired": {
+   "description": "an organization acquired or bought another organization",
+   "head_types": [
+    "organization"
+   ],
+   "tail_types": [
+    "organization"
+   ],
+   "tier": "semantic",
+   "sigma_family": "episodic"
+  },
+  "partnered_with": {
+   "description": "an organization partnered or collaborated with another organization",
+   "head_types": [
+    "organization"
+   ],
+   "tail_types": [
+    "organization"
+   ],
+   "tier": "semantic",
+   "sigma_family": "episodic"
+  },
+  "located_in": {
+   "description": "a person, organization, or place is located in a place",
+   "head_types": [
+    "organization",
+    "location",
+    "person"
+   ],
+   "tail_types": [
+    "location"
+   ],
+   "tier": "semantic",
+   "sigma_family": "factual"
+  },
+  "at_location": {
+   "description": "an entity, event, or object is at or associated with a location",
+   "head_types": [
+    "person",
+    "organization",
+    "event",
+    "concept",
+    "product"
+   ],
+   "tail_types": [
+    "location"
+   ],
+   "tier": "semantic",
+   "sigma_family": "factual"
+  },
+  "headquartered_in": {
+   "description": "an organization is headquartered in a place",
+   "head_types": [
+    "organization"
+   ],
+   "tail_types": [
+    "location"
+   ],
+   "tier": "semantic",
+   "sigma_family": "factual"
+  },
+  "born_in": {
+   "description": "a person was born in a place",
+   "head_types": [
+    "person"
+   ],
+   "tail_types": [
+    "location"
+   ],
+   "tier": "temporal",
+   "sigma_family": "temporal"
+  },
+  "died_in": {
+   "description": "a person died in a place",
+   "head_types": [
+    "person"
+   ],
+   "tail_types": [
+    "location"
+   ],
+   "tier": "temporal",
+   "sigma_family": "temporal"
+  },
+  "nationality": {
+   "description": "a person is a citizen or national of a place or country",
+   "head_types": [
+    "person"
+   ],
+   "tail_types": [
+    "location"
+   ],
+   "tier": "semantic",
+   "sigma_family": "factual"
+  },
+  "created": {
+   "description": "a person or organization created a work, product, or concept",
+   "head_types": [
+    "person",
+    "organization"
+   ],
+   "tail_types": [
+    "product",
+    "concept"
+   ],
+   "tier": "semantic",
+   "sigma_family": "authorial"
+  },
+  "created_by": {
+   "description": "a work, product, or concept was created by a person or organization",
+   "head_types": [
+    "product",
+    "concept"
+   ],
+   "tail_types": [
+    "person",
+    "organization"
+   ],
+   "tier": "semantic",
+   "sigma_family": "authorial"
+  },
+  "authored": {
+   "description": "a person authored or wrote a document, book, or work",
+   "head_types": [
+    "person"
+   ],
+   "tail_types": [
+    "product",
+    "concept"
+   ],
+   "tier": "semantic",
+   "sigma_family": "authorial"
+  },
+  "developed": {
+   "description": "a person or organization developed a product or technology",
+   "head_types": [
+    "person",
+    "organization"
+   ],
+   "tail_types": [
+    "product",
+    "concept"
+   ],
+   "tier": "semantic",
+   "sigma_family": "authorial"
+  },
+  "part_of": {
+   "description": "something is a part or component of a larger whole",
+   "head_types": [
+    "concept",
+    "organization",
+    "product"
+   ],
+   "tail_types": [
+    "concept",
+    "organization",
+    "product"
+   ],
+   "tier": "structural",
+   "sigma_family": "factual"
+  },
+  "has_part": {
+   "description": "a whole contains a part or component",
+   "head_types": [
+    "concept",
+    "organization",
+    "product"
+   ],
+   "tail_types": [
+    "concept",
+    "product"
+   ],
+   "tier": "structural",
+   "sigma_family": "factual"
+  },
+  "contains": {
+   "description": "a whole contains or includes a part, member, or component",
+   "head_types": [
+    "concept",
+    "organization",
+    "product"
+   ],
+   "tail_types": [
+    "concept",
+    "product",
+    "person"
+   ],
+   "tier": "structural",
+   "sigma_family": "factual"
+  },
+  "has_attribute": {
+   "description": "an entity has an attribute or descriptive property",
+   "head_types": [
+    "concept",
+    "organization",
+    "product",
+    "person"
+   ],
+   "tail_types": [
+    "concept"
+   ],
+   "tier": "structural",
+   "sigma_family": "factual"
+  },
+  "has_property": {
+   "description": "an entity has a property, trait, or quality",
+   "head_types": [
+    "concept",
+    "organization",
+    "product",
+    "person"
+   ],
+   "tail_types": [
+    "concept"
+   ],
+   "tier": "structural",
+   "sigma_family": "factual"
+  },
+  "is_a": {
+   "description": "something is a kind, class, or subtype of a broader concept",
+   "head_types": [
+    "concept",
+    "product",
+    "person",
+    "organization"
+   ],
+   "tail_types": [
+    "concept"
+   ],
+   "tier": "structural",
+   "sigma_family": "factual"
+  },
+  "instance_of": {
+   "description": "something is an instance or type of a more general category",
+   "head_types": [
+    "concept",
+    "product",
+    "person",
+    "organization"
+   ],
+   "tail_types": [
+    "concept"
+   ],
+   "tier": "structural",
+   "sigma_family": "factual"
+  },
+  "made_of": {
+   "description": "a thing is made of a material, component, or substance",
+   "head_types": [
+    "concept",
+    "product"
+   ],
+   "tail_types": [
+    "concept",
+    "product"
+   ],
+   "tier": "structural",
+   "sigma_family": "factual"
+  },
+  "form_of": {
+   "description": "a word, phrase, object, or concept is a form or variant of another",
+   "head_types": [
+    "concept",
+    "product"
+   ],
+   "tail_types": [
+    "concept",
+    "product"
+   ],
+   "tier": "structural",
+   "sigma_family": "factual"
+  },
+  "married_to": {
+   "description": "a person is or was married to another person",
+   "head_types": [
+    "person"
+   ],
+   "tail_types": [
+    "person"
+   ],
+   "tier": "semantic",
+   "sigma_family": "episodic"
+  },
+  "parent_of": {
+   "description": "a person is the parent of another person",
+   "head_types": [
+    "person"
+   ],
+   "tail_types": [
+    "person"
+   ],
+   "tier": "semantic",
+   "sigma_family": "factual"
+  },
+  "succeeded_by": {
+   "description": "a person or thing was succeeded or followed by another in a role",
+   "head_types": [
+    "person",
+    "organization"
+   ],
+   "tail_types": [
+    "person",
+    "organization"
+   ],
+   "tier": "temporal",
+   "sigma_family": "temporal"
+  },
+  "preceded_by": {
+   "description": "a person or thing was preceded by another in a role or sequence",
+   "head_types": [
+    "person",
+    "organization"
+   ],
+   "tail_types": [
+    "person",
+    "organization"
+   ],
+   "tier": "temporal",
+   "sigma_family": "temporal"
+  },
+  "caused": {
+   "description": "an event or thing caused or led to another event or outcome",
+   "head_types": [
+    "event",
+    "concept"
+   ],
+   "tail_types": [
+    "event",
+    "concept"
+   ],
+   "tier": "semantic",
+   "sigma_family": "causal"
+  },
+  "has_prerequisite": {
+   "description": "an event, concept, or action requires another condition before it",
+   "head_types": [
+    "event",
+    "concept"
+   ],
+   "tail_types": [
+    "event",
+    "concept"
+   ],
+   "tier": "semantic",
+   "sigma_family": "causal"
+  },
+  "requires": {
+   "description": "an action, event, or concept requires another condition or resource",
+   "head_types": [
+    "event",
+    "concept",
+    "product"
+   ],
+   "tail_types": [
+    "event",
+    "concept",
+    "product"
+   ],
+   "tier": "semantic",
+   "sigma_family": "causal"
+  },
+  "depends_on": {
+   "description": "an entity, event, or concept depends on another entity, event, or concept",
+   "head_types": [
+    "event",
+    "concept",
+    "product",
+    "organization"
+   ],
+   "tail_types": [
+    "event",
+    "concept",
+    "product",
+    "organization"
+   ],
+   "tier": "semantic",
+   "sigma_family": "causal"
+  },
+  "entails": {
+   "description": "a statement, event, or concept logically entails another",
+   "head_types": [
+    "event",
+    "concept"
+   ],
+   "tail_types": [
+    "event",
+    "concept"
+   ],
+   "tier": "semantic",
+   "sigma_family": "causal"
+  },
+  "motivated_by_goal": {
+   "description": "an action or entity is motivated by a goal or intended outcome",
+   "head_types": [
+    "event",
+    "concept",
+    "person",
+    "organization"
+   ],
+   "tail_types": [
+    "concept",
+    "event"
+   ],
+   "tier": "semantic",
+   "sigma_family": "causal"
+  },
+  "participated_in": {
+   "description": "a person or organization participated in an event",
+   "head_types": [
+    "person",
+    "organization"
+   ],
+   "tail_types": [
+    "event"
+   ],
+   "tier": "semantic",
+   "sigma_family": "episodic"
+  },
+  "signed": {
+   "description": "a person or organization signed or enacted a law, agreement, or document",
+   "head_types": [
+    "person",
+    "organization"
+   ],
+   "tail_types": [
+    "law",
+    "concept"
+   ],
+   "tier": "semantic",
+   "sigma_family": "authorial"
+  },
+  "applies_to": {
+   "description": "a law, rule, or concept applies to or governs a subject",
+   "head_types": [
+    "law",
+    "concept"
+   ],
+   "tail_types": [
+    "concept",
+    "organization",
+    "person"
+   ],
+   "tier": "semantic",
+   "sigma_family": "causal"
+  },
+  "used_for": {
+   "description": "an entity, product, or concept is used for a purpose or activity",
+   "head_types": [
+    "concept",
+    "product"
+   ],
+   "tail_types": [
+    "concept",
+    "event"
+   ],
+   "tier": "semantic",
+   "sigma_family": "factual"
+  },
+  "capable_of": {
+   "description": "a person, organization, product, or concept is capable of an action",
+   "head_types": [
+    "person",
+    "organization",
+    "product",
+    "concept"
+   ],
+   "tail_types": [
+    "event",
+    "concept"
+   ],
+   "tier": "semantic",
+   "sigma_family": "factual"
+  },
+  "receives_action": {
+   "description": "an entity receives, undergoes, or is affected by an action",
+   "head_types": [
+    "person",
+    "organization",
+    "product",
+    "concept"
+   ],
+   "tail_types": [
+    "event",
+    "concept"
+   ],
+   "tier": "semantic",
+   "sigma_family": "episodic"
+  },
+  "synonym": {
+   "description": "two concepts, names, or terms have the same or very similar meaning",
+   "head_types": [
+    "concept"
+   ],
+   "tail_types": [
+    "concept"
+   ],
+   "tier": "semantic",
+   "sigma_family": "factual"
+  },
+  "antonym": {
+   "description": "two concepts, names, or terms have opposite meanings",
+   "head_types": [
+    "concept"
+   ],
+   "tail_types": [
+    "concept"
+   ],
+   "tier": "semantic",
+   "sigma_family": "factual"
+  },
+  "manner_of": {
+   "description": "an action or concept is a manner, method, or style of another",
+   "head_types": [
+    "event",
+    "concept"
+   ],
+   "tail_types": [
+    "event",
+    "concept"
+   ],
+   "tier": "semantic",
+   "sigma_family": "factual"
+  },
+  "derived_from": {
+   "description": "a concept, product, or work is derived from another source",
+   "head_types": [
+    "concept",
+    "product"
+   ],
+   "tail_types": [
+    "concept",
+    "product"
+   ],
+   "tier": "semantic",
+   "sigma_family": "authorial"
+  },
+  "similar_to": {
+   "description": "two entities or concepts are similar in meaning, role, or behavior",
+   "head_types": [
+    "concept",
+    "product",
+    "organization",
+    "person"
+   ],
+   "tail_types": [
+    "concept",
+    "product",
+    "organization",
+    "person"
+   ],
+   "tier": "semantic",
+   "sigma_family": "factual"
+  },
+  "distinct_from": {
+   "description": "two entities or concepts are distinct and should not be conflated",
+   "head_types": [
+    "concept",
+    "product",
+    "organization",
+    "person"
+   ],
+   "tail_types": [
+    "concept",
+    "product",
+    "organization",
+    "person"
+   ],
+   "tier": "semantic",
+   "sigma_family": "factual"
+  },
+  "defined_as": {
+   "description": "a term, entity, or concept is defined as another concept or description",
+   "head_types": [
+    "concept",
+    "product",
+    "organization",
+    "person"
+   ],
+   "tail_types": [
+    "concept"
+   ],
+   "tier": "semantic",
+   "sigma_family": "authorial"
+  },
+  "related_to": {
+   "description": "two concepts or entities are meaningfully related (catch-all)",
+   "head_types": [
+    "concept"
+   ],
+   "tail_types": [
+    "concept"
+   ],
+   "tier": "semantic",
+   "sigma_family": "factual"
+  },
+  "occurred_on": {
+   "description": "an event occurred on or during a date or time period",
+   "head_types": [
+    "event"
+   ],
+   "tail_types": [
+    "date"
+   ],
+   "tier": "temporal",
+   "sigma_family": "temporal"
+  },
+  "publishes": {
+   "description": "an agent publishes, releases, ships, or launches a work or version",
+   "head_types": [
+    "person",
+    "organization"
+   ],
+   "tail_types": [
+    "product",
+    "concept",
+    "event"
+   ],
+   "tier": "semantic",
+   "sigma_family": "authorial"
+  },
+  "transacts": {
+   "description": "an agent buys, sells, pays for, or funds a thing",
+   "head_types": [
+    "person",
+    "organization"
+   ],
+   "tail_types": [
+    "product",
+    "organization",
+    "concept"
+   ],
+   "tier": "semantic",
+   "sigma_family": "episodic"
+  },
+  "uses": {
+   "description": "an agent or system uses, applies, or consumes a tool, method, or resource",
+   "head_types": [
+    "person",
+    "organization",
+    "product",
+    "concept"
+   ],
+   "tail_types": [
+    "product",
+    "concept"
+   ],
+   "tier": "semantic",
+   "sigma_family": "factual"
+  },
+  "has": {
+   "description": "an entity has, holds, possesses, or receives a thing",
+   "head_types": [
+    "person",
+    "organization",
+    "product",
+    "concept"
+   ],
+   "tail_types": [
+    "product",
+    "concept"
+   ],
+   "tier": "semantic",
+   "sigma_family": "factual"
+  },
+  "enables": {
+   "description": "a thing enables, supports, or allows another thing or capability",
+   "head_types": [
+    "concept",
+    "product",
+    "organization",
+    "event"
+   ],
+   "tail_types": [
+    "concept",
+    "product",
+    "event"
+   ],
+   "tier": "semantic",
+   "sigma_family": "causal"
+  },
+  "prevents_constrains": {
+   "description": "a thing prevents, blocks, limits, gates, or protects against another",
+   "head_types": [
+    "concept",
+    "product",
+    "organization",
+    "law"
+   ],
+   "tail_types": [
+    "concept",
+    "product",
+    "event"
+   ],
+   "tier": "semantic",
+   "sigma_family": "causal"
+  },
+  "improves": {
+   "description": "a change improves, enhances, or optimizes a thing",
+   "head_types": [
+    "concept",
+    "product",
+    "event"
+   ],
+   "tail_types": [
+    "concept",
+    "product"
+   ],
+   "tier": "semantic",
+   "sigma_family": "causal"
+  },
+  "transforms": {
+   "description": "a thing changes, extends, reduces, scales, or otherwise transforms another",
+   "head_types": [
+    "concept",
+    "product",
+    "event",
+    "organization"
+   ],
+   "tail_types": [
+    "concept",
+    "product"
+   ],
+   "tier": "semantic",
+   "sigma_family": "causal"
+  },
+  "replaces_supersedes": {
+   "description": "a newer thing replaces, supersedes, or retires an older one",
+   "head_types": [
+    "concept",
+    "product",
+    "organization"
+   ],
+   "tail_types": [
+    "concept",
+    "product",
+    "organization"
+   ],
+   "tier": "temporal",
+   "sigma_family": "temporal"
+  },
+  "becomes": {
+   "description": "an entity becomes, remains, or emerges as a state or role",
+   "head_types": [
+    "person",
+    "organization",
+    "product",
+    "concept"
+   ],
+   "tail_types": [
+    "concept"
+   ],
+   "tier": "semantic",
+   "sigma_family": "factual"
+  },
+  "describes": {
+   "description": "a work or person describes, represents, shows, or illustrates a thing",
+   "head_types": [
+    "person",
+    "product",
+    "concept"
+   ],
+   "tail_types": [
+    "concept",
+    "product",
+    "event"
+   ],
+   "tier": "semantic",
+   "sigma_family": "authorial"
+  },
+  "asserts": {
+   "description": "an agent claims, reports, proposes, recommends, or discusses something",
+   "head_types": [
+    "person",
+    "organization",
+    "product"
+   ],
+   "tail_types": [
+    "concept",
+    "event"
+   ],
+   "tier": "semantic",
+   "sigma_family": "authorial"
+  },
+  "references": {
+   "description": "a work references, cites, mentions, or links to another work or entity",
+   "head_types": [
+    "product",
+    "concept",
+    "person"
+   ],
+   "tail_types": [
+    "product",
+    "concept",
+    "person",
+    "organization"
+   ],
+   "tier": "semantic",
+   "sigma_family": "authorial"
+  },
+  "measures_evaluates": {
+   "description": "an agent measures, tests, scores, ranks, or evaluates a thing",
+   "head_types": [
+    "person",
+    "organization",
+    "product"
+   ],
+   "tail_types": [
+    "concept",
+    "product",
+    "event"
+   ],
+   "tier": "semantic",
+   "sigma_family": "episodic"
+  },
+  "verifies": {
+   "description": "an agent verifies, validates, confirms, audits, or proves a claim",
+   "head_types": [
+    "person",
+    "organization",
+    "product"
+   ],
+   "tail_types": [
+    "concept",
+    "product",
+    "event"
+   ],
+   "tier": "semantic",
+   "sigma_family": "factual"
+  },
+  "discovers": {
+   "description": "an agent finds, discovers, identifies, detects, or surfaces a thing",
+   "head_types": [
+    "person",
+    "organization",
+    "product"
+   ],
+   "tail_types": [
+    "concept",
+    "product",
+    "event"
+   ],
+   "tier": "semantic",
+   "sigma_family": "episodic"
+  },
+  "selects_decides": {
+   "description": "an agent selects, chooses, picks, or decides on an option",
+   "head_types": [
+    "person",
+    "organization"
+   ],
+   "tail_types": [
+    "concept",
+    "product",
+    "event"
+   ],
+   "tier": "semantic",
+   "sigma_family": "episodic"
+  },
+  "knows_learns": {
+   "description": "an agent learns, understands, teaches, or trains on knowledge",
+   "head_types": [
+    "person",
+    "organization",
+    "product"
+   ],
+   "tail_types": [
+    "concept"
+   ],
+   "tier": "semantic",
+   "sigma_family": "episodic"
+  },
+  "tracks_monitors": {
+   "description": "an agent tracks, monitors, observes, or traces a thing over time",
+   "head_types": [
+    "person",
+    "organization",
+    "product"
+   ],
+   "tail_types": [
+    "concept",
+    "product",
+    "event"
+   ],
+   "tier": "semantic",
+   "sigma_family": "episodic"
+  },
+  "expects_predicts": {
+   "description": "an agent expects, predicts, assumes, or projects an outcome",
+   "head_types": [
+    "person",
+    "organization",
+    "product"
+   ],
+   "tail_types": [
+    "concept",
+    "event"
+   ],
+   "tier": "semantic",
+   "sigma_family": "episodic"
+  },
+  "operates_maintains": {
+   "description": "a person or organization operates, runs, manages, maintains, or administers a facility, system, or process",
+   "head_types": [
+    "person",
+    "organization"
+   ],
+   "tail_types": [
+    "location",
+    "product",
+    "organization",
+    "concept"
+   ],
+   "tier": "semantic",
+   "sigma_family": "factual"
+  },
+  "leads": {
+   "description": "a person leads, heads, directs, or chairs an organization, program, or effort",
+   "head_types": [
+    "person"
+   ],
+   "tail_types": [
+    "organization",
+    "concept",
+    "event",
+    "product"
+   ],
+   "tier": "semantic",
+   "sigma_family": "factual"
+  },
+  "achieves_addresses": {
+   "description": "an agent achieves, reaches, delivers, solves, or addresses a goal or problem",
+   "head_types": [
+    "person",
+    "organization",
+    "product"
+   ],
+   "tail_types": [
+    "concept",
+    "event"
+   ],
+   "tier": "semantic",
+   "sigma_family": "episodic"
+  },
+  "targets_aims": {
+   "description": "an agent targets, aims at, focuses on, or plans toward a goal",
+   "head_types": [
+    "person",
+    "organization",
+    "product"
+   ],
+   "tail_types": [
+    "concept",
+    "event"
+   ],
+   "tier": "semantic",
+   "sigma_family": "causal"
+  },
+  "competes_outperforms": {
+   "description": "a thing competes with, outperforms, beats, or exceeds another",
+   "head_types": [
+    "person",
+    "organization",
+    "product"
+   ],
+   "tail_types": [
+    "person",
+    "organization",
+    "product"
+   ],
+   "tier": "semantic",
+   "sigma_family": "episodic"
+  },
+  "fails_on": {
+   "description": "a thing fails, breaks, crashes, or misses on a task or condition",
+   "head_types": [
+    "person",
+    "organization",
+    "product",
+    "concept"
+   ],
+   "tail_types": [
+    "concept",
+    "product",
+    "event"
+   ],
+   "tier": "semantic",
+   "sigma_family": "episodic"
+  },
+  "transfers_to": {
+   "description": "a thing moves, sends, feeds, routes, or distributes something to a destination",
+   "head_types": [
+    "person",
+    "organization",
+    "product"
+   ],
+   "tail_types": [
+    "person",
+    "organization",
+    "product",
+    "location"
+   ],
+   "tier": "semantic",
+   "sigma_family": "episodic"
+  },
+  "connects_to": {
+   "description": "things are connected, linked, bridged, or bound to each other",
+   "head_types": [
+    "concept",
+    "product",
+    "organization",
+    "person"
+   ],
+   "tail_types": [
+    "concept",
+    "product",
+    "organization",
+    "person"
+   ],
+   "tier": "semantic",
+   "sigma_family": "factual"
+  },
+  "combines_with": {
+   "description": "things are combined, merged, or integrated together into a whole",
+   "head_types": [
+    "concept",
+    "product",
+    "organization"
+   ],
+   "tail_types": [
+    "concept",
+    "product",
+    "organization"
+   ],
+   "tier": "semantic",
+   "sigma_family": "factual"
+  },
+  "processes_data": {
+   "description": "a system ingests, extracts, retrieves, renders, computes, or queries data",
+   "head_types": [
+    "product",
+    "organization",
+    "concept"
+   ],
+   "tail_types": [
+    "concept",
+    "product"
+   ],
+   "tier": "semantic",
+   "sigma_family": "episodic"
+  },
+  "stores_preserves": {
+   "description": "a system stores, saves, records, logs, archives, or preserves data or provenance",
+   "head_types": [
+    "product",
+    "organization"
+   ],
+   "tail_types": [
+    "concept",
+    "product",
+    "law"
+   ],
+   "tier": "semantic",
+   "sigma_family": "factual"
+  }
+ },
+ "family_count": 84,
+ "string_to_family": {
+  "achieve": "achieves_addresses",
+  "acquire": "acquired",
+  "add": "created",
+  "address": "achieves_addresses",
+  "adopt": "uses",
+  "affect": "caused",
+  "aim": "targets_aims",
+  "align": "similar_to",
+  "allow": "enables",
+  "analyze": "measures_evaluates",
+  "announce": "asserts",
+  "answer": "asserts",
+  "anticipate": "expects_predicts",
+  "appear": "becomes",
+  "apply": "uses",
+  "archive": "stores_preserves",
+  "argue": "asserts",
+  "ask": "asserts",
+  "assess": "measures_evaluates",
+  "assume": "expects_predicts",
+  "attach": "connects_to",
+  "attend": "participated_in",
+  "attest": "verifies",
+  "audit": "verifies",
+  "author": "authored",
+  "avoid": "prevents_constrains",
+  "bake": "processes_data",
+  "beat": "competes_outperforms",
+  "become": "becomes",
+  "benchmark": "measures_evaluates",
+  "bind": "connects_to",
+  "block": "prevents_constrains",
+  "boost": "improves",
+  "break": "fails_on",
+  "bridge": "connects_to",
+  "bring": "transfers_to",
+  "build": "created",
+  "buy": "transacts",
+  "call": "asserts",
+  "capture": "describes",
+  "carry": "contains",
+  "catch": "discovers",
+  "cause": "caused",
+  "chair": "leads",
+  "change": "transforms",
+  "check": "verifies",
+  "choose": "selects_decides",
+  "cite": "references",
+  "claim": "asserts",
+  "collaborate": "partnered_with",
+  "collapse": "fails_on",
+  "combine": "combines_with",
+  "compare": "measures_evaluates",
+  "compete": "competes_outperforms",
+  "compose": "created",
+  "comprise": "contains",
+  "compute": "processes_data",
+  "confirm": "verifies",
+  "conflict": "distinct_from",
+  "connect": "connects_to",
+  "consolidate": "combines_with",
+  "constitute": "becomes",
+  "constrain": "prevents_constrains",
+  "consume": "uses",
+  "contain": "contains",
+  "contrast": "distinct_from",
+  "converge": "connects_to",
+  "convert": "transforms",
+  "cost": "transacts",
+  "couple": "connects_to",
+  "crash": "fails_on",
+  "create": "created",
+  "decide": "selects_decides",
+  "define": "defined_as",
+  "deliver": "achieves_addresses",
+  "demand": "requires",
+  "demonstrate": "describes",
+  "denote": "defined_as",
+  "depend": "depends_on",
+  "depict": "describes",
+  "deploy": "publishes",
+  "derive": "derived_from",
+  "describe": "describes",
+  "design": "created",
+  "detect": "discovers",
+  "determine": "selects_decides",
+  "develop": "developed",
+  "differ": "distinct_from",
+  "direct": "leads",
+  "discover": "discovers",
+  "discuss": "asserts",
+  "distribute": "transfers_to",
+  "drive": "caused",
+  "embed": "processes_data",
+  "emerge": "becomes",
+  "emit": "publishes",
+  "enable": "enables",
+  "enforce": "prevents_constrains",
+  "engage": "participated_in",
+  "enhance": "improves",
+  "ensure": "enables",
+  "establish": "created",
+  "estimate": "measures_evaluates",
+  "evaluate": "measures_evaluates",
+  "evolve": "transforms",
+  "exceed": "competes_outperforms",
+  "expand": "transforms",
+  "expect": "expects_predicts",
+  "expose": "discovers",
+  "extend": "transforms",
+  "extract": "processes_data",
+  "fail": "fails_on",
+  "feature": "contains",
+  "feed": "transfers_to",
+  "find": "discovers",
+  "fit": "similar_to",
+  "flag": "asserts",
+  "focus": "targets_aims",
+  "follow": "preceded_by",
+  "force": "caused",
+  "form": "created",
+  "formalize": "created",
+  "frame": "describes",
+  "fund": "transacts",
+  "gain": "has",
+  "gate": "prevents_constrains",
+  "generate": "created",
+  "get": "has",
+  "govern": "operates_maintains",
+  "grow": "transforms",
+  "handle": "operates_maintains",
+  "have": "has",
+  "head": "leads",
+  "help": "enables",
+  "highlight": "describes",
+  "hold": "has",
+  "host": "operates_maintains",
+  "identify": "discovers",
+  "illustrate": "describes",
+  "implement": "created",
+  "imply": "entails",
+  "improve": "improves",
+  "include": "contains",
+  "incorporate": "contains",
+  "increase": "transforms",
+  "index": "processes_data",
+  "indicate": "describes",
+  "ingest": "processes_data",
+  "integrate": "combines_with",
+  "intend": "targets_aims",
+  "introduce": "created",
+  "invent": "created",
+  "involve": "contains",
+  "join": "participated_in",
+  "justify": "verifies",
+  "know": "knows_learns",
+  "land": "at_location",
+  "launch": "publishes",
+  "lead": "leads",
+  "leak": "fails_on",
+  "learn": "knows_learns",
+  "let": "enables",
+  "limit": "prevents_constrains",
+  "link": "connects_to",
+  "live": "at_location",
+  "log": "stores_preserves",
+  "lose": "competes_outperforms",
+  "maintain": "operates_maintains",
+  "make": "created",
+  "manage": "operates_maintains",
+  "map": "processes_data",
+  "match": "similar_to",
+  "mean": "defined_as",
+  "measure": "measures_evaluates",
+  "meet": "achieves_addresses",
+  "mention": "references",
+  "merge": "combines_with",
+  "miss": "fails_on",
+  "model": "processes_data",
+  "monitor": "tracks_monitors",
+  "move": "transfers_to",
+  "need": "requires",
+  "observe": "tracks_monitors",
+  "occurred_at": "occurred_on",
+  "operate": "operates_maintains",
+  "oppose": "distinct_from",
+  "optimize": "improves",
+  "outperform": "competes_outperforms",
+  "overlap": "similar_to",
+  "override": "replaces_supersedes",
+  "own": "owns",
+  "parse": "processes_data",
+  "participate": "participated_in",
+  "pass": "transfers_to",
+  "pay": "transacts",
+  "persist": "stores_preserves",
+  "pick": "selects_decides",
+  "plan": "targets_aims",
+  "predict": "expects_predicts",
+  "present": "describes",
+  "preserve": "stores_preserves",
+  "prevent": "prevents_constrains",
+  "produce": "created",
+  "project": "expects_predicts",
+  "propose": "asserts",
+  "protect": "prevents_constrains",
+  "prove": "verifies",
+  "publish": "publishes",
+  "pull": "transfers_to",
+  "push": "transfers_to",
+  "query": "processes_data",
+  "quote": "references",
+  "rank": "measures_evaluates",
+  "reach": "achieves_addresses",
+  "receive": "has",
+  "recognize": "discovers",
+  "recommend": "asserts",
+  "record": "stores_preserves",
+  "reduce": "transforms",
+  "refer": "references",
+  "reference": "references",
+  "reflect": "describes",
+  "reject": "prevents_constrains",
+  "release": "publishes",
+  "rely": "depends_on",
+  "remain": "becomes",
+  "render": "processes_data",
+  "replace": "replaces_supersedes",
+  "report": "asserts",
+  "represent": "describes",
+  "require": "requires",
+  "resemble": "similar_to",
+  "reside": "at_location",
+  "restrict": "prevents_constrains",
+  "retain": "has",
+  "retire": "replaces_supersedes",
+  "retrieve": "processes_data",
+  "reveal": "describes",
+  "route": "transfers_to",
+  "run": "operates_maintains",
+  "save": "stores_preserves",
+  "say": "asserts",
+  "scale": "transforms",
+  "score": "measures_evaluates",
+  "seek": "targets_aims",
+  "select": "selects_decides",
+  "sell": "transacts",
+  "send": "transfers_to",
+  "serve": "operates_maintains",
+  "share": "transfers_to",
+  "shift": "transforms",
+  "ship": "publishes",
+  "show": "describes",
+  "sign": "signed",
+  "sit": "at_location",
+  "solve": "achieves_addresses",
+  "specify": "defined_as",
+  "spend": "transacts",
+  "split": "combines_with",
+  "spot": "discovers",
+  "state": "asserts",
+  "stay": "becomes",
+  "steer": "operates_maintains",
+  "store": "stores_preserves",
+  "suggest": "asserts",
+  "supersede": "replaces_supersedes",
+  "support": "enables",
+  "surface": "discovers",
+  "surpass": "competes_outperforms",
+  "target": "targets_aims",
+  "teach": "knows_learns",
+  "tell": "asserts",
+  "test": "measures_evaluates",
+  "trace": "tracks_monitors",
+  "track": "tracks_monitors",
+  "train": "knows_learns",
+  "transfer": "transfers_to",
+  "transform": "transforms",
+  "trigger": "caused",
+  "tune": "transforms",
+  "turn": "becomes",
+  "uncover": "discovers",
+  "understand": "knows_learns",
+  "unify": "combines_with",
+  "unlock": "enables",
+  "update": "transforms",
+  "use": "uses",
+  "utilize": "uses",
+  "validate": "verifies",
+  "vary": "transforms",
+  "verify": "verifies",
+  "watch": "tracks_monitors",
+  "win": "achieves_addresses",
+  "work": "works_at",
+  "write": "created",
+  "yield": "caused"
+ },
+ "sigma_classes": [
+  "temporal",
+  "causal",
+  "factual",
+  "episodic",
+  "authorial"
+ ],
+ "tiers": [
+  "semantic",
+  "structural",
+  "temporal"
+ ]
+}

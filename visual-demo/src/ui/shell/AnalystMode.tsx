@@ -73,7 +73,10 @@ function useFamiliesInView(): { family: string; sigma: SigmaClass; count: number
 
 export function AnalystRail({ className }: { className?: string }): JSX.Element | null {
   const { open, density, reducedMotion, integrity, families, view, quarantineOpen } = useAtlasStore((s) => ({
-    open: s.ui.analyst,
+    /* THE LENS IS THE TRUTH. `ui.analyst` is kept in step by `setLens`, but it
+       is now a derived flag and reading a derived flag where the primary exists
+       is how two sources of one fact get created. */
+    open: s.lens === 'analyze',
     density: s.density,
     reducedMotion: s.reducedMotion,
     integrity: s.integrity,
@@ -94,16 +97,31 @@ export function AnalystRail({ className }: { className?: string }): JSX.Element 
       {/* ---- the σ-class filter, from the interaction layer ---------------- */}
       <SigmaFilters />
 
-      {/* ---- families actually present, most used first -------------------- */}
+      {/* ---- families actually present, most used first --------------------
+              FOLDED. Fourteen chips is an INVENTORY, and an inventory is
+              reference material: you open it when you want to restrict the
+              picture to one relation family, and you are not reading it the rest
+              of the time. Left expanded it was a wall of chips between the
+              filter above it and the truth-gate report below, on the one surface
+              a reader opens to find a specific number. The count in the summary
+              is the part that is worth seeing without asking. */}
       <Panel title={COPY.analyst.familyFilter.title}>
-        <p className="t-11 ink-faint" data-prose>
+        <p className="t-12-5 ink-dim" data-prose>
           {COPY.analyst.familyFilter.note}
         </p>
         {present.length === 0 ? (
-          <p className="t-12-5 ink-dim" data-prose>
+          <p className="t-13 ink-dim" data-prose>
             {COPY.analyst.familyFilter.empty}
           </p>
         ) : (
+          <Disclosure
+            summary={
+              <>
+                {COPY.analyst.familyFilter.title}
+                <Num value={present.length} format="int" tone="dim" />
+              </>
+            }
+          >
           <div className="arail__families">
             {present.slice(0, 14).map((f) => (
               <Tip key={f.family} content={`${sigmaCopy(f.sigma).label} — ${sigmaCopy(f.sigma).short}`}>
@@ -129,6 +147,7 @@ export function AnalystRail({ className }: { className?: string }): JSX.Element 
               </Tip>
             ))}
           </div>
+          </Disclosure>
         )}
       </Panel>
 
@@ -140,7 +159,7 @@ export function AnalystRail({ className }: { className?: string }): JSX.Element 
               owns the block. */}
       {quarantineOpen ? null : (
       <Panel title={COPY.integrity.title}>
-        <p className="t-11 ink-faint" data-prose>
+        <p className="t-12-5 ink-dim" data-prose>
           {COPY.integrity.note}
         </p>
         {integrity === null ? (
@@ -187,7 +206,11 @@ export function AnalystRail({ className }: { className?: string }): JSX.Element 
                   <>
                     <Num value={(gate?.rate ?? Number.NaN) * 100} format="pct1" tone="dim" />
                     <span className="ink-faint"> {COPY.common.ofLabel} </span>
-                    <Num value={gate?.gated ?? Number.NaN} format="int" tone="faint" />
+                    {/* THE DENOMINATOR IS THE HONEST HALF OF A RATE. A rate
+                        printed without what it is a rate OF is the figure this
+                        panel exists to avoid, so it does not sit on the
+                        decorative ink step. */}
+                    <Num value={gate?.gated ?? Number.NaN} format="int" tone="dim" />
                   </>
                 }
               />
@@ -195,7 +218,7 @@ export function AnalystRail({ className }: { className?: string }): JSX.Element 
             <Tip content={COPY.integrity.rows.truth_gate_exempt_structural.tip} className="u-block">
               <Row
                 label={COPY.integrity.rows.truth_gate_exempt_structural.label}
-                value={<Num value={integrity.truth_gate_exempt_structural} format="int" tone="faint" />}
+                value={<Num value={integrity.truth_gate_exempt_structural} format="int" tone="dim" />}
               />
             </Tip>
             <Tip content={COPY.quarantine.gate.floor.tip} className="u-block">
@@ -206,7 +229,7 @@ export function AnalystRail({ className }: { className?: string }): JSX.Element 
             </Tip>
 
             <Disclosure summary={<SectionLabel>{COPY.integrity.byReason.title}</SectionLabel>}>
-              <p className="t-11 ink-faint" data-prose>
+              <p className="t-12-5 ink-dim" data-prose>
                 {COPY.integrity.byReason.note}
               </p>
               {integrity.by_reason.map((r) => (
@@ -215,7 +238,7 @@ export function AnalystRail({ className }: { className?: string }): JSX.Element 
                     label={
                       <>
                         {quarantineReasonCopy(r.reason).label}
-                        <span className="mono ink-faint"> {r.reason}</span>
+                        <span className="mono ink-dim"> {r.reason}</span>
                       </>
                     }
                     value={<Num value={r.count} format="int" tone="dim" />}
@@ -235,7 +258,7 @@ export function AnalystRail({ className }: { className?: string }): JSX.Element 
 
       {/* ---- density and motion -------------------------------------------- */}
       <Panel title={COPY.analyst.density.title}>
-        <p className="t-11 ink-faint" data-prose>
+        <p className="t-12-5 ink-dim" data-prose>
           {COPY.analyst.density.note}
         </p>
         <div className="arail__density">
@@ -262,7 +285,7 @@ export function AnalystRail({ className }: { className?: string }): JSX.Element 
           <Tip content={COPY.topbar.bake.tip} className="u-block">
             <Row
               label={COPY.topbar.bake.label}
-              value={<span className="mono ink-faint">{view.bake_id}</span>}
+              value={<span className="mono ink-dim">{view.bake_id}</span>}
               mono
             />
           </Tip>

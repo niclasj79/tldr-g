@@ -58,7 +58,7 @@ export function FirstRun(): JSX.Element {
         <p className="firstrun__body t-14 ink-dim" data-prose>
           {COPY.states['FIRST-RUN'].body}
         </p>
-        <p className="firstrun__note t-12-5 ink-faint" data-prose>
+        <p className="firstrun__note t-12-5 ink-dim" data-prose>
           {COPY.states['FIRST-RUN'].note}
         </p>
 
@@ -71,7 +71,7 @@ export function FirstRun(): JSX.Element {
           {COPY.states['FIRST-RUN'].action?.label}
         </Btn>
 
-        <p className="firstrun__corpus caps ink-faint" data-prose>
+        <p className="firstrun__corpus caps ink-dim" data-prose>
           {COPY.provenance.badge}
         </p>
       </div>

@@ -1,4 +1,18 @@
 /* =============================================================================
+   THE CONTRAST RE-POINTING (2026-07-31)
+   -----------------------------------------------------------------------------
+   Every field label in this file was set on --ink-faint, which measured 2.70:1
+   against the panel ground at 11px. A label is the only text that says what a
+   value IS; a hash whose caption cannot be read is a hash you cannot use. The
+   verbatim source bytes were on the same step, which is the sharpest version of
+   the same mistake - that text is the evidence the whole panel exists to show.
+
+   --ink-faint was raised to 3:1 and re-scoped to decoration; these moved to
+   --ink-dim (>= 5.61:1). Two things stayed faint on purpose and they are both
+   punctuation: the em dash between byte offsets, and the slash in a ratio.
+   ========================================================================== */
+
+/* =============================================================================
    TLDR-G VISUAL DEMO — PROVENANCE & TRUST
    -----------------------------------------------------------------------------
    Every value here is a var() from design-tokens.css. There is no hex, no raw
@@ -226,7 +240,7 @@
 .pv-tip-code {
   margin-top: var(--s-1);
   font-family: var(--ff-mono);
-  color: var(--ink-faint);
+  color: var(--ink-dim);
   letter-spacing: var(--tracking-mono);
 }
 
@@ -254,7 +268,7 @@
   font-family: var(--ff-mono);
   font-size: var(--fs-11);
   letter-spacing: var(--tracking-mono);
-  color: var(--ink-faint);
+  color: var(--ink-dim);
   overflow-wrap: anywhere;
 }
 
@@ -269,7 +283,7 @@
 }
 
 .pv-id-prefix {
-  color: var(--ink-faint);
+  color: var(--ink-dim);
   flex: none;
 }
 
@@ -382,7 +396,7 @@
   line-height: var(--lh-ui);
   text-transform: uppercase;
   letter-spacing: var(--tracking-caps);
-  color: var(--ink-faint);
+  color: var(--ink-dim);
 }
 
 .pv-rl-v {
@@ -685,7 +699,7 @@
   font-weight: var(--fw-500);
   text-transform: uppercase;
   letter-spacing: var(--tracking-caps);
-  color: var(--ink-faint);
+  color: var(--ink-dim);
 }
 
 .pv-uri {
@@ -730,7 +744,7 @@
   font-weight: var(--fw-500);
   text-transform: uppercase;
   letter-spacing: var(--tracking-caps);
-  color: var(--ink-faint);
+  color: var(--ink-dim);
 }
 
 /* The value has to WRAP, so the inline-flex hash becomes a wrapping flex row and
@@ -782,7 +796,7 @@
   border: var(--border-1) solid var(--line);
   border-radius: var(--r-6);
   background: rgb(var(--void-rgb) / 0.4);
-  color: var(--ink-faint);
+  color: var(--ink-dim);
   font-size: var(--fs-12-5);
   line-height: var(--lh-body);
   white-space: pre-wrap;
@@ -790,11 +804,11 @@
 }
 
 .pv-src-txt {
-  color: var(--ink-faint);
+  color: var(--ink-dim);
 }
 
 .pv-src-cut {
-  color: var(--ink-faint);
+  color: var(--ink-dim);
 }
 
 /* The cited span, in place, in the document. If the offsets were wrong this
@@ -1004,7 +1018,7 @@
    brighter than the `before` line's. The two are otherwise identical, which is
    what makes the one changed character findable. */
 .pv-mut-ctx {
-  color: var(--ink-faint);
+  color: var(--ink-dim);
 }
 
 .pv-mut-line.tone-alarm .pv-mut-ctx {
@@ -1064,7 +1078,7 @@
   font-weight: var(--fw-500);
   text-transform: uppercase;
   letter-spacing: var(--tracking-caps);
-  color: var(--ink-faint);
+  color: var(--ink-dim);
 }
 
 /* An edge id is a control here: pressing it selects the relation's two ends in
@@ -1117,7 +1131,7 @@
   font-weight: var(--fw-500);
   text-transform: uppercase;
   letter-spacing: var(--tracking-caps);
-  color: var(--ink-faint);
+  color: var(--ink-dim);
 }
 
 .pv-gate-v {
@@ -1247,7 +1261,7 @@
   line-height: var(--lh-ui);
   text-transform: uppercase;
   letter-spacing: var(--tracking-caps);
-  color: var(--ink-faint);
+  color: var(--ink-dim);
   overflow-wrap: anywhere;
 }
 

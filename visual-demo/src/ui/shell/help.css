@@ -1,0 +1,390 @@
+/* =============================================================================
+   TLDR-G VISUAL DEMO — THE GUIDANCE SURFACES
+   -----------------------------------------------------------------------------
+   The help dialog and the tour card. Two surfaces, one job: teach the product.
+
+   -----------------------------------------------------------------------------
+   WHY THIS IS A NEW BLOCK AND NOT AN EDIT TO `.help__*`
+   -----------------------------------------------------------------------------
+   The old help sheet was 1120px wide with `grid-template-columns:
+   repeat(auto-fit, minmax(280px, 1fr))`, which resolves to THREE columns of
+   prose at a laptop's 1120px — set at 12.5px and 11px, two of the three columns
+   carrying their body on --ink-faint. Beneath it the glossary ran `columns:
+   3 300px` over 42 disclosures. Three columns of small dim prose above three
+   newspaper columns of collapsed terms is a reference card, and nobody reads a
+   reference card to find out what the five things they can do are.
+
+   The measure here is ONE COLUMN, at 680px, at 13px minimum, on --ink-dim or
+   brighter. A second column appears at 1240px and only in the glossary, where
+   the rows are two lines each and a column genuinely fits. Prose does not get a
+   second column at any width: a paragraph that wraps at 40 characters is not
+   denser, it is just harder.
+
+   -----------------------------------------------------------------------------
+   ELEVATION IS BORDER PLUS INSET TOP-EDGE LIGHT, HERE AS EVERYWHERE
+   -----------------------------------------------------------------------------
+   There is no light source above this UI. Nothing in this file casts an outer
+   shadow, and no colour in it is written as a literal.
+   ========================================================================== */
+
+/* =============================================================================
+   1. THE DIALOG
+   ========================================================================== */
+
+.guide {
+  width: min(680px, 94vw);
+  max-height: 86vh;
+}
+
+.guide__lede {
+  color: var(--ink);
+  max-width: var(--shell-measure);
+  line-height: var(--lh-body);
+}
+
+/* -----------------------------------------------------------------------------
+   THE FIVE TASKS
+   -----------------------------------------------------------------------------
+   An ordered list, and it is `<ol>` rather than a grid of cards because the
+   order is the content: ask, read, open, return, check is the sequence a person
+   is actually in. A card grid would say "five equal things, pick one", which is
+   the same mistake the top bar's five equal-rank switches made.
+   -------------------------------------------------------------------------- */
+
+.guide__topics {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-section);
+  margin: var(--gap-section) 0;
+  padding: 0;
+  list-style: none;
+}
+
+.guide__topic {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: var(--gap-tight) var(--gap-row);
+  align-items: baseline;
+  min-width: 0;
+}
+
+/* The ordinal sits in its own column so all five bodies start on one left edge.
+   It is a figure, so it is on the mono rail like every other figure here. */
+.guide__ord {
+  grid-row: span 2;
+  color: var(--render);
+}
+
+.guide__ttl {
+  margin: 0;
+  color: var(--ink);
+  font-family: var(--ff-ui);
+  font-weight: var(--fw-500);
+  line-height: var(--lh-ui);
+}
+
+.guide__body {
+  margin: 0;
+  grid-column: 2;
+  color: var(--ink-dim);
+  line-height: var(--lh-body);
+  max-width: var(--shell-measure);
+}
+
+.guide__keys {
+  grid-column: 2;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--gap-tight);
+  margin-top: var(--gap-tight);
+}
+
+/* -----------------------------------------------------------------------------
+   THE FOLDS — everything that used to be a column
+   -------------------------------------------------------------------------- */
+
+.guide__fold {
+  border-top: var(--border-1) solid var(--line);
+  padding-top: var(--pad-row);
+}
+
+.guide__fold > .disc-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-row);
+  padding-bottom: var(--pad-section);
+}
+
+.guide__prose {
+  margin: 0;
+  color: var(--ink-dim);
+  line-height: var(--lh-body);
+  max-width: var(--shell-measure);
+}
+
+/* The four lights keep their colour rail: it is the one place in the product
+   where the three-light language is stated rather than used. */
+.guide__lights {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-row);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.guide__light {
+  font-size: var(--fs-13);
+  line-height: var(--lh-body);
+  color: var(--ink-dim);
+  padding-left: var(--gap-row);
+  border-left: var(--lod-0-stroke) solid var(--line);
+}
+
+.guide__light[data-light='render'] {
+  border-left-color: var(--render);
+}
+.guide__light[data-light='evidence'] {
+  border-left-color: var(--evidence);
+}
+.guide__light[data-light='curiosity'] {
+  border-left-color: var(--curiosity);
+}
+.guide__light[data-light='alarm'] {
+  border-left-color: var(--alarm);
+}
+
+/* One grid per keyboard group, so every cap in it shares a column width and the
+   labels start on a single left edge. */
+.guide__group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-tight);
+}
+
+.guide__keymap {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: var(--gap-tight) var(--gap-row);
+  align-items: baseline;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.guide__keyrow {
+  display: contents;
+}
+
+/* =============================================================================
+   2. THE GLOSSARY, BEHIND SEARCH
+   ========================================================================== */
+
+.guide__find {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-row);
+  flex-wrap: wrap;
+}
+
+.guide__search {
+  flex: 1 1 18ch;
+  min-width: 12ch;
+  min-height: var(--hit-min);
+  padding: 0 var(--pad-control);
+  color: var(--ink);
+  background: var(--surface-2);
+  border: var(--border-1) solid var(--line);
+  border-radius: var(--r-6);
+  font-family: var(--ff-ui);
+  font-size: var(--fs-13);
+}
+
+/* THE PLACEHOLDER IS THE FIELD'S ONLY LABEL UNTIL SOMETHING IS TYPED IN IT, so
+   it is functional text and not decoration. It shipped on --ink-faint, which
+   check-discipline.mjs itself measures at 3.40 / 3.19 / 3.01 : 1 against the
+   three grounds — the AA floor for non-text and nothing above it. That is the
+   same ruling `src/interaction/search.css` already had to make for
+   `.cmd__input::placeholder`, and every other placeholder in `src/` is on
+   --ink-dim (6.34 / 5.95 / 5.61 : 1). Rule 12 only greps `<Num tone="faint">`,
+   so nothing mechanical caught this one: it is a decision, stated here.
+
+   `.guide .guide__search` rather than the bare class on purpose. This stylesheet
+   is imported from a .tsx and is therefore emitted BEFORE the shared ones, so a
+   single-class rule here loses a tie to a single-class rule in shell.css or
+   base.css — an outcome decided by the module graph rather than by intent. */
+.guide .guide__search::placeholder {
+  color: var(--ink-dim);
+}
+
+.guide__count {
+  color: var(--ink-dim);
+  white-space: nowrap;
+}
+
+.guide__gloss {
+  columns: 1;
+  margin-top: var(--gap-row);
+}
+
+.guide__term {
+  break-inside: avoid;
+  margin-bottom: var(--gap-tight);
+}
+
+.guide__termhd {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  min-width: 0;
+}
+
+/* The definition and its cross-references, inside an open entry. */
+.guide__def {
+  margin: 0;
+  color: var(--ink-dim);
+  line-height: var(--lh-body);
+}
+
+/* -----------------------------------------------------------------------------
+   THE CROSS-REFERENCES
+   -----------------------------------------------------------------------------
+   They were `entry.see.join(' · ')` — plain text naming three other entries in a
+   list of 42, with no way to reach any of them. They are controls now, so they
+   are sized like controls: 13px, --ink-dim, and a hit slop that takes each one
+   out to the 24px floor without painting a button around a word.
+   -------------------------------------------------------------------------- */
+
+.guide__sees {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--gap-tight) var(--gap-row);
+  margin-top: var(--gap-row);
+}
+
+.guide__see {
+  padding: 0;
+  color: var(--ink-dim);
+  background: none;
+  border: 0;
+  border-bottom: var(--border-1) solid var(--line);
+  font-family: var(--ff-ui);
+  font-size: var(--fs-13);
+  line-height: var(--lh-ui);
+  cursor: pointer;
+}
+
+.guide__see:hover,
+.guide__see:focus-visible {
+  color: var(--ink);
+  border-bottom-color: var(--render);
+}
+
+/* The entry a cross-reference just landed on. --render because the reason it is
+   lit is that the engine's own reader is attending to it; it fades on the next
+   jump rather than persisting as decoration. */
+.guide__term[data-landed='true'] > .disc {
+  border-left: var(--lod-0-stroke) solid var(--render);
+  padding-left: var(--gap-row);
+}
+
+/* =============================================================================
+   3. TWO COLUMNS, BUT ONLY WHERE THERE IS ROOM AND ONLY FOR THE LIST
+   ========================================================================== */
+
+@media (min-width: 1240px) {
+  .guide {
+    width: min(880px, 92vw);
+  }
+
+  .guide__gloss {
+    columns: 2 340px;
+    column-gap: var(--gap-panel);
+  }
+}
+
+/* =============================================================================
+   4. THE TOUR CARD
+   -----------------------------------------------------------------------------
+   The card's frame lives in shell.css under `.walk` and is unchanged — it is
+   still bottom-centre, still non-modal, still leaves the terrain live. What is
+   new is the half that asks the reader to DO something, so the two additions
+   below are the task line and the tour picker.
+   ========================================================================== */
+
+/* The step's own prose. A NEW class rather than an override of `.walk__body` in
+   shell.css: at equal specificity the winner would depend on which stylesheet
+   the bundler happened to emit second, and a 12.5px body that is 13px only on
+   some builds is worse than either. */
+.walk__prose {
+  margin: 0 0 var(--s-4);
+  font-size: var(--fs-13);
+  line-height: var(--lh-body);
+  color: var(--ink-dim);
+}
+
+/* The imperative. It carries a --render rail because it is the one line on the
+   card that is addressed to the reader rather than about the product. */
+.walk__do {
+  display: flex;
+  align-items: baseline;
+  gap: var(--gap-row);
+  margin: 0 0 var(--s-3);
+  padding-left: var(--gap-row);
+  border-left: var(--lod-0-stroke) solid var(--render);
+}
+
+.walk__do[data-done='true'] {
+  border-left-color: var(--ok);
+}
+
+.walk__doLabel {
+  color: var(--ink-dim);
+  white-space: nowrap;
+}
+
+.walk__doText {
+  font-size: var(--fs-13);
+  line-height: var(--lh-body);
+  color: var(--ink);
+}
+
+.walk__do[data-done='true'] .walk__doText {
+  color: var(--ink-dim);
+}
+
+.walk__act {
+  margin: 0 0 var(--s-4);
+}
+
+/* The two optional tours, offered on the last step of the main one. */
+.walk__tours {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-tight);
+  margin: 0 0 var(--s-4);
+  padding-top: var(--pad-row);
+  border-top: var(--border-1) solid var(--line);
+}
+
+/* THE OFFER ABOVE THEM IS A SENTENCE, SO IT IS NOT A SECTION MARKER.
+   It shipped through `.caps` — --fs-11 plus `text-transform: uppercase` plus
+   --tracking-caps — which rendered "Two shorter tours, if you want them:" as
+   TWO SHORTER TOURS, IF YOU WANT THEM: at 11px. `.caps` is the one-or-two-word
+   micro-label step, which is what `.walk__doLabel` correctly uses for "Your
+   turn" and "Done"; a full clause ending in a colon is prose, and every other
+   piece of prose on these two surfaces — .walk__prose, .walk__doText,
+   .guide__body, .guide__prose — is --fs-13. This was the one line left under
+   the floor. */
+.walk__toursPrompt {
+  font-size: var(--fs-13);
+  line-height: var(--lh-ui);
+  color: var(--ink-dim);
+}
+
+.walk__toursRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--gap-row);
+}

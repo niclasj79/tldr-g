@@ -1,0 +1,396 @@
+/* =============================================================================
+   TLDR-G VISUAL DEMO — THE THREE INSTRUMENTS
+   -----------------------------------------------------------------------------
+   The HUD, the empty state, and the failure band: the three surfaces that report
+   on the machine rather than on the corpus. Their copy already lives together in
+   one block (`COPY.instruments`); this is the same seam in CSS.
+
+   IT IS A SECOND FILE, NOT A REWRITE OF THE FIRST. `shell.css` §5, §6 and §10
+   still own the geometry of all three — the row, the band, the plate, the type,
+   the alarm rule, the shed breakpoints — and none of it is repeated here. This
+   file is imported by `DegradedBar.tsx`, which the shell evaluates
+   unconditionally at module load, so its rules land whether or not anything has
+   failed. One import point for three surfaces, because the file is one seam
+   rather than three.
+
+   IT LANDS BEFORE `shell.css`. Module evaluation order decides CSS order, and
+   `DegradedBar` is evaluated before the shell's own `import './shell.css'`. So
+   every rule below that could collide with an existing one is written ONE CLASS
+   HEAVIER than the rule it answers — the same convention `timeline.css` states
+   and for the same reason: two files at equal specificity are two files whose
+   order decides the outcome, and import order is the least visible thing in a
+   build to depend on.
+
+   Nothing here invents a colour, a duration or a radius. Every value is a token.
+   ========================================================================== */
+
+/* =============================================================================
+   1. THE HUD — a row of readings, not a row of promises
+   -----------------------------------------------------------------------------
+   The row used to carry fifteen cells before a question had been asked, three of
+   which printed em dashes and one of which printed `0 ms` for a call that had
+   never been made. It carries four now, and the rest moved behind the Analyze
+   lens. See BottomHUD.tsx for which moved, which stayed, and why — including the
+   fifth, a `SELECTED` count the terrain was already printing.
+   ========================================================================== */
+
+/* NO CORPUS, SO NO CELLS. One sentence where five labels over five em dashes
+   used to be. The row keeps its height — it is furniture, and the frame must not
+   change shape between states — and gives up everything else. */
+.hud.hud--quiet {
+  gap: var(--gap-row);
+}
+
+.hud__idle {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* THE ROW'S FLEX ITEMS ARE THE TOOLTIP ANCHORS, NOT THE CELLS.
+   `<Tip>` wraps its child in a `.tip-anchor`, so a `margin-left: auto` or a
+   `display: none` written against `.hud__group` acts on a span INSIDE a flex
+   item and cannot move or remove it. `.hud--descent { margin-left: auto }` in
+   shell.css §5 was inert for exactly this reason — the gauge only looked
+   right-aligned because it was last in source order in a full row. Every rule
+   below is written against the anchor, which is what `.hud__cell` marks.
+   Precedent for styling the anchor directly: shell.css `.topbar__right >
+   .tip-anchor` and `.answer__signals > .tip-anchor`. */
+.hud > .hud__cell {
+  flex: none;
+  min-width: 0;
+}
+
+/* WHERE YOU ARE, FIRST IN THE ROW.
+   This cell is the old `.hud--descent`, which sat at the END of the row after
+   eleven figures about the render. It leads now: it is the cell a reader
+   consults most, and it says what everything to its right is a measurement OF. */
+.hud > .hud__cell--level {
+  padding-right: var(--gap-section);
+  border-right: var(--border-1) solid var(--line-a40);
+}
+
+/* THE ANALYZE APPENDIX BEGINS HERE, AND SAYS SO.
+   Nine figures arriving in the middle of a row is nine figures a reader has to
+   work out the provenance of. One marker, at the seam, in --ink-dim because it
+   names the group rather than decorating it. */
+.hud > .hud__cell--seam {
+  padding-left: var(--gap-section);
+  border-left: var(--border-1) solid var(--line-a40);
+}
+
+/* THE ANSWER'S OWN END OF THE ROW.
+   `margin-left: auto` holds the render status and the budget it spent against
+   the right edge, next to the rail where the answer is. Everything to the left
+   is about the terrain; everything from here is about the question. It works
+   here and did not work on `.hud--descent` because it is on the flex item. */
+.hud > .hud__cell--render {
+  margin-left: auto;
+  padding-left: var(--gap-section);
+  border-left: var(--border-1) solid var(--line-a40);
+}
+
+/* EVERY LABEL ON THIS ROW IS FUNCTIONAL TEXT, AND EVERY ONE OF THEM WAS FAINT.
+   `check-discipline.mjs` §12 fails the build on a Num carrying the faint tone,
+   so the FIGURES were all moved off the decoration step. It cannot see a label:
+   they are spans, and every one of them carried `ink-faint` — seven in the
+   default row, eighteen with the Analyze appendix open — the third ink step, at
+   11px, measured at 3.25:1 against this row's ground against a 4.5:1 floor for
+   text. The word `RENDER` is what identifies `not run` as a render state rather
+   than a rung name, and it was two steps less legible than the reading beside it
+   at 6.07:1.
+
+   THE CLASS MOVES, NOT THE CELL. A per-cell override would have fixed the one
+   new label and left the other six wrong, which is how a ramp acquires an
+   exception. The
+   `ink-faint` utility is gone from the markup rather than overridden here —
+   base.css lands AFTER this file at equal specificity, so a `.hud__label` rule
+   would have lost the tie to a class the markup was still asking for.
+
+   `.hud__sep` is deliberately NOT in this rule. A `/` between two figures is
+   punctuation; the figures on either side of it state the values. */
+.hud .hud__label {
+  color: var(--ink-dim);
+}
+
+/* THE STATUS WORD IS NOT A FIGURE, so it is not on the mono rail and does not go
+   through <Num>. It is one of exactly three readings and it is set at the row's
+   own size; `ink` while a render is in flight, `ink-dim` at rest, both applied
+   from the markup where the state is known. */
+.hud__state {
+  font-size: var(--fs-11);
+  line-height: var(--lh-ui);
+  letter-spacing: var(--tracking-normal);
+}
+
+/* =============================================================================
+   1b. THE SHED LADDER — four rungs, one owner, every one of them measured
+   -----------------------------------------------------------------------------
+   The row never wraps and never scrolls: it sheds, from the least load-bearing
+   figure inward, because a HUD that reflowed to two lines would change the
+   height of the frame and the terrain has a floor. That rule is shell.css's and
+   is unchanged. WHAT MOVED IS WHERE IT IS WRITTEN.
+
+   `shell.css` sheds `.hud--wide` / `.hud--xwide`, which were classes on the
+   `.hud__group` — a span INSIDE the flex item. Hiding it hid the content and
+   left a zero-width anchor still collecting a `--gap-section` on each side, so a
+   row that shed four cells shed their figures and kept 128px of their
+   whitespace. Moving the classes to the anchor fixes that and breaks the old
+   rules at the same time: `.tip-anchor { display: inline-flex }` in
+   primitives.css lands AFTER shell.css at equal specificity, so `.hud--wide
+   { display: none }` no longer wins on an anchor. Measured at 1440px with the
+   Analyze lens open: six cells that should have shed were all still on the row,
+   which overflowed by 532px and clipped the render budget off the right edge.
+
+   So the ladder is declared here, once, against the anchor, at a specificity
+   nothing downstream can accidentally outrank. The `.hud--wide` / `.hud--xwide`
+   rules in shell.css §5 now match nothing in this row.
+
+   -----------------------------------------------------------------------------
+   EVERY RUNG IS NOW THE WIDTH THE ROW MEASURED, NOT A ROUND NUMBER
+   -----------------------------------------------------------------------------
+   The first version of this ladder inherited 2100 / 1700 from shell.css and put
+   the partition at 1500, and not one of those was ever compared against what the
+   row actually asks for. Measured, by summing the visible flex items plus their
+   gaps plus the row's padding, at the `query-render` scene:
+
+     explore  partition + latency          1327px
+     explore  partition, latency shed       1206px
+     explore  partition shed                 685px
+     analyze  everything                    2436px
+     analyze  partition shed                1916px
+     analyze  partition + cache/frame shed  1633px
+     analyze  appendix only                 1133px
+
+   Against those, the old rungs put 2436px of cells into a 2101px row — measured
+   OVERFLOW +432 at 2101 and +127 at 2400 — and `.hud { overflow: hidden }` means
+   an overflow is not a scrollbar, it is a silent crop of the RIGHT end, which is
+   where `margin-left: auto` has just parked the render budget. That is the exact
+   failure this ladder was written to fix, reintroduced one rung higher up.
+
+     2500px   the resolution partition, WHILE the Analyze appendix is open
+     2000px   the two frame-cost cells: response cache, frame time
+     1700px   renderer geometry: labels, corridors, points, draw calls, latency
+     1279px   the resolution partition otherwise
+
+   Each rung clears its own requirement with room: 2501 carries 2436, 2001 carries
+   1916, 1701 carries 1633, 1280 carries 1206.
+
+   THE PARTITION'S DEFAULT RUNG CAME DOWN 221px BECAUSE A DUPLICATE CELL LEFT THE
+   ROW. It was at 1500 because with the `SELECTED` cell in, the default row wanted
+   1296px and did not fit a 1280px laptop — measured OVERFLOW +16. That cell was a
+   second owner of a count the terrain already prints and is gone (see
+   BottomHUD.tsx), the row now wants 1206px, and the partition survives at 1280
+   with 74px to spare. That is not cosmetic: `audit()`'s ramp check is the one
+   assertion in the product that two VISIBLE figures agree, it is vacuous whenever
+   the partition is off screen, and `verify-shell.mjs` measures at 1920 / 1280 /
+   1024. Deleting the duplicate turned that check from real at one of the three
+   widths into real at two.
+
+   The partition still sheds LAST and only when it genuinely cannot fit: it and
+   NODES are the two halves of "how much is here, and how much of it was spent
+   on", and at 505px it is the widest object on the row. `audit()` tolerates its
+   absence by construction — `figuresIn()` skips anything with no `offsetParent`,
+   so a shed cell contributes no figures, the ramp check passes vacuously rather
+   than falsely, and the sum is asserted only when a reader can see the five chips.
+
+   WHAT THIS LADDER STILL DOES NOT COVER: the Analyze appendix alone wants 1133px,
+   so the lens overflows below that — measured +109 at 1024x768. It is not new and
+   it is 90px less than it was, but closing it needs a rung that sheds the
+   appendix's own figures, which is a decision about the lens's minimum width
+   rather than a breakpoint.
+   ========================================================================== */
+@media (max-width: 2000px) {
+  .hud > .hud__cell--xwide {
+    display: none;
+  }
+}
+
+@media (max-width: 1700px) {
+  .hud > .hud__cell--wide {
+    display: none;
+  }
+}
+
+@media (max-width: 1279px) {
+  .hud > .hud__cell--ramp {
+    display: none;
+  }
+}
+
+/* THE PARTITION'S RUNG MOVES WHEN THE APPENDIX IS OPEN.
+   Same ladder, entered far earlier, because the row is
+   carrying nine more cells behind the partition's 505px. The attribute selector
+   makes this rule (0,3,0) against the default rung's (0,2,0), so it wins inside
+   its own range without depending on which one is written first. */
+@media (max-width: 2500px) {
+  .hud[data-analyst='true'] > .hud__cell--ramp {
+    display: none;
+  }
+}
+
+/* =============================================================================
+   2. THE FAILURE BAND — four kinds of cause, one severity
+   -----------------------------------------------------------------------------
+   `shell.css` §6 owns the band: the full-strength --alarm top rule at twice the
+   LOD-0 stroke, the wash, the hairline, the content-sized cells. What is added
+   here is the two things the band did not used to have — a statement of WHICH
+   KIND of failure this is, and more than one control.
+   ========================================================================== */
+
+/* The taxonomy's own name for the kind, above the clause that explains it. Three
+   rows in a cell that `shell.css` built as two, so the column direction it
+   already sets is what carries this. */
+.degraded .degraded__field--class {
+  max-width: var(--shell-measure);
+}
+
+/* THE KIND IS THE FIRST THING TO READ IN THE BAND AFTER THE WORD `DEGRADED`.
+   In --ink rather than --alarm: the band is already alarm from edge to edge, and
+   a fourth saturated element inside it competes with the top rule rather than
+   adding to it. */
+.degraded__class {
+  color: var(--ink);
+}
+
+/* ONE CLASS HEAVIER, BECAUSE THIS FILE IS EMITTED FIRST.
+   `.degraded__meaning { color: var(--ink-dim) }` is (0,1,0) and so is
+   `.degraded__ftext`-adjacent inherit chain in shell.css, which the bundle emits
+   AFTER this file — so the rule never applied and the sentence computed to
+   --ink, identical to the two lines it was meant to sit behind. Measured in the
+   built app, not read off the diff. */
+.degraded .degraded__meaning {
+  color: var(--ink-dim);
+}
+
+/* ONE CELL, N CONTROLS.
+   `shell.css` places a single `> .btn` into the remedy grid's second column,
+   spanning both rows. There are two, three or four of them now, so they travel
+   as one object into that same slot and the grid is unchanged underneath. */
+.degraded .degraded__field--remedy > .degraded__remedies {
+  grid-row: 1 / span 2;
+  grid-column: 2;
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-tight);
+  align-self: center;
+}
+
+.degraded__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--gap-row);
+}
+
+/* THE SENTENCES THAT ARE ABOUT THE CONTROLS RATHER THAN ABOUT THE FAILURE.
+   They span the whole remedy cell, under everything, because they qualify the
+   buttons above them and a qualification that sits beside its subject reads as a
+   third peer.
+
+   `.degraded__consequence` JOINED THEM BECAUSE IT WAS A TOOLTIP. It said the one
+   thing about these buttons a reader cannot verify by looking at them — that the
+   bar clearing is a consequence and not a dismissal — from inside a `<Tip>` hung
+   off a `<span>`, measured `tabIndex: -1`, so neither a keyboard nor a thumb
+   could ever reach it. It is printed now, in the same slot as the other two
+   qualifications, because that is where a sentence about the controls belongs. */
+.degraded .degraded__field--remedy > .degraded__consequence,
+.degraded .degraded__field--remedy > .degraded__nodismiss,
+.degraded .degraded__field--remedy > .degraded__unclassified {
+  grid-column: 1 / span 2;
+  max-width: var(--shell-measure);
+  margin-top: var(--gap-tight);
+}
+
+/* The absence of a dismiss control is information, and it is information about
+   the alarm, so it is stated in the alarm's own colour. This is the one class
+   where a result the interface already vouched for is under dispute. */
+.degraded__nodismiss {
+  color: var(--alarm);
+}
+
+/* =============================================================================
+   3. THE EMPTY STATE — the explanation and the pixels have to agree
+   -----------------------------------------------------------------------------
+   THE DEFECT: the plate says "outline only, no labels" and "No corpus loaded",
+   while the DOM label layer from the corpus that was just closed is still
+   painted behind it, naming documents that are no longer loaded. A trust-
+   oriented product cannot ship explanatory copy that the screen contradicts —
+   least of all on the one screen whose entire text is a lecture about not
+   pretending.
+
+   THE CAUSE IS TWO STALE LAYERS, NOT ONE. `useShellWiring` skips
+   `terrain.setScene` while `view === null` and `unload()` never clears the
+   terrain, so on close-then-EMPTY BOTH survive: the WebGL canvas still holds the
+   last frame it drew, and `.tg-labels` still holds that frame's names at
+   `--z-labels`. The plate's own `LatentField` canvas is transparent by
+   construction — it `clearRect`s and strokes outlines — so it hid neither.
+
+   BOTH ARE ANSWERED, AND NEITHER IS ANSWERED BY PAINTING OVER THEM. Covering
+   the stale frame with an opaque latent field was the first fix and it was
+   wrong twice over: `audit()`'s `visibleLabelBoxes()` tests `display`,
+   `visibility` and `opacity` but NOT occlusion, so the labels would still have
+   been reported live on a screen that says there are none — the same
+   disagreement, moved one layer down — and `findOccluders()` does not skip the
+   plate, so the field became a 100%-of-the-stage occluder and the unobstructed-
+   terrain figure went to 0.0% on this screen. A fix that has to be argued away
+   in two instrument readings is not a fix.
+
+   So each stale layer is switched OFF at its own source, and every instrument
+   then reads the same thing a person does.
+
+   -----------------------------------------------------------------------------
+   WHAT THIS DOES NOT COVER, STATED EXACTLY, BECAUSE IT USED TO BE STATED WRONG
+   -----------------------------------------------------------------------------
+   This is a suppression keyed on `data-app='EMPTY'`, so it lifts the instant the
+   state leaves EMPTY — and the stale layers are still there underneath it, since
+   nothing has cleared them. The comment that used to sit here said "nothing is
+   lost functionally: the next ingest flips `data-app` to INGESTING before a
+   single frame is drawn", which reads as a claim that the flip is harmless when
+   the flip is precisely what un-hides them.
+
+   MEASURED, on close-then-re-ingest in the built app, sampling every frame: the
+   shell advertises INGESTING while `view` is still null for 3.4–24.1 ms across
+   1x, 6x and 20x CPU throttling, and ZERO frames are painted inside that window
+   at any of them — the ingest holds the main thread, and by the first painted
+   frame the new scene is already set. So the claim is true of the PIXELS and it
+   was never true as an argument. What is real is a ~20 ms hole in the DOM:
+   `audit()` called inside it reads the closed corpus's labels as live.
+
+   IT IS NOT CLOSED BY WIDENING THE SELECTOR. `[data-app='INGESTING']` is the
+   obvious patch and it is wrong: `READY -> INGESTING` is a legal transition —
+   more documents arriving into a LIVE corpus — where the terrain is holding the
+   corpus it should be holding, and blanking it there would delete a live map to
+   fix a 3.8 ms window in a different transition.
+
+   The repair is upstream and is NOT this file: `unload()` should clear the
+   terrain, or `useShellWiring` should push an empty scene when `view` goes null,
+   so that the EMPTY screen is not correcting for state the terrain should never
+   still be holding. Those live in files this surface does not own.
+   ========================================================================== */
+
+/* THE LAST FRAME BELONGS TO A CORPUS THAT IS NO LONGER LOADED, SO IT IS NOT
+   SHOWN. `visibility` rather than `display`, because the canvas keeps its box:
+   `audit()` measures the terrain rect off this element, and a display-none
+   canvas would report a zero-area terrain — an instrument reading `0%` of `0%`
+   allocated, which is a different and less true statement than "the terrain is
+   allocated and there is nothing in it".
+
+   Nothing is lost visually: `.tg-terrain` paints --void under the canvas, which
+   is the same ground the field is drawn onto, and the plate's own `LatentField`
+   sits above it. What this does not cover on the way OUT of EMPTY is stated in
+   the section header above, with the measurement. */
+.shell[data-app='EMPTY'] .tg-terrain__canvas {
+  visibility: hidden;
+}
+
+/* NO LABELS, SAID BY THE DOM AS WELL AS BY THE PIXELS.
+   `display` rather than `opacity` so nothing is a hidden-but-measured element,
+   and `.tg-labels` rather than `.tg-label` so the layer goes as one object. Safe
+   for the layer itself: `labels.ts` measures text through a 2D canvas context
+   and never reads a DOM rect, so a hidden host cannot poison a placement, and
+   the next `setScene()` rebuilds it regardless. */
+.shell[data-app='EMPTY'] .tg-labels {
+  display: none;
+}

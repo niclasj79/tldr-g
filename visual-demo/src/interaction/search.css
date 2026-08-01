@@ -1,0 +1,399 @@
+/* =============================================================================
+   TLDR-G VISUAL DEMO — DISCOVERY: THE COMPOSER'S COMBOBOX AND THE SEARCH DOOR
+   -----------------------------------------------------------------------------
+   Everything the two search affordances need, in the stylesheet the two surfaces
+   that own them import. `interaction.css` owns the palette's own chrome and
+   `shell.css` owns the command bar's frame; this owns what was ADDED to both to
+   make command search findable, plus the contrast floors those two files set
+   below the level their own text is doing work at.
+
+   It is a separate file for the same reason the copy deck was split into blocks:
+   `shell.css` is 50 KB and every surface in the product edits it, so a revision
+   landing there meets three unrelated revisions on the way in.
+
+   Nothing here invents a colour, a duration or a radius. Every value is a token.
+   ========================================================================== */
+
+/* =============================================================================
+   1. THE COMPOSER — three rows, because 295px is not one row
+   -----------------------------------------------------------------------------
+   `.cmd` in shell.css is a single flex row: field, readout, Render. That was
+   right when the composer lived in the top bar. It now lives at the top of the
+   rail, which is 320px wide and 295px inside its padding — and the labelled
+   Search control makes a fourth child. Four children on one 295px row leaves the
+   QUESTION FIELD around 100px, which is narrower than the 220px floor it had in
+   the top bar it was moved out of to stop it truncating.
+
+   So the composer is a small grid instead. It is a MODIFIER class rather than an
+   edit to `.cmd`, so the base rules in shell.css are untouched and any other
+   mounting of this component keeps the row it was designed for.
+
+       [ the question field, full width                    ]
+       [ Search  /                          ] [   Render   ]
+       [ BRIDGE · Verified sample answer                   ]
+
+   The suggestion listbox hangs off the bottom of the whole block, not off the
+   field, which is why the form is the positioning context.
+
+   -----------------------------------------------------------------------------
+   THE FIRST VERSION OF THIS RULE NEVER APPLIED, AND IT MADE THINGS WORSE
+   -----------------------------------------------------------------------------
+   It was written `.cmd--composer`, which is ONE class (0,1,0) — and so is
+   `.cmd { display: flex }` in shell.css. A component stylesheet imported from a
+   `.tsx` is emitted BEFORE the shared sheets in the bundle, so the tie went to
+   shell.css on source order and the entire grid was inert. Measured in the
+   production build at 1440x900: `getComputedStyle('.cmd--composer').display`
+   read `flex`, so every `grid-area` below was dead too.
+
+   What that produced: the composer collapsed back to one flex row, but now with
+   the fourth child on it. The question field measured 18px wide — `scrollWidth`
+   400 against `clientWidth` 16, so a 62-character staged question overflowed by
+   384px — and it was an 18x32 target, under the 24px WCAG 2.2 SC 2.5.8 minimum
+   this repo pins in `check-discipline.mjs` rule 13. Meanwhile `.cmd__meta` held
+   220.1px (it is `flex: none` in shell.css, so `.cmd__well` was the only child
+   that could give) and Render held 60.7px. The rule meant to stop a ~100px field
+   shipped an 18px one.
+
+   With the grid applying, the same measurement reads: field 295x32 at full rail
+   width, Search 85.7px and Render 60.7px on their own row, `.cmd__meta` 295px on
+   the third. The form is 94.8px tall instead of 50.9px, which is the cost of the
+   two rows and is paid out of the rail's scrolling body, not out of the field.
+
+   `.cmd.cmd--composer` is TWO classes (0,2,0). It wins on weight rather than on
+   emission order, which is a property of the module graph and not of intent.
+   Every rule in this file that has to beat a shared sheet now carries the same
+   weight for the same reason — see `.cmd .cmd__input` and `.cmd .cmd__search`.
+   ========================================================================== */
+
+.cmd.cmd--composer {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  /* THE ORDER IS THE SEQUENCE: ask, see how it was read, run it, and only then
+     the other way in. Render had been sharing a row with the Search door at the
+     same size and the same weight, which made the act and the alternative to it
+     look like two options rather than a verb and a door. */
+  grid-template-areas:
+    'well well'
+    'meta meta'
+    'act  act'
+    'aux  aux';
+  align-items: center;
+  row-gap: var(--gap-row);
+  column-gap: var(--gap-row);
+}
+
+.cmd.cmd--composer .cmd__well {
+  grid-area: well;
+}
+
+.cmd.cmd--composer .cmd__aux {
+  grid-area: aux;
+  display: flex;
+  align-items: center;
+  gap: var(--gap-row);
+  min-width: 0;
+}
+
+.cmd.cmd--composer .cmd__act {
+  grid-area: act;
+  /* Full width, because it is the one thing on this surface that spends
+     anything. Nothing else in the rail is allowed to look like this. */
+  width: 100%;
+  justify-content: center;
+}
+
+.cmd.cmd--composer .cmd__meta {
+  grid-area: meta;
+  min-width: 0;
+  /* It wraps rather than truncating. `Verified sample answer` is the plain half
+     of a term a first-time reader is meeting for the first time; eliding it to
+     `Verified sampl…` would leave a word that means nothing. */
+  flex-wrap: wrap;
+  white-space: normal;
+}
+
+/* THE MARK THAT SAYS THE CORPUS CAN SCORE THIS ONE IS NOT STYLED HERE.
+   It used to be: `.cmd__verified { color: var(--evidence) }`, one class, against
+   `.ink-dim { color: var(--ink-dim) }` in base.css — which is also one class and
+   is emitted later, on the same element, because the span carried both. The
+   computed colour on the live control came back as --ink-dim. The amber never
+   rendered, so the mark the three-lights encoding was added to carry read in the
+   same grey as the intent beside it.
+
+   The repair is not a heavier selector. Two colour authorities on one span is
+   the defect; the product already has ONE channel for this — `.tone-*` sets
+   `--tone` and `.u-tone` paints it — so the span asks for `tone-evidence` and
+   there is nothing left here to lose a tie with. Amber because it is old light:
+   the by-construction answer predates this session and this render. It is not
+   the engine's attention and it is not a question. --evidence measures
+   11.43 / 10.74 / 10.12 : 1 against the three grounds. */
+
+/* =============================================================================
+   2. THE FIELD ITSELF — the placeholder was on the decoration step
+   -----------------------------------------------------------------------------
+   `shell.css` sets `.cmd__input::placeholder` to --ink-faint. design-tokens.css
+   is explicit that --ink-faint is DECORATION ONLY — it measures 3.40 / 3.19 /
+   3.01 : 1 against the three grounds, which is the AA floor for non-text and
+   nothing more — and a placeholder in an empty composer is not decoration: it is
+   the only text on screen stating what may be typed into the product's most
+   important control. It moves to --ink-dim (6.34 / 5.95 / 5.61 : 1).
+
+   The size moves with it. design-tokens §9 puts every interactive label at
+   --fs-13 and says outright that anything below it is a unit, a tick or a key
+   cap; the field's own text was at --fs-12-5 while the button beside it was not.
+
+   Specificity is deliberate, and this is the one place in the file that got it
+   right the first time. Both rules are one class and one pseudo-element, so
+   whichever stylesheet the bundler happens to emit second would win — and that
+   ordering is a property of the module graph, not of intent. `.cmd` on the front
+   makes the outcome a decision instead of a coin toss. §1 and §3 shipped without
+   the same guard and both lost; they now carry it.
+   ========================================================================== */
+
+.cmd .cmd__input {
+  font-size: var(--fs-13);
+}
+
+.cmd .cmd__input::placeholder {
+  color: var(--ink-dim);
+}
+
+/* =============================================================================
+   3. THE SEARCH DOOR
+   -----------------------------------------------------------------------------
+   `.btn-sm` is --fs-12-5, which is under the --fs-13 interactive-label floor
+   design-tokens §9 states. That is a primitive this file does not own, so the
+   floor is restored for this one control rather than for every small button in
+   the product.
+
+   AND IT HAS TO BE RESTORED WITH TWO CLASSES, for the reason §1 measured. Written
+   `.cmd__search` this rule was 0,1,0 against `.btn-sm` at 0,1,0 in primitives.css,
+   which the bundle emits after this file — so `.btn-sm` won the tie and the
+   control shipped at a measured 12.5px. A NEW interactive label under the floor is
+   the exact violation the local override existed to avoid, and it was invisible
+   because the override looked present. It reads 13px now.
+
+   The key cap inside it is a HINT, not the route: it sits after the word, it is
+   the same glyph the keyboard map declares, and pressing the button does what
+   pressing the key does. The keyboard map in the help overlay prints the same
+   glyph behind a second keystroke and cannot be pressed — that is what this
+   control exists to replace.
+   ========================================================================== */
+
+.cmd .cmd__search {
+  font-size: var(--fs-13);
+  flex: none;
+}
+
+/* =============================================================================
+   4. THE SUGGESTION LISTBOX
+   -----------------------------------------------------------------------------
+   A combobox popup, NOT a modal. It never takes focus — the options are taken on
+   a prevented `mousedown`, so the caret stays in the field the whole time and
+   there is nothing to be trapped in. See CommandBar.tsx for why the modal
+   palette would have been the wrong answer to "suggestions on focus".
+
+   IT IS ABSOLUTELY POSITIONED AND IT DOES NOT GET CLIPPED. The composer sits in
+   `.rail__pinned`, which is the non-scrolling band of the rail's three-row grid
+   and sets no `overflow` — so the popup hangs over `.rail__body` below it rather
+   than into it. --z-overlay is the layer for exactly this: a transient popover
+   over docked panels.
+   ========================================================================== */
+
+.cmd__pop {
+  position: absolute;
+  top: calc(100% + var(--s-1));
+  left: 0;
+  right: 0;
+  z-index: var(--z-overlay);
+  display: flex;
+  flex-direction: column;
+  background: var(--panel-bg);
+  border: var(--panel-border);
+  border-radius: var(--r-10);
+  backdrop-filter: blur(var(--panel-blur));
+  box-shadow: var(--edge-light); /* inset — elevation is border + top edge */
+  overflow: hidden;
+}
+
+/* The group marker, on its own hook.
+   This rule used to say `color: var(--ink-dim)` under a comment asserting that
+   `SectionLabel` is --ink-faint by design. It is not: `.section-label` in
+   primitives.css:595 already declares --ink-dim, so the declaration set the
+   value it was already at and the comment sent a reader looking for a contrast
+   problem that does not exist. Both are gone; what this rule actually does is
+   give the marker the popup's own padding, which the primitive does not carry.
+
+   It targets `.cmd__popmark` rather than `.section-label` so the hook the
+   element names is the hook that styles it — `.cmd__popmark` appeared on the
+   markup and in no stylesheet, which is a class name that looks like a handle
+   and holds nothing. Two classes for the same reason as §1: the primitive is
+   emitted later in the bundle. */
+.cmd__pop .cmd__popmark {
+  padding: var(--pad-section) var(--pad-section) var(--pad-row);
+}
+
+.cmd__popempty {
+  margin: 0;
+  padding: 0 var(--pad-section) var(--pad-row);
+  max-width: var(--shell-measure);
+}
+
+.cmd__opts {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  /* Five staged questions plus the way out is six rows; the cap exists so a
+     larger corpus cannot turn a suggestion list into a panel over the rail. */
+  max-height: 44vh;
+}
+
+.cmd__opt {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-row);
+  width: 100%;
+  min-height: var(--hit-row);
+  padding: var(--pad-row) var(--pad-section);
+  border-left: var(--border-1) solid transparent;
+  font-size: var(--fs-13);
+  color: var(--ink-dim);
+  cursor: pointer;
+  transition:
+    background var(--t-fast) var(--ease-ui),
+    color var(--t-fast) var(--ease-ui);
+}
+
+/* The cursor row. Same treatment as the palette's active row, because it is the
+   same gesture in a smaller box — a user who learns one has learned both. */
+.cmd__opt[data-active='true'] {
+  background: var(--render-a06);
+  border-left-color: var(--render);
+  color: var(--ink);
+}
+
+.cmd__opt--all {
+  border-top: var(--border-1) solid var(--line-a40);
+}
+
+.cmd__opt-glyph {
+  flex: none;
+  width: var(--s-4);
+  text-align: center;
+  color: var(--ink-dim);
+}
+
+.cmd__opt-main {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.cmd__opt-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* The second line of every option. --ink-dim and --fs-12-5, never the decoration
+   step: it is the corpus's own one-line reason the question exists, and on the
+   "search everything" row it is the only text naming what "everything" contains. */
+.cmd__opt-sub {
+  font-size: var(--fs-12-5);
+  color: var(--ink-dim);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cmd__opt-hit {
+  background: none;
+  color: var(--render);
+  font-weight: var(--fw-500);
+}
+
+/* The sentence that keeps this from being an autocomplete that spends tokens. */
+.cmd__popft {
+  margin: 0;
+  padding: var(--pad-row) var(--pad-section);
+  border-top: var(--border-1) solid var(--line);
+  max-width: var(--shell-measure);
+}
+
+/* =============================================================================
+   5. THE PALETTE'S OWN FLOORS
+   -----------------------------------------------------------------------------
+   Two rules, pinned here rather than assumed, because both sit on rows a user
+   arrow-keys through.
+
+   `.ix-palette__ft` carries the Enter/Esc contract and the index count, and it
+   is the only statement of either. `interaction.css` sets it to --fs-11; this
+   raises it to --fs-12-5, which is the one rule in this section that changes a
+   measured value.
+
+   `.ix-palette__sub` is the SECOND LINE OF EVERY NAVIGABLE ROW — a staged
+   question's reason for existing, a node's aliases, a rung's one-line
+   description. On the aliases it is frequently the only thing distinguishing two
+   rows whose titles are near-identical, which makes it functional text and puts
+   it at --ink-dim / --fs-12-5. `interaction.css` currently agrees, so this rule
+   is a PIN and not a correction — it is two classes against that file's one, so
+   a later revision there cannot quietly drop the step back without this rule
+   having to be removed on purpose.
+
+   A THIRD RULE USED TO SIT HERE AND DID NOTHING. It set the palette's group
+   headings to --ink-dim under the premise that `SectionLabel` is --ink-faint
+   globally. `.section-label` in primitives.css:595 already declares --ink-dim,
+   so the rule set the value it was already at, and the premise generated a
+   follow-up against a primitive with no defect in it. Deleted — see §4, which
+   carried the same false premise.
+   ========================================================================== */
+
+.ix-palette .ix-palette__sub {
+  font-size: var(--fs-12-5);
+  color: var(--ink-dim);
+}
+
+.ix-palette .ix-palette__ft {
+  font-size: var(--fs-12-5);
+}
+
+/* THE SHEET IS ONE WIDE ROW, NOT THREE NARROW ONES.
+   The three-row grid is right for a 320px column and wrong for the ~1000px
+   sheet a narrow frame docks the rail as: it tripled the composer from 32px to
+   94.8px in a band with only ~292px of rail to spend. The breakpoint is the
+   same 1100px `shell.css` switches the rail at — one number, two files, and it
+   is stated here rather than duplicated as a literal. */
+@media (max-width: 1100px) {
+  .cmd.cmd--composer {
+    display: flex;
+    align-items: center;
+    gap: var(--gap-row);
+  }
+
+  .cmd.cmd--composer > * {
+    grid-area: auto;
+  }
+}
+
+/* =============================================================================
+   3. THE FIELD GROWS WITH THE QUESTION
+   -----------------------------------------------------------------------------
+   It is a `<textarea>` now — see the component for why an `<input>` was the same
+   defect the pinned header exists to prevent, one band higher up. These are the
+   two rules that make a textarea behave like a question box rather than like a
+   comment form: no resize grabber (the height is the content's business, not a
+   thing to drag), and a ceiling past which it scrolls instead of eating the
+   rail. `field-sizing: content` does this natively where it is supported; the
+   component sets the height from `scrollHeight` everywhere else, and the two
+   agree because both are bounded by the same `max-height`.
+   ========================================================================== */
+.cmd .cmd__input {
+  resize: none;
+  overflow-y: auto;
+  /* Roughly five lines at --fs-13 / --lh-ui, which is a long question and a
+     short paragraph. Past it the field scrolls and the text is all still there. */
+  max-height: calc(var(--fs-13) * var(--lh-ui) * 5);
+  field-sizing: content;
+}

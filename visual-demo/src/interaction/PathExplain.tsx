@@ -199,7 +199,7 @@ function Hop({ step, labels }: { step: PathStep; labels: Map<string, string> }):
     <li className="ix-hop">
       <span className="ix-hop__index">
         <span className="caps ink-faint">{COPY.answer.path.hop}</span>
-        <Num value={step.index + 1} format="int" tone="faint" />
+        <Num value={step.index + 1} format="int" tone="dim" />
       </span>
 
       <span className="ix-hop__chain">

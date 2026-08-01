@@ -41,8 +41,13 @@ export function Chip({
   const body = (
     <>
       <span className="chip-body">{children}</span>
+      {/* THE COUNT ON AN INACTIVE CHIP IS STILL A MEASUREMENT.
+          It used to drop to the faint step whenever the chip was not selected,
+          which put a real figure — the number this filter would admit — below
+          every contrast floor on every unselected chip in the product. Inactive
+          is a state of the CONTROL, not a reason to stop reporting. */}
       {count === undefined ? null : (
-        <Num value={count} format="int" tone={active ? tone : 'faint'} className="chip-count" />
+        <Num value={count} format="int" tone={active ? tone : 'dim'} className="chip-count" />
       )}
     </>
   );

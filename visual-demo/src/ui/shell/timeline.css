@@ -1,0 +1,185 @@
+/* =============================================================================
+   TLDR-G VISUAL DEMO — THE EVENT AXIS
+   -----------------------------------------------------------------------------
+   The dock over the terrain: its readouts, its two sliders, and the marks they
+   brush over.
+
+   IT IS A SECOND FILE, NOT A REWRITE OF THE FIRST. `shell.css` §9 still owns the
+   axis's geometry — the track, the envelope, the gridlines, the masks, the
+   hatch, the legend keys — and none of it is repeated here. This file is
+   imported by `TimelineDock.tsx` and therefore lands after `shell.css`, so
+   everything below either adds a rule that did not exist or overrides one that
+   did; each override carries the measurement it is answering.
+
+   Overrides are written `.tdock .tdock__x` rather than `.tdock__x`, one class
+   heavier than the rule they replace. Not stylistic: two files with the same
+   specificity are two files whose order decides the outcome, and import order is
+   the least visible thing in a build to depend on.
+
+   Nothing here invents a colour, a duration or a radius. Every value is a token.
+   ========================================================================== */
+
+/* =============================================================================
+   1. THE HEADER — readouts, at readout size
+   -----------------------------------------------------------------------------
+   The whole row rendered at --fs-11. That size is declared in the scale as
+   "micro-labels, axis ticks, unit suffixes" — and what is actually in this row
+   is four dates and two counts, which the same scale calls the --fs-12-5 job:
+   "table rows, readouts, secondary UI". The CAPS labels stay at 11px, because
+   the `.caps` class sets its own size and a micro-label is exactly what they
+   are.
+
+   Every one of those labels also moved off --ink-faint. Faint is DECORATION ONLY
+   at 3:1; a word that names a value is not decoration, and `AXIS`, `WINDOW` and
+   `EVENTS` are the only text saying what the figures beside them are.
+   ========================================================================== */
+
+.tdock .tdock__head {
+  font-size: var(--fs-12-5);
+  /* Row gap as well as column gap: at 1024px this row wraps, and two wrapped
+     lines with no vertical gap read as one line with a stray fragment. */
+  gap: var(--gap-row) var(--gap-section);
+}
+
+/* =============================================================================
+   2. THE BRUSH STATE — a word, where an inference used to be
+   -----------------------------------------------------------------------------
+   Applied vs previewed was previously legible only from whether the map had
+   just changed underneath you. It is a token now: hairline while the window is
+   a preview, --render once it is holding something, because holding IS the
+   engine attending and cyan means nothing else in this product.
+
+   Deliberately NOT a <Chip>. A chip carries the 36px hit floor, which is right
+   for a control and wrong for a readout — this one is not pressable, and 36px
+   of header on a panel that stands on the map is terrain spent on a word.
+   ========================================================================== */
+
+.tdock__state {
+  display: inline-flex;
+  align-items: center;
+  padding: 0 var(--pad-chip);
+  border: var(--border-1) solid var(--line);
+  border-radius: var(--r-full);
+  color: var(--ink-dim);
+  white-space: nowrap;
+}
+
+.tdock__state[data-applied='true'] {
+  color: var(--render);
+  border-color: var(--render-a32);
+  background: var(--render-a12);
+}
+
+/* =============================================================================
+   3. THE TRACK — the whole of it is the brush
+   -----------------------------------------------------------------------------
+   `cursor: ew-resize` has been on this element since the first build, promising
+   that pressing the track does something. It did not: only the two 8px handles
+   responded, and the other 1,870px of the advertised target was inert. Pressing
+   anywhere now grabs the nearer end (see the component), which is what the
+   cursor was always claiming.
+
+   `touch-action: none` is load-bearing on the same gesture: without it a thumb
+   drag across the axis is a page scroll and the brush never moves at all.
+   ========================================================================== */
+
+.tdock .tdock__track {
+  touch-action: none;
+}
+
+/* =============================================================================
+   4. THE TICKS — marks, and the return leg of the two-way link
+   -----------------------------------------------------------------------------
+   One wrapper, so `aria-hidden` and `pointer-events` are stated once rather than
+   two hundred times. A tick is decoration by decision, not by neglect: the
+   operable enumeration is the rail's list of event rows, which can be read in
+   order and opened, and which two hundred 1px tab stops could never be.
+
+   `pointer-events: none` is also what makes §3 work — a press that lands on a
+   tick is a press on the track, not a press on a hairline that does nothing.
+   ========================================================================== */
+
+.tdock__ticks {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+/* HELD NODES, ON THE CLOCK.
+   The link ran one way: the axis could throw 162 nodes at the map and the map
+   could say nothing back. Pressing an event row in the rail, or a node on the
+   terrain, now lights that node's ticks here — full height, --render, at the
+   1.5px weight this product uses everywhere for "this one, right now". It is
+   the answer to "when did the thing I am holding happen", which was previously
+   unanswerable from a panel whose entire subject is when things happened. */
+.tdock__ticks .tdock__tick[data-held='true'] {
+  top: 0;
+  bottom: 0;
+  width: var(--lod-0-stroke);
+  margin-left: calc(var(--lod-0-stroke) * -0.5);
+  background: var(--render);
+  opacity: 1;
+}
+
+/* =============================================================================
+   5. THE HANDLES — 8px of hairline, 24px of target
+   -----------------------------------------------------------------------------
+   Measured: in a representative result state 18 of 19 visible focusables were
+   under 44px, and the two worst were these — 8px WIDE, and 8px in every density,
+   because they were sized in raw pixels and --density-hit-scale never reached
+   them. Touch mode widened every other control by 40% and left the two hardest
+   ones exactly where they were.
+
+   The hairline must stay a hairline: it marks an instant on a date axis, and a
+   24px-wide handle would cover roughly three weeks of a six-year span. So the
+   VISUAL size is unchanged and the PRESSABLE area is extended past it, which is
+   the entire reason `.u-hitslop` exists. The generic slop is inset -8px/-4px,
+   which brings 8px to 16px and still misses WCAG 2.2's 24×24 floor; this widens
+   it to the floor without touching the mark.
+
+   AND THE SLOP VERY NEARLY DELETED THE CONTROL. `.u-hitslop` set
+   `position: relative` at (0,1,0) — a dead tie with `.tdock__handle`'s
+   `position: absolute` in shell.css — and base.css is emitted AFTER the
+   component stylesheets, so the utility won: `bottom: 0` stopped applying and
+   both handles measured 8×0px, which is a two-handled brush with no handles.
+   The repair is in base.css, where it belongs: `:where(.u-hitslop)` contributes
+   zero specificity and now loses every tie by construction. Measured after it,
+   in the shipped bundle: `position: absolute`, 8×40px, ::before 24×56px, all
+   four corners of a 24×24 box hit-testing back to the handle.
+
+   NOT re-declared here, deliberately. A component defending its own layout
+   against a utility with a heavier selector would make the tie invisible again
+   at the next utility, on the next component. One rule that cannot win a tie
+   fixes the class; two rules racing fixes one instance.
+   ========================================================================== */
+
+.tdock .tdock__handle {
+  /* THE ONE DECLARATION THIS FILE OWES THIS ELEMENT. What stood here —
+     `padding: 0`, `background`, `border: 0`, `border-radius: 0` — was justified
+     as "the button-ish resets the element no longer inherits". A <div> never
+     inherited a <button>'s UA padding, border or radius, so three of them reset
+     nothing; `background` and `border-left` restated shell.css:1308–1309
+     verbatim, shadowing the file that owns this element's geometry with a copy
+     that could drift from it. Five declarations, five no-ops.
+
+     `touch-action: none` is not one: without it a thumb drag across the axis is
+     a page scroll and the brush never moves at all. */
+  touch-action: none;
+}
+
+.tdock .tdock__handle:hover,
+.tdock .tdock__handle:focus-visible {
+  background: var(--render-a56);
+}
+
+.tdock .tdock__handle.u-hitslop::before {
+  /* Longhands, because the shared rule sets `inset` and a shorthand cannot be
+     partly overridden. Centred on the hairline so the target grows evenly in
+     both directions rather than dragging the press point off the mark. */
+  top: calc(var(--hit-slop) * -1);
+  right: auto;
+  bottom: calc(var(--hit-slop) * -1);
+  left: 50%;
+  width: max(var(--hit-floor), calc(100% + var(--hit-slop) * 2));
+  translate: -50% 0;
+}

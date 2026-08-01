@@ -37,6 +37,28 @@
  * React in the pan loop and repaint every panel underneath it. The target is
  * written ONCE, when the hand stops, so a saved view carries where you actually
  * are rather than where you last clicked.
+ *
+ * -----------------------------------------------------------------------------
+ * AND IT CARRIES THE SURFACE'S ASSISTIVE-TECHNOLOGY EQUIVALENT
+ * -----------------------------------------------------------------------------
+ * `<TerrainOutline/>` and `<Announcer/>` mount HERE rather than in the shell, and
+ * the reason is `aria-activedescendant`: it is resolved against the DOM subtree
+ * of the element that declares it, so the option rows the surface points at have
+ * to be its own descendants. Mounting the outline in the shell would put it in a
+ * sibling subtree and the attribute would resolve to nothing — a cursor that
+ * names a node no screen reader can find.
+ *
+ * The three things that changed on this element, and what each one was before:
+ *
+ *   aria-label              was ONE STATIC SENTENCE at every cursor position. It
+ *                           names the node under the cursor now, because the node
+ *                           is what changes when you press an arrow key.
+ *   aria-activedescendant   did not exist anywhere in the application. The arrow
+ *                           keys moved a cursor that lived only in world
+ *                           coordinates, with no DOM element behind it, so
+ *                           traversing the graph was completely silent.
+ *   the marquee's cap       the rubber band's cap was reported to the eye as
+ *                           `40 of 137` and to a screen reader as two numbers.
  * ========================================================================== */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -46,6 +68,8 @@ import { RUNG_DEPTH, engine } from '@/engine';
 import type { GraphNode, Rung, Vec2 } from '@/engine';
 import { useAtlas, useAtlasStore } from '@/state';
 import { Btn, Num } from '@/ui/primitives';
+import { Announcer } from '@/ui/shell/Announcer';
+import { TerrainOutline, terrainOptionId } from '@/ui/shell/TerrainOutline';
 
 import { createCameraControl, type PointerSample } from '@/interaction/camera-control';
 import { placeHoverCard } from '@/interaction/HoverCard';
@@ -136,18 +160,33 @@ export function InteractionSurface({
 }: InteractionSurfaceProps): JSX.Element {
   const terrain = useTerrain();
 
-  const { app, rung, stackDepth, parentId, view, bake, selectionCount, density, reducedMotion } =
-    useAtlasStore((s) => ({
-      app: s.app,
-      rung: s.rung,
-      stackDepth: s.stack.length,
-      parentId: s.stack.length === 0 ? null : s.stack[s.stack.length - 1].id,
-      view: s.view,
-      bake: s.bake,
-      selectionCount: s.selection.length,
-      density: s.density,
-      reducedMotion: s.reducedMotion,
-    }));
+  const {
+    app,
+    rung,
+    stackDepth,
+    parentId,
+    view,
+    bake,
+    selectionCount,
+    focus,
+    density,
+    reducedMotion,
+  } = useAtlasStore((s) => ({
+    app: s.app,
+    rung: s.rung,
+    stackDepth: s.stack.length,
+    parentId: s.stack.length === 0 ? null : s.stack[s.stack.length - 1].id,
+    view: s.view,
+    bake: s.bake,
+    selectionCount: s.selection.length,
+    /* THE CURSOR, READ FOR ITS NAME. It is already the thing the keyboard moves
+       and the thing the terrain lights; it is now also the thing this element's
+       accessible name and active descendant are derived from, so there is one
+       cursor in the product rather than a visual one and an assistive one. */
+    focus: s.focus,
+    density: s.density,
+    reducedMotion: s.reducedMotion,
+  }));
 
   /**
    * The tuning is memoised — twenty `getComputedStyle` reads inside a pointermove
@@ -605,9 +644,19 @@ export function InteractionSurface({
     (e: React.KeyboardEvent<HTMLDivElement>) => {
       const t = terrainRef.current;
       if (t === null) return;
-      const store = useAtlas.getState();
-      const tune = readTuning();
 
+      /* ZOOM IS THE SURFACE'S OWN, FROM ANYWHERE INSIDE IT, AND IT IS HANDLED
+         BEFORE THE SUBTREE GUARD BELOW.
+         The guard exists because children implement their own meanings for the
+         arrow keys and Enter. NOTHING implements `+`/`=`/`-`: the outline's
+         `onKeyDown` falls through its `default:` branch, `src/state/keys.ts`
+         binds no zoom key globally, and this element's rect is what anchors the
+         zoom in the first place. The outline's listbox is now the FIRST focusable
+         child of this surface, which is exactly where a keyboard user lands — so
+         with these three keys behind the guard, arriving by keyboard silently
+         cost you the zoom that a keyboard user standing on the surface itself
+         still had. There is no text-entry descendant to steal a `-` from: the
+         command palette is a sibling and portals to `<body>`. */
       if (e.key === '+' || e.key === '=' || e.key === '-') {
         e.preventDefault();
         const r = rect();
@@ -616,6 +665,21 @@ export function InteractionSurface({
         evaluateSemanticZoom();
         return;
       }
+
+      /* THIS HANDLER BELONGS TO THE SURFACE ITSELF, NOT TO ITS SUBTREE.
+         The surface now contains real focusable children — the skip link and the
+         outline's listbox — and React bubbles their key events through here. The
+         failure that guard prevents is concrete: Enter on the focused skip link
+         reached this handler, which called `preventDefault()` and descended into
+         whatever node the cursor was on, and the `preventDefault` then suppressed
+         the button's own click, so the one keyboard route out of the terrain
+         performed a navigation nobody asked for and did not skip anywhere. A
+         handler on a container that reacts to keys pressed on its children is a
+         handler that will keep finding new ways to be wrong as children are
+         added; this is the general fix rather than a special case for Enter. */
+      if (e.target !== e.currentTarget) return;
+      const store = useAtlas.getState();
+      const tune = readTuning();
 
       const dir = ARROWS[e.key];
       if (dir !== undefined) {
@@ -725,13 +789,38 @@ export function InteractionSurface({
 
   const capped = marquee !== null && marquee.total > marquee.taken && marquee.taken === selectionCount;
 
+  /**
+   * THE ACCESSIBLE NAME NOW NAMES THE NODE.
+   *
+   * It was `COPY.a11y.terrain` at every cursor position — one sentence teaching
+   * the controls, which is the right thing to say when you arrive and the wrong
+   * thing to repeat on every arrow press. The resting name still teaches them;
+   * the moment there is something under the cursor the name becomes that thing,
+   * so a screen reader returning to this element is told where it is standing.
+   */
+  const focusNode = focus === null ? undefined : nodeById.get(focus);
+  const surfaceLabel =
+    app === 'QUERYING'
+      ? COPY.a11y.terrainBusy
+      : focusNode === undefined
+        ? COPY.a11y.terrain
+        : `${COPY.a11yTwin.surface.focusedOn} ${focusNode.label}`;
+
   return (
     <div
       ref={hostRef}
       className={className ? `ix-surface ${className}` : 'ix-surface'}
       tabIndex={0}
       role="application"
-      aria-label={app === 'QUERYING' ? COPY.a11y.terrainBusy : COPY.a11y.terrain}
+      aria-label={surfaceLabel}
+      /* THE VIRTUAL CURSOR, MADE REAL. The id resolves to an option row inside
+         `<TerrainOutline/>` below — a descendant of this element, which is what
+         makes the attribute resolvable at all. It is only set when the node is in
+         the current view, because `terrainOptionId` of a node the outline did not
+         render is a pointer at nothing, and an unresolvable activedescendant is
+         worse than none: it tells the screen reader a cursor exists and then
+         refuses to say where. */
+      aria-activedescendant={focusNode === undefined ? undefined : terrainOptionId(focusNode.id)}
       onPointerDown={onPointerDown}
       onPointerMove={onPointerMove}
       onPointerUp={onPointerUp}
@@ -741,6 +830,12 @@ export function InteractionSurface({
       onKeyDown={onKeyDown}
       onContextMenu={(e) => e.preventDefault()}
     >
+      {/* THE STRUCTURED TWIN, FIRST IN THE SUBTREE.
+          First because it carries the skip link, and a skip link that is not the
+          first thing reachable inside the region it skips out of is a skip link
+          you have to tab through the region to find. */}
+      <TerrainOutline />
+
       <div ref={marqueeRef} className="ix-marquee" hidden aria-hidden="true" />
 
       <HoverLayer
@@ -752,12 +847,22 @@ export function InteractionSurface({
 
       {showSelectionReadout && selectionCount > 0 ? (
         <div className="ix-selection" title={COPY.hud.selectionLabel}>
-          <span className="caps ink-faint">{COPY.hud.selectionLabel}</span>
+          {/* THE SOLE OWNER OF THIS FACT, SO IT IS NOT DECORATION.
+              The HUD carried a second SELECTED cell for one round and dropping it
+              was right — one owner per fact — but it left the survivor's label on
+              the decoration-only ink step, measured at 3.22:1 over the composited
+              panel ground. A count nobody can read the name of is a count. */}
+          <span className="caps ink-dim">{COPY.hud.selectionLabel}</span>
           <Num value={selectionCount} format="int" tone="render" />
           {capped ? (
             <>
               <span className="ink-faint">{COPY.common.ofLabel}</span>
-              <Num value={marquee.total} format="int" tone="faint" />
+              {/* --ink-dim, NOT --ink-faint. This figure is the only statement
+                  anywhere on screen of how many nodes the rubber band actually
+                  caught, and the faint step is decoration only — 3.01:1 against
+                  the panel ground. A number that reports an omission cannot be
+                  the least legible thing in the row that reports it. */}
+              <Num value={marquee.total} format="int" tone="dim" />
             </>
           ) : null}
           <Btn
@@ -770,6 +875,44 @@ export function InteractionSurface({
           </Btn>
         </div>
       ) : null}
+
+      {/* THE RUBBER BAND'S CAP, SAID RATHER THAN IMPLIED.
+          The readout above prints `40` and `of 137` and a sighted reader takes
+          the omission from the word `of`. Read aloud, that is two numbers with a
+          preposition between them. This states what happened.
+
+          THE REGION IS MOUNTED FROM THE FIRST FRAME, EMPTY, and only its contents
+          are conditional. It used to be created at the same moment it was
+          populated, which is the classic way to ship an announcement that never
+          fires — a screen reader does not watch a region it has never observed,
+          so a rubber band that silently dropped nodes at the cap stayed silent,
+          which is the omission this element exists to state. Announcer.tsx states
+          the same rule over the two live regions it owns.
+
+          It is NOT gated on `showSelectionReadout`, because the cap is a fact
+          about what the gesture did rather than a property of the panel that
+          reports it — a caller who turns the readout off has turned off a panel,
+          not the truth.
+
+          AND IT CARRIES ONE FIGURE, THE ONE NOTHING ELSE CARRIES. It used to
+          print `marquee.taken` too, which line 777 above defines as
+          `=== selectionCount` — the exact number the announcer already speaks as
+          `N nodes held`. A fact with two owners is a fact that gets said twice,
+          and the second saying is the one that makes a listener wonder which
+          number to believe. */}
+      <div className="u-sr" role="status" aria-live="polite" aria-atomic="true">
+        {capped && marquee !== null ? (
+          <>
+            {COPY.a11yTwin.surface.marquee.lead} <Num value={marquee.total} format="int" />{' '}
+            {COPY.a11yTwin.surface.marquee.trail}
+          </>
+        ) : null}
+      </div>
+
+      {/* THE LIVE REGIONS. Last in the subtree and mounted unconditionally: a
+          region a screen reader has not been watching since the first frame is a
+          region it will not read when it fills. See Announcer.tsx. */}
+      <Announcer />
     </div>
   );
 }

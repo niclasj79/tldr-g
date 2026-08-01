@@ -160,17 +160,91 @@
    2. THE RAIL — right, 320px, the only place dense detail lives
    ========================================================================== */
 
+/* THREE BANDS, AND ONLY THE MIDDLE ONE SCROLLS.
+   The column used to be one scroll region that appended every panel any switch
+   had ever turned on: 6,409px against a 632px viewport in one measured state,
+   with the question and the answer somewhere above the first screenful and the
+   analyst controls somewhere below the fourth. Pinning the context and switching
+   the detail is the whole fix, and it is a grid, not a promise. */
 .shell__rail {
   flex: 0 0 var(--shell-rail-w);
   width: var(--shell-rail-w);
-  display: flex;
-  flex-direction: column;
-  gap: var(--gap-row);
-  padding: var(--pad-section);
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  min-height: 0;
   border-left: var(--panel-border);
   background: var(--panel-bg);
   backdrop-filter: blur(var(--panel-blur));
   box-shadow: var(--edge-light); /* inset */
+}
+
+/* THE PINNED BAND. The question, the reverse actions, and the tab strip: every
+   one of them context for whatever is below, so none of them scrolls away. */
+.rail__pinned {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-row);
+  padding: var(--pad-section);
+  border-bottom: var(--border-1) solid var(--line-a40);
+  background: var(--panel-bg-2);
+}
+
+.rail__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-row);
+  min-height: 0;
+  overflow-y: auto;
+  padding: var(--pad-section);
+}
+
+/* ***  A SCROLL COLUMN'S CHILDREN MUST NOT SHRINK.  ***
+   This is the bug a test drive found in thirty seconds and no gate caught,
+   because every gate was measuring the CONTAINERS and the containers were
+   right. A flex item defaults to `flex-shrink: 1`. In a column whose content
+   exceeds its height, that means the browser COMPRESSES each panel toward its
+   content-height minimum instead of letting the column scroll — so an 84px-tall
+   panel went on painting three hundred pixels of question buttons straight
+   through the panel below it. Measured: three children at 220..636, 644..728,
+   736..799 with no overlap in the box model at all, and the corpus census drawn
+   over the staged questions on screen. The layout was correct and the paint was
+   not, which is exactly why it survived a measurement pass.
+
+   `flex: none` is the whole fix: every panel takes the height its content needs
+   and the column scrolls, which is what `overflow-y: auto` was there for. */
+.rail__body > *,
+.rail__pinned > * {
+  flex: none;
+}
+
+.rail__body > [role='tabpanel'] {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-row);
+  min-height: 0;
+}
+
+/* A tab panel is a real focus target after a tab press, and it must not draw a
+   ring for a click that landed inside it. */
+.rail__body > [role='tabpanel']:focus {
+  outline: none;
+}
+
+.rail__body > [role='tabpanel']:focus-visible {
+  outline: var(--focus-ring-w) solid var(--render-a80);
+  outline-offset: var(--focus-ring-offset);
+}
+
+.rail__empty {
+  margin: 0;
+  max-width: var(--shell-measure);
+}
+
+.rail__foot {
+  display: flex;
+  justify-content: flex-end;
+  padding: var(--pad-row) var(--pad-section);
+  border-top: var(--border-1) solid var(--line-a40);
 }
 
 /* THE RAIL STEPS WITH THE FRAME.
@@ -337,6 +411,90 @@
 }
 
 /* =============================================================================
+   THE SHEET IS A REACH PROBLEM, AND THE WIDTH PROBLEM HAS A BETTER ANSWER
+   -----------------------------------------------------------------------------
+   The first attempt at this was a sheet below 1100px, on the arithmetic that a
+   fixed 320px column is 31% of a 1024px frame and puts the terrain under its
+   floor. The arithmetic was right and the conclusion was wrong, and the browser
+   said so: measured at 1024x768, the COLUMN leaves the terrain 60.9% allocated
+   and ~54% unobstructed, while the SHEET leaves it 88.5% allocated and **45.4%**
+   unobstructed — because a sheet does not take width, it takes the map. Trading
+   an honest 54% for a flattering 88.5% that measures 45.4% is exactly the class
+   of self-flattery `audit()` exists to catch.
+
+   It also broke the rail's own shape. At 768px tall the 38vh sheet is 292px and
+   the pinned band is 213px of it — 73% — leaving 29px of body. The band stopped
+   being a band, which is the one property the whole three-band design rests on.
+
+   So the width problem is solved by NARROWING THE RAIL, which keeps one
+   architecture at every size, and the sheet is left to do the job it was
+   actually argued for: reach. Below 820px a 288px column is 35% of the frame and
+   nobody is holding a mouse anyway.
+   ========================================================================== */
+@media (max-width: 1200px) {
+  /* 288px still holds a four-rung ledger row and a question at a readable
+     measure; it is 28% of a 1024px frame rather than 31%. */
+  .shell__rail {
+    flex-basis: calc(var(--shell-rail-w) - var(--s-8));
+    width: calc(var(--shell-rail-w) - var(--s-8));
+  }
+
+  /* The lens switch keeps its labels and gives up its air first: a segmented
+     control whose segments are icons is a control that has to be learned twice. */
+  .topbar {
+    gap: var(--gap-row);
+  }
+
+  .topbar__lens,
+  .topbar__aux {
+    padding: 0 var(--pad-chip);
+  }
+}
+
+@media (max-width: 820px) {
+  .shell__body {
+    position: relative;
+  }
+
+  .shell__rail {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: auto;
+    flex: none;
+    height: auto;
+    max-height: var(--shell-sheet-h);
+    border-left: 0;
+    border-top: var(--panel-border);
+    border-radius: var(--r-14) var(--r-14) 0 0;
+    z-index: var(--z-overlay);
+  }
+
+  .shell__dock {
+    bottom: calc(var(--shell-sheet-h) + var(--shell-float-inset));
+  }
+}
+
+/* AND WHEREVER IT IS A SHEET, THE BAND STAYS A BAND.
+   A pinned band sized for a 700px column takes three quarters of a 292px sheet.
+   The question is still first and still never truncates — it is the band that
+   scrolls, not the question that clips — and the body is guaranteed room to be
+   a body. Both sheet triggers get this, which is why it is stated once. */
+:root[data-density='touch'] .rail__pinned,
+.shell__rail[style] .rail__pinned {
+  max-height: 60%;
+  overflow-y: auto;
+}
+
+@media (max-width: 820px) {
+  .rail__pinned {
+    max-height: 60%;
+    overflow-y: auto;
+  }
+}
+
+/* =============================================================================
    3. THE TOP BAR
    ========================================================================== */
 
@@ -401,6 +559,81 @@
   background: var(--panel-bg-2);
 }
 
+/* =============================================================================
+   THE WORKSPACE SWITCH: one segmented control, exactly one segment lit
+   -----------------------------------------------------------------------------
+   Not five chips that happen to be adjacent. A segmented control is the visual
+   grammar of MUTUAL EXCLUSION: the segments share one well, one border and one
+   baseline, so "one of these at a time" is legible before a single label is
+   read. `role="radiogroup"` in the markup says the same thing to a screen
+   reader, and the two are the same decision rather than two that agree.
+   ========================================================================== */
+.topbar__lenses {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  padding: var(--border-1);
+  border: var(--border-1) solid var(--line);
+  border-radius: var(--r-6);
+  background: var(--panel-bg-2);
+}
+
+.topbar__lens {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: var(--hit-row);
+  padding: 0 var(--pad-control);
+  border: var(--border-1) solid transparent;
+  border-radius: calc(var(--r-6) - var(--border-1));
+  /* AA on the panel ground. The old inactive switch label was --ink-faint at
+     12.5px, which measured 2.70:1: a control you could see was there and could
+     not read. */
+  color: var(--ink-dim);
+  font-size: var(--fs-13);
+  font-weight: var(--fw-500);
+  line-height: 1;
+  white-space: nowrap;
+  transition: color var(--t-fast) var(--ease-ui), background-color var(--t-fast) var(--ease-ui),
+    border-color var(--t-fast) var(--ease-ui);
+}
+
+.topbar__lens:hover {
+  color: var(--ink);
+  background: var(--ink-a06);
+}
+
+/* THE LIT SEGMENT IS A PLACE, NOT AN ALARM. It fills in ink rather than in
+   --render, because teal is the engine attending to something: the rendered
+   path, the active selection. A workspace being open is not that. In ink the
+   BOX does the work, which also survives greyscale. */
+.topbar__lens[data-active='true'] {
+  color: var(--ink);
+  background: var(--ink-a12);
+  border-color: var(--line);
+}
+
+/* The manual, and anything else that is a word rather than a workspace. */
+.topbar__aux {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--hit-row);
+  padding: 0 var(--pad-control);
+  border: var(--border-1) solid transparent;
+  border-radius: var(--r-6);
+  color: var(--ink-dim);
+  font-size: var(--fs-13);
+  font-weight: var(--fw-500);
+  white-space: nowrap;
+  transition: color var(--t-fast) var(--ease-ui), border-color var(--t-fast) var(--ease-ui);
+}
+
+.topbar__aux:hover,
+.topbar__aux[data-active='true'] {
+  color: var(--ink);
+  border-color: var(--line);
+}
+
 /* THREE CLUSTERS, NOT NINE PEERS. A hairline between them is the same grammar
    the command bar's readouts use, and it is cheaper than air the 48px band does
    not have: [the panels] · [the manual] · [share and provenance]. */
@@ -411,10 +644,15 @@
 
 /* A switch is a word at rest and a box only once it is ON. The box is then doing
    real work: it is the state, not the affordance. */
+/* THE COLOUR HALF OF THIS RULE IS GONE. It set every inactive control label in
+   the top bar to --ink-faint, which was 2.70:1 against the panel. Because it is
+   a two-class selector it beat both the base `.chip` rule and the `tone-dim` the
+   component was passing, so the component looked correct and the screen was not.
+   Inactive is expressed by the missing box, which is what the comment above
+   always claimed it was. */
 .topbar__panels .chip:not(.is-active),
 .topbar__right > .tip-anchor .chip:not(.is-active) {
   border-color: transparent;
-  color: var(--ink-faint);
 }
 
 .topbar__panels .chip:not(.is-active):hover,
@@ -435,7 +673,9 @@
    one job in this product; a permanent badge is not it. This is a stamp, in
    ink, and it is still the first thing you can read in the corner it sits in. */
 .topbar__corpus {
-  color: var(--ink-faint);
+  /* A standing claim about the whole product, that every document in it is
+     generated, is not decoration whatever its visual weight. */
+  color: var(--ink-dim);
   padding: 0 var(--pad-chip);
   border: var(--border-1) solid var(--line);
   border-radius: var(--r-6);
@@ -445,9 +685,44 @@
 /* Narrow displays give the breadcrumb up before the command bar or the
    switches, because those are the two things the product is operated with.
    Nothing is ever removed from the HUD. */
+/* THE BREADCRUMB IS NO LONGER THE FIRST THING CUT.
+   It used to be `display: none` below 1500px: orientation withdrawn at exactly
+   the widths where orientation is hardest, and the only remaining way up the
+   spine was a keyboard shortcut nobody had been shown. The composer left this
+   row for the rail, which freed the 520px that made the trade look necessary;
+   what is left is a graceful narrowing rather than a removal, so a compact
+   scope-and-level readout survives to the smallest frame the product supports.
+   `.rb-compact` is that narrow form; see atlas.css. */
 @media (max-width: 1500px) {
+  /* AND IT MUST NOT BE CLIPPED EITHER, WHICH IS A DIFFERENT FAILURE WEARING THE
+     SAME CLOTHES. The base rule shrinks this box and hides its overflow, which is
+     right for the full ancestry — a long chain elides gracefully. It is wrong for
+     the compact strip, whose children are deliberately unshrinkable (four level
+     stops at --hit-icon and an Up control, all `flex: none`): a shrinkable box
+     with unshrinkable contents and `overflow: hidden` does not degrade, it
+     amputates, and the last thing cut is the Up control at the right-hand end.
+     That is the same withdrawal-of-orientation the `display: none` was, arrived
+     at by a different route.
+
+     So at the width where the compact form takes over, the box stops shrinking
+     and stops clipping. It is the smallest thing in this row; the identity and
+     the workspace switch give up their air first. */
   .topbar__crumbs {
-    display: none;
+    flex: 0 0 auto;
+    min-width: 0;
+    overflow: visible;
+  }
+
+  /* The wordmark is the one thing here that can be read from memory. */
+  .topbar__id {
+    min-width: 0;
+    overflow: hidden;
+  }
+
+  .topbar__name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 }
 

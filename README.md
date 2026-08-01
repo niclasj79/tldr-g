@@ -28,14 +28,17 @@ The engine runs **entirely on your machine** — no cloud, no API key:
 
 What is *not* synthetic is the instrument. The hashes are real SHA-256 over the verbatim bytes, the signatures are real Ed25519, verification runs locally — you do not ask the party that issued a receipt whether the receipt is good — and the *Break it on purpose* control mutates the real bytes and re-runs the demo's own verifier for real rather than flipping a badge, so an altered quote and an altered signature fail differently and the panel says which. A worthless key over a manufactured corpus is also the cleanest way to show the split the contracts in this repo insist on: tamper-evidence is something an envelope can prove by itself; **who signed it is not.** For that you resolve the signer — and this signer resolves to nothing, deliberately.
 
-> The demo's trust code is built to be worthless and is **not** the verifier. Its receipts are `visual-demo-trace-v1`, a shape of its own, and they do not interoperate with the artifacts specified in `docs/contracts/`. The real verifier is `tp-vrg-verify` — a separate implementation with a real identity.
+> The demo's trust code is built to be worthless and is **not** the verifier. Its receipts are `visual-demo-trace-v1`, a shape of its own, and they do not interoperate with the artifacts specified in `docs/contracts/`. The real verifier is [`verify.html`](verify.html) and `tp-vrg-verify` — a separate implementation with a real identity.
 
 ## What's in this repo
 
 - **Boundary contracts** — `docs/contracts/` (the artifact + render-trace formats) and `src/tp_vrg/adapters/` (the interface a host integrates against). The two exportable boundary objects: the `PortableArtifact` (a rung-level subgraph export, GDPR Art-20 shaped) and the render trace (the answer + citations — "memory you can audit").
 - **Offline attestation / verify** — `src/tp_vrg/attestation.py` + the `tp-vrg-verify` CLI: Ed25519 detached signatures over those artifacts (same family as Sigstore / Certificate Transparency / eIDAS 2.0 qualified seals — **not** a blockchain, no token, no ledger). Anyone holding an exported artifact runs `tp-vrg-verify <file>` and checks tamper-evidence offline.
-- **[`visual-demo/`](visual-demo/)** — the source for the demo above, and the scripts that check its own claims (`node scripts/verify-trust.mjs` rebuilds the corpus, signs a trace, tampers with real bytes, and exits non-zero if a figure drifted).
+- **[`verify.html`](verify.html) — verify with nothing installed.** One self-contained file: open it in any browser, drop in a receipt, get a verdict. No Python, no install, no network — it works offline from a `file://` URL, because there is no server to talk to. This is the one to hand to a lawyer, an auditor, or a procurement reviewer; the CLI is for people who already have a terminal open.
+- **[Agent quickstart](docs/MCP-QUICKSTART.md)** — wire `tp-vrg-mcp` into Claude Desktop, Cursor, or your own client in about five minutes, and have your agent hand back a signed receipt anyone can check.
 - **Provenance audit** — `tools/provenance_audit.py`: a stdlib-only tool that checks every cited snippet in a render trace actually exists in the source — the "no hallucinated citations" proof.
+- **[`visual-demo/`](visual-demo/)** — the source for the demo above, and the scripts that check its own claims (`node scripts/verify-trust.mjs` rebuilds the corpus, signs a trace, tampers with real bytes, and exits non-zero if a figure drifted).
+- **[`primitives/`](primitives/) — the method drop.** Small self-contained pieces extracted from building the engine, useful on their own: content-addressing hygiene (hash the content, not the checkout), the AST scanner that proves an open-core boundary holds, and the agent-harness starter kit (the contract you hand a coding agent instead of a prompt). Zero dependencies, each carrying the incident that produced it.
 
 ## Why provenance + attestation are front-and-centre
 
@@ -49,14 +52,14 @@ TLDR-G crosses boundaries for a living. The same primitive **moves and merges kn
 
 So your data stays yours without you giving anything up:
 
-- **Local-first by default.** Ingestion runs on-device with no model calls, your knowledge graph is a single local file, and an air-gapped install sends nothing — ever.
+- **Local-first by default.** Ingestion runs on-device — local models only, no generative LLM in the default pipeline, no cloud calls — your knowledge graph is a single local file, and an air-gapped install sends nothing — ever.
 - **Federation crosses organizational boundaries with attestations, not content** (a future capability — no federation runs today). A participant shares only the connections it chooses to attest; a data-less attestation cannot carry the data beneath it.
 
 The one optional outbound we're building is **a contribution you choose, not a tax you pay**: an opt-in, content-free, aggregate signal about *how* the engine rendered, which improves the shared default packs everyone benefits from — never your documents or queries, never one user exposed to another, fully inspectable, and **off until its privacy guarantee is provable** (so today it sends nothing).
 
 ## Open by design
 
-The boundary you build against is **open (Apache-2.0)** so your integration and your verification never depend on us staying in business. Beyond this repo, we're publishing more of the *method* — design notes, a few standalone primitives, and a starter-kit of the AI-augmented development harness this project runs on — as a generous bonus to anyone building in the space. Watch the repo / [tldr-g.ai](https://tldr-g.ai) for the drops. *(The production engine stays a closed, free binary — open contracts, not open-core. Principle, not recipe.)*
+The boundary you build against is **open (Apache-2.0)** so your integration and your verification never depend on us staying in business. Beyond this repo, we're publishing more of the *method* — design notes, a few standalone primitives, and a starter-kit of the AI-augmented development harness this project runs on — as a generous bonus to anyone building in the space. **The first drop is live: [`primitives/`](primitives/)** (content-addressing hygiene · the open-core boundary scanner · the agent-harness starter kit). More to follow — watch the repo / [tldr-g.ai](https://tldr-g.ai). *(The production engine stays a closed, free binary — open contracts, not open-core. Principle, not recipe.)*
 
 ## Quickstart (no engine, no API key)
 
@@ -68,6 +71,12 @@ python examples/quickstart.py
 ```
 
 `examples/quickstart.py` signs a sample artifact, verifies it offline, then tampers one byte and shows verification fail — the whole trust story in ~20 lines.
+
+**Or skip all of it:** open [`verify.html`](verify.html) in a browser and drop a receipt on it. Nothing to install, works offline.
+
+## Versioning
+
+This repo's version tracks the **contract surface** — the artifact formats, the verification behaviour, the adapter interface — **not** the engine binary's version (v0.1.x). They change for different reasons, and this is the one your integration pins. Within a major version, an artifact that verifies today verifies tomorrow. Full rule + history: [CHANGELOG.md](CHANGELOG.md).
 
 ## Tests
 

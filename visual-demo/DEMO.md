@@ -68,14 +68,15 @@ call — the corpus is generated in-process. Click it.
   that moves while you read it destroys the only thing a map is for."*
 
 ### 2 — The staged question (do not rush this)
-- The question sits in the command bar **unrun**, labelled *"Staged, not rendered. The engine has
-  not spent a token on this yet."*
+- The question sits at the top of the rail **unrun**, labelled *"Staged, not rendered. The engine
+  has not spent a token on this yet."*
 - **This is the most important beat in the demo.** Say: *"Every RAG demo you have seen already ran.
   This one is waiting for you. The first render is your act."*
 - Note the five **intent chips** — Bridge · Lookup · Compare · Timeline · Summarise. The staged
   question is classified **Bridge**, because it is two hops through an entity mentioned on two
   different islands.
-- The Inspector says *why the question is there*: the answer path physically crosses a **strait**.
+- The panel says *why the question is there*: the answer path physically crosses a
+  **cross-cluster connection** — a *strait*, in the map's own vocabulary.
 
 ### 3 — Render it
 - Press **`Q`**, or click **Render**.
@@ -85,8 +86,18 @@ call — the corpus is generated in-process. Click it.
 - Say: *"That countdown is not an animation. It is the state transition — one number became the
   other because the engine spent one and not the other."*
 
-### 4 — The receipt (`P`)
-Walk these in order. Each has a customer meaning:
+### 4 — The evidence trail (already open)
+**Do not press anything.** A render that lands opens the evidence trail by itself, because that is
+what a landed render is *for* — and the question and the answer stay pinned above it, so nothing you
+read below is read without them. That pairing is the demo: a claim, and the receipt for it, in one
+glance, at every width.
+
+Every source the answer stands on is listed under the hop it supports, each with three verbs —
+**Read source**, **Locate on map**, **Compare**. Only the first leaves the list, and it leaves a
+**Back** behind it. Say: *"Where is this and what does it say are two different questions, and only
+one of them should cost you your place."*
+
+Then open the receipt fold. Walk these in order; each has a customer meaning:
 
 - **Token budget** — rendered vs stuffed context. The counterfactual is a *measured inventory* of
   every passage of every document the answer touched, not an estimate. This is the ROI slide, and it
@@ -128,9 +139,13 @@ Walk these in order. Each has a customer meaning:
 - Say: *"This is not magnification. At each level the map is made of different objects."*
 - Descend to a **passage** and show the verbatim text with its hash and offsets: *"the bottom rung
   is the actual source bytes. Slice the document at those offsets, hash it, and it matches."*
-- **`A`** opens **Atlas Mode** — all four rungs at once. The best single screenshot of the model.
+- The **detail-level selector and the breadcrumb are permanent**, at every width. They used to
+  disappear below 1500px — orientation withdrawn at exactly the viewport where orientation is
+  hardest. If they get lost: **`B`** goes back, **`R`** returns to the result, **`H`** goes home.
+  Every move in this product has a reverse action and all four are on the keyboard, because the
+  moment you need one is the moment you notice.
 
-### 8 — Nothing is hidden (`G`, Analyst Mode)
+### 8 — Nothing is hidden (`G`, the Analyze workspace)
 - Names which of the three edge rules drew what is on screen: **trade-route-skeleton** (bundled
   corridors between regions), **hover-neighborhood** (k-hop around the pointer), and
   **query-constellation** (exactly the answer path and its neighbours).
@@ -166,19 +181,19 @@ Walk these in order. Each has a customer meaning:
 
 ## Keys
 
+Three workspaces, three result surfaces, and a reverse action for every move.
+
 | Key | Action |
 | --- | --- |
-| `/` | Command search |
+| `/` | Search questions, places and commands |
 | `Q` | Render the staged question |
-| `A` | Atlas Mode — all four rungs at once |
-| `I` | Inspector |
-| `P` | Provenance — the render trace |
-| `T` | Timeline |
-| `G` | Analyst Mode |
-| `?` | Keyboard map and glossary |
-| `1` `2` `3` `4` | Jump to a rung |
-| `Backspace` | Ascend one rung |
-| `Esc` | Clear focus and selection |
+| `E` `T` `G` | Workspace: **Explore** · **Timeline** · **Analyze** (one at a time) |
+| `A` `P` `I` | Result detail: **Answer** · **Evidence trail** · **Inspect** (one at a time) |
+| `?` | Help, and the glossary |
+| `1` `2` `3` `4` | Detail level: continents / islands / documents / passages |
+| `Backspace` | Up one level |
+| `B` `R` `H` | Back · Back to the result · Home |
+| `Esc` | Clear the selection |
 
 Arrow keys move focus to the nearest node **in that direction** — cone-constrained, so "right" never
 means "up". Hover previews, click selects, double-click descends. There is also a share control that
@@ -190,8 +205,10 @@ Each has a by-construction answer, so the engine can be **scored** rather than a
 intent class, and each states its own *why* in the Inspector:
 
 - **Lookup** — one hop, one citation. The floor case: the engine should spend almost nothing.
-- **Compare** — two subjects joined by one shared object. The constellation should be a **fork**,
-  not a chain.
+- **Compare** — two subjects joined by one shared object. The constellation is a **fork**, not a
+  chain, and the interface says so: the independent re-derivation reports *not a single route*
+  rather than a disagreement. That distinction used to be missing, and it made this question raise
+  the loudest alarm the product has over an answer the engine had got right at every step.
 - **Timeline** — dated sessions put in order, with what changed between them.
 - **Summarise** — what one record establishes about one company.
 

@@ -24,16 +24,42 @@
  * certified reading are the same number.
  *
  * -----------------------------------------------------------------------------
- * THE ALTIMETER IS A REAL GAUGE
+ * THE ALTIMETER IS A REAL GAUGE, AND ITS STOPS ARE ONE CONTROL
  * -----------------------------------------------------------------------------
- * The four stops on the left are the spine. The band under them is the live
- * altitude of the camera, measured as a ratio against the zoom the current rung
- * was framed at, with the two thresholds that decide a rung change drawn on it.
- * Every number in it comes off `terrain.camera` or off design-tokens.css §15 —
- * there is no invented scale and no decorative needle. It is also the only place
- * in the product where the HYSTERESIS is visible: you can watch the altitude
- * travel a factor of six and a half between the two thresholds and see for
- * yourself why the boundary does not flicker.
+ * The four stops on the left are the spine. They used to be four independent
+ * `<button>`s in a list — four things you may press — when what they describe is
+ * ONE thing with four mutually exclusive positions, the way a lens is. They are
+ * a radio group now, and the implementation is shared with the top bar's compact
+ * strip (`<LevelSelector>` in ./Breadcrumb.tsx) so the level selector is
+ * reachable and operable at every width and cannot disagree with itself about
+ * which level is current.
+ *
+ * A stop also no longer discards where you are. Pressing `Assets` from inside
+ * one island used to draw all 521 assets in the corpus; it now descends into the
+ * selection, the breadcrumb scope, or the answer's own place — see
+ * `scopeForLevel()`.
+ *
+ * The band under the stops is the live altitude of the camera, measured as a
+ * ratio against the zoom the current rung was framed at, with the two thresholds
+ * that decide a rung change drawn on it. Every number in it comes off
+ * `terrain.camera` or off design-tokens.css §15 — there is no invented scale and
+ * no decorative needle. It is also the only place in the product where the
+ * HYSTERESIS is visible: you can watch the altitude travel a factor of six and a
+ * half between the two thresholds and see for yourself why the boundary does not
+ * flicker.
+ *
+ * -----------------------------------------------------------------------------
+ * THE PANEL DOES NOT OWN A SECOND COPY OF A NAVIGATION CONTROL
+ * -----------------------------------------------------------------------------
+ * It used to carry `Ascend` — 'Return to the containing rung' — while the
+ * navigation row pinned at the top of this same column carried `Up` — 'Up one
+ * detail level'. One move, two names, two tooltips, in one column. The reverse
+ * actions belong to the navigation stack, which renders them whenever there is a
+ * corpus and disables rather than hides the ones that would do nothing; this
+ * panel points at them instead of restating them.
+ *
+ * What survives here is the one control that is genuinely this panel's own: the
+ * guided run, and the `Stop` that ends it.
  *
  * -----------------------------------------------------------------------------
  * WHY THE JOURNEY DOES NOT START ITSELF
@@ -46,31 +72,25 @@
  * journey from there, resting `--atlas-dwell` on each rung.
  *
  * ESCAPING LEAVES YOU WHERE YOU ARE. Not where you started. Taking manual
- * control — Descend, Ascend, or closing the panel — stops the guided run
- * immediately and hands the camera back at the rung currently on screen. There
- * is no snap-back, because a snap-back would throw away the place the user
- * stopped at to look at something.
+ * control — Descend, Stop, a level stop, a ledger row, the navigation row's Up,
+ * or closing the panel — stops the guided run and hands the camera back at the
+ * rung currently on screen. There is no snap-back, because a snap-back would
+ * throw away the place the user stopped at to look at something.
  * =============================================================================
  */
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-import { RUNGS, RUNG_DEPTH } from '@/engine';
+import { RUNG_DEPTH } from '@/engine';
 import type { GraphNode, Rung } from '@/engine';
-import { COPY, rungCopy } from '@/copy';
+import { COPY, dual, rungCopy } from '@/copy';
 import { subscribeTerrain, type Terrain } from '@/graph';
 import { useAtlas, useAtlasStore } from '@/state';
 import { Btn, Glyph, Meter, Num, Panel, SectionLabel, Tip, cx } from '@/ui/primitives';
 
+import { LevelSelector } from './Breadcrumb';
 import { RungLedger } from './RungLedger';
-import {
-  ascend,
-  descend,
-  goToRung,
-  isDescending,
-  subscribeDescent,
-  type DescentFrame,
-} from './descent';
+import { descend, isDescending, subscribeDescent, type DescentFrame } from './descent';
 import {
   createRungGate,
   readAtlasMotion,
@@ -186,11 +206,6 @@ export interface AtlasModeProps {
   className?: string;
 }
 
-/** The scope a rung jump should keep: the ancestor already on the breadcrumb. */
-function scopeFor(rung: Rung, stack: readonly { id: string }[]): string | null {
-  return stack[RUNG_DEPTH[rung] - 1]?.id ?? null;
-}
-
 /**
  * The body a guided descent should enter: the most central one at this rung.
  *
@@ -209,13 +224,41 @@ function guidedTarget(nodes: readonly GraphNode[], rung: Rung): string | null {
   return best?.id ?? null;
 }
 
+/**
+ * The place, as one comparable string — the level plus its scope.
+ *
+ * THE GUIDED RUN USES THIS TO NOTICE THAT SOMEBODY ELSE TOOK THE WHEEL. It used
+ * to stop only on controls it owned, and removing its private `Ascend` in favour
+ * of the navigation row's `Up` would otherwise have left the tour narrating on
+ * over a move it did not make: the reader presses Up, the dwell finishes, and
+ * the panel dives back into a level they had just climbed out of. Comparing
+ * where the store actually is against where the last step left it is cheap,
+ * synchronous, and catches every external move — Up, Back, Home, a ledger row, a
+ * level stop, a keyboard shortcut — with one test instead of one hook per
+ * control.
+ */
+function placeOf(s: { rung: Rung; stack: readonly { id: string }[] }): string {
+  return `${s.rung}|${s.stack.length === 0 ? '' : s.stack[s.stack.length - 1].id}`;
+}
+
 export function AtlasMode({ className }: AtlasModeProps): JSX.Element | null {
   // NEVER `s.view?.nodes ?? []` in a selector. `useShallow` compares the
   // selector's RESULT shallowly, so a fresh `[]` on every call is a new value on
   // every store write and the component re-renders itself into an infinite loop.
   // Select the payload; derive from it where it is needed.
   const { open, app, rung, stack } = useAtlasStore((s) => ({
-    open: s.ui.atlas,
+    /* THE MOUNT DECIDES, NOT A FLAG NOTHING SETS.
+       This read `s.ui.atlas`, which was a top-bar toggle until the five
+       equal-rank switches became three lenses — and then nothing set it, ever.
+       The component mounted and returned null: the altimeter, the rung ledger
+       and the guided descent were unreachable in the shipped build, which is why
+       an adversarial pass could find no control, no key and no scene that opened
+       them. A component that gates itself on state its host does not own will
+       eventually gate itself on state nobody owns.
+
+       The gate is now the lens, which is the thing the rail already uses to
+       decide whether to mount this at all — one fact, read in one place. */
+    open: s.lens === 'explore',
     app: s.app,
     rung: s.rung,
     stack: s.stack,
@@ -250,16 +293,37 @@ export function AtlasMode({ className }: AtlasModeProps): JSX.Element | null {
     setTouring(true);
     const motion = readAtlasMotion();
 
+    /** Where the last step left the store. `null` before the first step. */
+    let expected: string | null = null;
+
     for (;;) {
       const state = useAtlas.getState();
       if (mine !== generation.current) return;
       if (state.app !== 'READY') break;
+      // SOMEBODY ELSE MOVED US. Hand the wheel over rather than diving again
+      // from a place the reader chose. See `placeOf`.
+      if (expected !== null && placeOf(state) !== expected) break;
 
       const target = guidedTarget(state.view?.nodes ?? [], state.rung);
       if (target === null || rungBelow(state.rung) === null) break;
 
       const result = await descend(target);
-      if (mine !== generation.current || result.interrupted || result.refused) return;
+      // A NEWER GENERATION OWNS THE FLAGS, SO THIS ONE LEAVES THEM ALONE.
+      if (mine !== generation.current) return;
+      /* BUT AN INTERRUPTED DESCENT IS STILL THIS GENERATION'S TO CLEAN UP.
+         This used to `return` on `interrupted` / `refused` as well, which left
+         `touring` true and `dwell` running with no tour behind either of them.
+         Any external move mid-choreography bumps the ticket in descent.ts and
+         comes back `interrupted: true` — and since this panel gave up its
+         private `Ascend`, the reverse move now arrives from a control the tour
+         does not own, which made that interleaving ordinary rather than rare.
+         The residue was not cosmetic: `touring` is the render gate for the
+         `Stop` button and the dwell Meter below, and it routes the primary
+         `Descend` into its stop-then-single-step branch — so the panel offered
+         to stop a tour that had already ended and then spent a press doing it.
+         Breaking runs the same cleanup every other exit from this loop runs. */
+      if (result.interrupted || result.refused) break;
+      expected = placeOf(useAtlas.getState());
       if (rungBelow(useAtlas.getState().rung) === null) break;
 
       // The dwell. A reading pause, driven by a real clock and reported as one.
@@ -295,11 +359,6 @@ export function AtlasMode({ className }: AtlasModeProps): JSX.Element | null {
     }
     void runTour();
   }, [touring, runTour, stopTour]);
-
-  const onAscend = useCallback(() => {
-    stopTour();
-    void ascend();
-  }, [stopTour]);
 
   const close = useCallback(() => {
     stopTour();
@@ -340,54 +399,34 @@ export function AtlasMode({ className }: AtlasModeProps): JSX.Element | null {
             that is going to happen to them, and nothing once they are
             travelling. `here.long` moves to the caption's own title, one hover
             away and out of the frame. */}
-        {depth === 0 ? <p className="am-sub t-12-5 ink-dim">{COPY.atlas.note}</p> : null}
+        {depth === 0 ? <p className="am-sub t-13 ink-dim">{COPY.atlas.note}</p> : null}
 
         {/* ---- THE ALTIMETER ------------------------------------------- *
          * The four stops are the spine, and each one carries the NOUN FOR WHAT
          * IS INSIDE IT. Read down the column and the ontology ladder is legible
          * without descending at all — continents contain islands, islands
          * contain assets, assets contain passages, passages contain mentions —
-         * which is the difference between a depth gauge and a zoom slider. It is
-         * also the claim the whole mode makes, stated in four words rather than
-         * in a paragraph. */}
+         * which is the difference between a depth gauge and a zoom slider.
+         *
+         * The stops themselves are `<LevelSelector>`, the same radio group the
+         * top bar renders in its compact form. One implementation, one scope
+         * rule, one keyboard model: two copies of a selector are two chances for
+         * the rail and the bar to disagree about which level is current. */}
         <div className="am-alt">
-          <ol className="am-stops" aria-label={COPY.rungs.title}>
-            {RUNGS.map((r) => {
-              const state =
-                r === rung ? 'here' : RUNG_DEPTH[r] < depth ? 'above' : 'below';
-              return (
-                <li key={r} className={cx('am-stop', `is-${state}`)}>
-                  <button
-                    type="button"
-                    className="am-stop-btn"
-                    onClick={() => {
-                      stopTour();
-                      void goToRung(r, scopeFor(r, stack));
-                    }}
-                    title={rungCopy(r).short}
-                    aria-current={r === rung ? 'true' : undefined}
-                  >
-                    <Glyph rung={r} tone={r === rung ? 'render' : 'faint'} />
-                    <span className="am-stop-name">{rungCopy(r).plural}</span>
-                    {/* Not on the stop you are standing on: the caption below
-                        already says what is here, and the two together elided
-                        each other into `Passag… mentio… YOU ARE HERE`. */}
-                    {r === rung ? (
-                      <span className="am-here caps">{COPY.atlas.here}</span>
-                    ) : (
-                      <span className="am-stop-holds ink-faint">{rungCopy(r).contains}</span>
-                    )}
-                  </button>
-                </li>
-              );
-            })}
-          </ol>
+          <LevelSelector variant="rail" className="am-stops" onJump={stopTour} />
 
-          {/* The live altitude, inside the band that owns this rung. */}
-          <div className="am-band" aria-label={COPY.topbar.rung.label}>
+          {/* The live altitude, inside the band that owns this rung.
+              THE LABEL IS THE DUAL-LAYER PAIR, not `Rung`. `Rung` is the
+              engine's word for the thing this gauge measures, and it was
+              leading — on a gauge a first-time reader meets before anything has
+              explained the spine. The plain name leads and the technical term
+              follows, exactly as the deck's vocabulary table has it; the figure
+              is a ratio and renders with its × so it cannot be misread as an
+              index into four levels. */}
+          <div className="am-band" aria-label={dual('lod')}>
             <Tip content={COPY.topbar.rung.tip}>
               <span className="am-band-hd">
-                <span className="caps ink-faint">{COPY.topbar.rung.label}</span>
+                <span className="caps ink-dim">{dual('lod')}</span>
                 <Num
                   value={altitude.anchored ? altitude.ratio : Number.NaN}
                   format="ratio"
@@ -409,12 +448,12 @@ export function AtlasMode({ className }: AtlasModeProps): JSX.Element | null {
                 claiming a direction the spine does not have. */}
             <span className="am-band-ends">
               <span className="am-band-end">
-                {above === null ? null : <Glyph rung={above} tone="faint" />}
-                <Num value={altitude.band.out} format="ratio" tone="faint" />
+                {above === null ? null : <Glyph rung={above} tone="dim" />}
+                <Num value={altitude.band.out} format="ratio" tone="dim" />
               </span>
               <span className="am-band-end is-right">
-                <Num value={altitude.band.in} format="ratio" tone="faint" />
-                {below === null ? null : <Glyph rung={below} tone="faint" />}
+                <Num value={altitude.band.in} format="ratio" tone="dim" />
+                {below === null ? null : <Glyph rung={below} tone="dim" />}
               </span>
             </span>
           </div>
@@ -437,10 +476,11 @@ export function AtlasMode({ className }: AtlasModeProps): JSX.Element | null {
 
         {/* ---- THE FOOT ------------------------------------------------- *
          * Docked to the bottom of the scrolling body. At the asset rung the
-         * ledger is twenty documents long, and both of the things down here have
-         * to survive that: a primary action that scrolls out of reach is a
-         * primary action nobody presses, and a corpus disclosure that scrolls
-         * out of reach is a disclosure that has been hidden. */}
+         * ledger is twenty documents long, and all three of the things down here
+         * have to survive that: a primary action that scrolls out of reach is a
+         * primary action nobody presses, a corpus disclosure that scrolls out of
+         * reach is a disclosure that has been hidden, and a pointer to the
+         * reverse actions is only useful where the descent controls are. */}
         <div className="am-foot">
           <div className="am-provenance" title={COPY.provenance.long}>
             <SectionLabel>{COPY.provenance.field}</SectionLabel>
@@ -457,15 +497,21 @@ export function AtlasMode({ className }: AtlasModeProps): JSX.Element | null {
             >
               {COPY.atlas.descend.label}
             </Btn>
-            <Btn
-              variant="quiet"
-              tone="dim"
-              onClick={onAscend}
-              disabled={depth === 0 || busy}
-              title={COPY.atlas.ascend.title}
-            >
-              {COPY.atlas.ascend.label}
-            </Btn>
+
+            {/* WHERE `ASCEND` USED TO BE. Not a replacement for it — the reverse
+                of a descent is the navigation row's `Up`, and this panel does
+                not own a second copy of that. This ends a NARRATION, which is
+                the one thing on screen that only this panel can start. */}
+            {touring ? (
+              <Btn
+                variant="quiet"
+                tone="dim"
+                onClick={stopTour}
+                title={COPY.navigation.tour.stop.title}
+              >
+                {COPY.navigation.tour.stop.label}
+              </Btn>
+            ) : null}
 
             {/* The dwell. A real clock, reported as one: it is how much of the
                 reading pause is left before the guided run moves to the next
@@ -480,6 +526,9 @@ export function AtlasMode({ className }: AtlasModeProps): JSX.Element | null {
               />
             ) : null}
           </div>
+
+          {/* THE REVERSE ACTIONS HAVE ONE HOME AND IT IS NOT THIS PANEL. */}
+          <p className="am-reverse t-13 ink-dim">{COPY.navigation.reverse.note}</p>
         </div>
       </Panel>
     </aside>

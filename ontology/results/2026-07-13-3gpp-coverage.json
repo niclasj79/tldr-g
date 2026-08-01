@@ -1,0 +1,18 @@
+{
+ "threshold": 0.541,
+ "distinct_relations": 102,
+ "distinct_coverage": 1.0,
+ "edge_coverage": 1.0,
+ "gap_distinct": 0,
+ "gap_clusters": 0,
+ "p4_shipped_unknown": 93,
+ "p4_reclaimed_by_embedding": 93,
+ "per_domain": {
+  "telecom_3gpp": {
+   "distinct_coverage": 1.0,
+   "edge_coverage": 1.0,
+   "distinct_relations": 102
+  }
+ },
+ "extension_candidates": []
+}

@@ -554,7 +554,7 @@ export function PassageDrilldown({
                 key={seg.seq}
                 label={
                   <span className="pv-seg-row">
-                    <span className="pv-seg-badge tone-faint">{COPY.trust.sourceSegment.derivedBadge}</span>
+                    <span className="pv-seg-badge tone-dim">{COPY.trust.sourceSegment.derivedBadge}</span>
                     <Code code={seg.kind} />
                   </span>
                 }

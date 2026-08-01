@@ -332,7 +332,7 @@ export function InspectorBody({
               key={seg.seq}
               label={
                 <span className="pv-seg-row">
-                  <span className={cx('pv-seg-badge', seg.seq === 0 ? 'tone-dim' : 'tone-faint')}>
+                  <span className={cx('pv-seg-badge', seg.seq === 0 ? 'tone-dim' : 'tone-dim')}>
                     {seg.seq === 0
                       ? COPY.trust.sourceSegment.verbatimBadge
                       : COPY.trust.sourceSegment.derivedBadge}

@@ -1,0 +1,222 @@
+/* =============================================================================
+   TLDR-G VISUAL DEMO — THE ASSISTIVE-TECHNOLOGY TWIN
+   -----------------------------------------------------------------------------
+   Almost nothing. That is the design, not an omission.
+
+   THE TWIN IS NOT DRAWN.
+   The outline renders visually hidden — `.u-sr` from base.css, one class, no
+   copy of it here — because the alternative is a second information architecture
+   over the same graph. A visible list of the terrain would have to be laid out,
+   ranked, scrolled, kept in step with the map through every re-bake, and revised
+   every time the map was; within a month it would be the surface that disagrees
+   with the picture, and a twin that disagrees with its subject is worse than no
+   twin. Hidden, it is one derivation of one store, and it cannot drift.
+
+   So the whole file is TWO reveals, and both are the same rule applied twice: a
+   focusable control a sighted keyboard user cannot see is a trap. The skip link
+   had existed as a string in the copy deck (`COPY.a11y.skipToCommand`) and been
+   rendered by nothing. The caret plate is section 3, and it exists because the
+   listbox is ALSO focusable, is ALSO clipped, and was measured holding the caret
+   at 1x623px with no indicator anywhere on the screen.
+
+   Zero hex, zero raw rgb(), zero durations and zero radii that are not a var()
+   from design-tokens.css. Elevation is a 1px --line border plus --edge-light,
+   which is an INSET highlight along the top edge — nothing here casts a shadow.
+   ============================================================================= */
+
+/* -----------------------------------------------------------------------------
+   1. THE REGION
+   -----------------------------------------------------------------------------
+   A zero-box anchor, not a layer. Both of its children position themselves
+   absolutely against it, so it never has a rect of its own and can never
+   intercept a pointer aimed at the terrain underneath it — which matters here
+   more than anywhere, because this element is mounted INSIDE the input surface
+   whose bounding rect anchors every zoom in the product.
+   -------------------------------------------------------------------------- */
+
+.tro {
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+/* -----------------------------------------------------------------------------
+   2. THE SKIP LINK
+   -----------------------------------------------------------------------------
+   Hidden exactly as `.u-sr` hides things — until it is focused, at which point
+   it becomes a real, full-size control at the top-left of the terrain. The
+   reveal is not decoration: a skip link that stays invisible while focused is a
+   trap, because the sighted keyboard user has lost the caret and cannot see
+   where it went.
+
+   `:focus`, NOT `:focus-visible`, and this is the one place in the product where
+   that is the right way round. `:focus-visible` is a browser HEURISTIC about
+   input modality: it is not specified to fire on programmatic focus, and
+   programmatic focus is exactly how assistive technology, a test harness and the
+   product's own `focus()` calls move the caret. Every other control in the build
+   can afford to lose that bet, because losing it costs a focus ring on something
+   that is already visible. This one cannot: losing it leaves a 1px clipped
+   element holding the caret, which is the trap the reveal exists to prevent.
+   Everything else keeps the shared `:focus-visible` ring from base.css.
+
+   It is a chip at --hit-min with a --fs-13 label, the two floors the rest of the
+   product was just brought up to. A 24px 11px skip link would be the one control
+   in the build that regressed them.
+   -------------------------------------------------------------------------- */
+
+.tro__skip {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: var(--z-overlay);
+
+  /* The hidden state, matching .u-sr exactly. */
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  font-size: var(--fs-13);
+  line-height: var(--lh-ui);
+  text-align: left;
+  cursor: pointer;
+}
+
+.tro__skip:focus {
+  width: auto;
+  height: auto;
+  min-height: var(--hit-min);
+  padding: var(--pad-row) var(--pad-control);
+  overflow: visible;
+  clip-path: none;
+
+  margin: var(--pad-panel);
+  display: inline-flex;
+  align-items: center;
+
+  background: var(--panel-bg);
+  border: var(--panel-border);
+  border-radius: var(--r-10);
+  backdrop-filter: blur(var(--panel-blur));
+  box-shadow: var(--edge-light); /* inset — the top-edge light, never an outer shadow */
+}
+
+/* -----------------------------------------------------------------------------
+   3. THE CARET PLATE
+   -----------------------------------------------------------------------------
+   THE MEASUREMENT. `.tro__list` is `tabIndex={0}` with a layout box of 1x623px,
+   and it sits inside `.tro__twin.u-sr`, whose `clip-path: inset(50%)` clips the
+   paint of the WHOLE descendant subtree — including the shared `:focus-visible`
+   ring from base.css. The tab order inside `.ix-surface` is skip link, listbox,
+   clear-selection. So a sighted keyboard user tabbing forward from the skip link
+   landed on the listbox, saw nothing anywhere on the screen, and their next
+   ArrowDown changed the selection on the map with the caret nowhere visible.
+
+   That is the same trap section 2 reveals the skip link to avoid, one control
+   further along, and it got no equivalent treatment. This is the equivalent
+   treatment — and it is a FOCUS INDICATOR, not a list. Revealing two hundred
+   option rows would be the second information architecture the top of this file
+   argues against; one line naming the node under the cursor is what a focus ring
+   would say if a focus ring could speak.
+
+   It is `aria-hidden` in the markup and `pointer-events: none` here: every word
+   on it is already in the twin, and it is mounted inside the input surface whose
+   bounding rect anchors every zoom in the product, so it must never intercept a
+   pointer aimed at the terrain.
+
+   It shares the top-left slot with the skip link, which is safe because they are
+   mutually exclusive by construction: one is revealed by the skip link having
+   focus and the other by the listbox having it.
+   -------------------------------------------------------------------------- */
+
+.tro__caret {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: var(--z-overlay);
+  pointer-events: none;
+
+  margin: var(--pad-panel);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--gap-row);
+  min-height: var(--hit-min);
+  max-width: min(94ch, 76vw);
+  padding: var(--pad-row) var(--pad-control);
+
+  background: var(--panel-bg);
+  border: var(--panel-border);
+  border-radius: var(--r-10);
+  backdrop-filter: blur(var(--panel-blur));
+  box-shadow: var(--edge-light); /* inset — the top-edge light, never an outer shadow */
+
+  color: var(--ink);
+  font-size: var(--fs-13);
+  line-height: var(--lh-ui);
+  white-space: nowrap;
+}
+
+/* --ink-dim, NOT --ink-faint, on both of the quiet halves. They are functional
+   text — one says which control has the caret and the other says what the keys
+   do — and the faint step is decoration only at 3.01:1 against this ground. */
+.tro__caret .tro__caret-name,
+.tro__caret .tro__caret-hint {
+  color: var(--ink-dim);
+}
+
+/* WHICH OF THE THREE IS ALLOWED TO SHRINK, MEASURED.
+   The first version set `overflow: hidden` on the node name and nothing on the
+   other two, and `overflow: hidden` is what resolves a flex item's automatic
+   minimum size to zero — so the node was the ONLY shrinkable item, and at a
+   56ch cap it collapsed to 0px while the keyboard hint kept its full width. The
+   plate that exists to say WHERE THE CARET IS rendered without the node's name
+   on it, which is the whole content gone and the decoration kept.
+
+   So the name and the node do not shrink at all, and the hint — the least
+   load-bearing of the three, and already dropped entirely below 900px — is the
+   one that gives way. */
+.tro__caret .tro__caret-name {
+  flex: 0 0 auto;
+}
+
+.tro__caret .tro__caret-node {
+  flex: 0 0 auto;
+  max-width: 34ch;
+  color: var(--ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tro__caret .tro__caret-hint {
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+@media (max-width: 900px) {
+  .tro__caret .tro__caret-hint {
+    display: none;
+  }
+}
+
+/* -----------------------------------------------------------------------------
+   4. THE TWIN AND THE LIVE REGIONS
+   -----------------------------------------------------------------------------
+   They carry `.u-sr` and nothing else, and there is deliberately no rule for
+   them here. A visually-hidden element with its own paint is an element that
+   someone will eventually be tempted to reveal, and the argument at the top of
+   this file is the reason not to.
+
+   One property is worth stating rather than inheriting by accident: the option
+   rows must NOT be `display: none` and must NOT be `visibility: hidden`. Both
+   remove an element from the accessibility tree, and an outline removed from the
+   accessibility tree is an outline that does not exist. `.u-sr` clips; it does
+   not hide. That distinction is the entire mechanism.
+   -------------------------------------------------------------------------- */

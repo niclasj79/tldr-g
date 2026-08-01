@@ -87,7 +87,7 @@ export function IngestScreen(): JSX.Element {
         <p className="t-14 ink-dim" data-prose>
           {state.body}
         </p>
-        <p className="t-11 ink-faint" data-prose>
+        <p className="t-12-5 ink-dim" data-prose>
           {state.note}
         </p>
 
@@ -106,7 +106,7 @@ export function IngestScreen(): JSX.Element {
                 {done ? (
                   <Num value={ms} format="ms" tone="dim" />
                 ) : (
-                  <span className="ingest__pending caps ink-faint">{COPY.common.notRun}</span>
+                  <span className="ingest__pending caps ink-dim">{COPY.common.notRun}</span>
                 )}
                 {done && Number.isFinite(total) && total > 0 ? (
                   <Meter value={ms} max={total} tone="render" />
@@ -156,7 +156,7 @@ export function IngestScreen(): JSX.Element {
             {bake === null ? null : (
               <Row
                 label={COPY.topbar.bake.label}
-                value={<span className="mono ink-faint">{bake.bake_id}</span>}
+                value={<span className="mono ink-dim">{bake.bake_id}</span>}
                 mono
               />
             )}

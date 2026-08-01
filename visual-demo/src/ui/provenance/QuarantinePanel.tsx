@@ -200,9 +200,9 @@ export function QuarantinePanel({
             <span className="pv-rate">
               <Num value={rate * 100} format="pct1" tone="neutral" className="pv-gate-v" />
               <span className="pv-rate-of">
-                <Num value={report.quarantined} format="tokens" tone="faint" />
+                <Num value={report.quarantined} format="tokens" tone="dim" />
                 <span className="pv-rate-slash">/</span>
-                <Num value={gated} format="tokens" tone="faint" />
+                <Num value={gated} format="tokens" tone="dim" />
               </span>
             </span>
           </span>
@@ -234,7 +234,7 @@ export function QuarantinePanel({
             label={COPY.integrity.rows.truth_gate_exempt_structural.label}
             tip={COPY.integrity.rows.truth_gate_exempt_structural.tip}
           >
-            <Num value={report.truth_gate_exempt_structural} format="tokens" tone="faint" />
+            <Num value={report.truth_gate_exempt_structural} format="tokens" tone="dim" />
           </Fact>
         </div>
       </section>

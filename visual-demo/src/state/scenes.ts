@@ -219,17 +219,23 @@ const SCENES: Record<SceneName, () => Promise<void>> = {
     }
   },
 
+  /* THE RECEIPT IS A TAB NOW, NOT A PANEL.
+     `ui.receipt` was a boolean that appended a 3,022px panel to the bottom of a
+     scroll column; the evidence trail is a surface the rail SWITCHES to. The
+     scene name is unchanged on purpose: it names the state being photographed,
+     and that state still exists. */
   receipt: async () => {
     await rendered();
-    if (!st().ui.receipt) st().toggle('receipt');
+    st().setTab('evidence', { pin: true });
   },
 
   'passage-drilldown': async () => {
     await rendered();
     const citation = st().trace?.citations[0];
     if (citation === undefined) return;
+    // `openPassage` now pushes the scene it displaces, so this capture is also
+    // the one that proves `Back` has somewhere to go.
     await st().openPassage(citation.passage_id);
-    if (!st().ui.receipt) st().toggle('receipt');
   },
 
   'path-explain': async () => {
@@ -239,56 +245,68 @@ const SCENES: Record<SceneName, () => Promise<void>> = {
 
   /* ---- Atlas Mode, one scene per rung ----------------------------------- */
 
+  /* ATLAS MODE IS NOT A PANEL YOU OPEN ANY MORE — it is what the Explore lens
+     shows in the rail while nothing has been asked, and the rung selector it
+     carries is permanent chrome rather than a mode. So these four scenes assert
+     the LENS and the RUNG, which is what they were always photographing. */
   'atlas-continent': async () => {
+    await st().setLens('explore');
     await descendTo(0);
-    if (!st().ui.atlas) st().toggle('atlas');
   },
 
   'atlas-island': async () => {
+    await st().setLens('explore');
     await descendTo(1);
-    if (!st().ui.atlas) st().toggle('atlas');
   },
 
   'atlas-asset': async () => {
+    await st().setLens('explore');
     await descendTo(2);
-    if (!st().ui.atlas) st().toggle('atlas');
   },
 
   'atlas-passage': async () => {
+    await st().setLens('explore');
     await descendTo(3);
-    if (!st().ui.atlas) st().toggle('atlas');
   },
 
   /* ---- the instrument panels -------------------------------------------- */
 
   analyst: async () => {
     await rendered();
-    if (!st().ui.analyst) st().toggle('analyst');
+    await st().setLens('analyze');
   },
 
+  /* THE TIMELINE OVER AN ANSWER, not over the whole corpus. The lens defaults to
+     the current answer's scope, and photographing it from `home()` with no
+     result would capture the one state the review singled out: a sampled axis
+     announcing `200 shown / 2,168 not shown` as its headline. */
   timeline: async () => {
-    await home();
-    await st().loadTimeline();
-    if (!st().ui.timeline) st().toggle('timeline');
+    await rendered();
+    await st().setLens('timeline');
   },
 
   'verify-valid': async () => {
     await rendered();
-    if (!st().ui.receipt) st().toggle('receipt');
+    st().setTab('evidence', { pin: true });
     st().verifyActive();
   },
 
   'verify-invalid': async () => {
     await rendered();
-    if (!st().ui.receipt) st().toggle('receipt');
+    st().setTab('evidence', { pin: true });
     // Real bytes are mutated and the same verifier runs. The badge goes red
     // because the signature genuinely stopped matching.
     st().tamperActive('payload');
   },
 
+  /* THE TRUTH GATE'S REJECTIONS LIVE IN THE ANALYZE LENS. They are engine
+     internals — what was thrown away and why — which is the definition of the
+     expert surface, and they were previously reachable as a floating panel over
+     any workspace at all. */
   quarantine: async () => {
     await home();
     if (!st().filters.showQuarantined) st().toggleQuarantined();
+    await st().setLens('analyze');
     if (!st().ui.quarantine) st().toggle('quarantine');
   },
 

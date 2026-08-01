@@ -4,7 +4,10 @@
  * =============================================================================
  *
  * `/` is the entry point into a large graph. Thirty-three islands are legible;
- * 4,406 nodes are not, and no amount of panning finds a name you already know.
+ * the bake's 4,406 positions are not, and no amount of panning finds a name you
+ * already know. The index this surface builds over them holds 3,885 searchable
+ * things — the footer prints that count, and it is the figure any prose about
+ * "what search covers" has to use, because it is the one the reader can see.
  *
  * FOUR GROUPS, IN THIS ORDER, AND THE ORDER IS THE ARGUMENT:
  *
@@ -21,11 +24,42 @@
  *
  * IT NEVER RANKS BY ANYTHING BUT THE QUERY. No popularity, no history, no
  * learned weighting: the same keystrokes always produce the same list.
+ *
+ * -----------------------------------------------------------------------------
+ * IT USED TO HAVE ONE DOOR, AND THE DOOR WAS A KEYSTROKE
+ * -----------------------------------------------------------------------------
+ * Everything above was true and almost nobody reached it. The only production
+ * affordance that opened this surface was `/`, plus one accident — Enter on an
+ * empty command bar. There was no visible reference to it anywhere in the
+ * mounted tree: scanning every `button` and `[role=button]` for text matching
+ * /search/ returned nothing. (An earlier note here blamed a `<KeyHint>` chip in
+ * `StagedPanel` for being the only mention. `StagedPanel` is mounted by nothing
+ * — `InspectorRail` mounts `StagedQuestions`, which has no search reference at
+ * all — so the real state was one step worse than the one that was written down.)
+ *
+ * `openCommandSearch()` below is the fix's other end. The composer carries a real
+ * labelled control and an inline suggestion listbox (see `CommandBar.tsx` for why
+ * the focus behaviour is a combobox and NOT this dialog — a modal that opens on
+ * focus takes the caret away from the user who just clicked into the field), and
+ * the RESULT header carries the same control once the composer is gone, because
+ * the composer is only mounted before a render or while editing one. Every route
+ * comes through this one function, and it carries the text the user had already
+ * typed rather than making them type it twice.
+ *
+ * -----------------------------------------------------------------------------
+ * THE QUESTION ROWS SAY `Verified sample answer`, NOT `By construction`
+ * -----------------------------------------------------------------------------
+ * This is a FIRST-USE SURFACE: for a reader who found the palette from the
+ * composer it is the first list of anything they have seen, and `By construction`
+ * is four words that have to be decoded before the row can be read. The plain
+ * half of `COPY.vocabulary.byConstruction` leads and the technical term is one
+ * hover away in `dual()`. The receipt and the answer's gold row are expert
+ * surfaces and keep the technical term unchanged.
  * ========================================================================== */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import { COPY, rungCopy } from '@/copy';
+import { COPY, dual, plain, rungCopy } from '@/copy';
 import { RUNGS, RUNG_GLYPH } from '@/engine';
 import type { Rung, StagedQuery } from '@/engine';
 import { KEYMAP, useAtlas, useAtlasStore, type KeyBinding } from '@/state';
@@ -38,6 +72,7 @@ import { getTerrain } from '@/graph';
 import { stopMomentum } from '@/interaction/InteractionSurface';
 
 import '@/interaction/interaction.css';
+import '@/interaction/search.css';
 
 type Row =
   | { group: 'questions'; key: string; query: StagedQuery; score: number }
@@ -52,6 +87,35 @@ function afterPaint(): Promise<void> {
   return new Promise((resolve) => {
     requestAnimationFrame(() => requestAnimationFrame(() => resolve()));
   });
+}
+
+/* -----------------------------------------------------------------------------
+ * THE DOOR
+ * -----------------------------------------------------------------------------
+ * `ui.search` is a boolean in the store and `toggle()` flips it, which is the
+ * right shape for a keyboard binding and the wrong one for a button: a control
+ * labelled "Search" that CLOSES search when the surface is already open is a
+ * control that lies about what it does. So this opens, and only opens.
+ *
+ * The seed is a one-shot handoff and it is module state rather than store state
+ * on purpose — carried text is a property of one open, not of the application,
+ * and putting it in the store would mean a field that has to be cleared by
+ * whoever remembers to. It is read and cleared by the open effect below, so a
+ * later `/` cannot inherit text somebody typed into the composer ten minutes
+ * ago.
+ * -------------------------------------------------------------------------- */
+let pendingSeed = '';
+
+/** Open command search, carrying `seed` into its field. Never closes it. */
+export function openCommandSearch(seed = ''): void {
+  const store = useAtlas.getState();
+  // The seed is only armed when an open will actually follow. Setting it on a
+  // call that opens nothing would leave it loaded for whoever opened next —
+  // text typed into the composer arriving in a palette somebody reached with
+  // `/` minutes later.
+  if (store.ui.search) return;
+  pendingSeed = seed;
+  store.toggle('search');
 }
 
 export function CommandPalette(): JSX.Element | null {
@@ -84,10 +148,20 @@ export function CommandPalette(): JSX.Element | null {
 
   useEffect(() => {
     if (!open) return;
-    setText('');
+    // The seed is consumed here and cleared, so it can never leak into a later
+    // open. An unseeded open is the empty string, which is what it always was.
+    setText(pendingSeed);
+    pendingSeed = '';
     setActive(0);
     // Focus after the portal has mounted, or the caret lands nowhere.
-    const id = requestAnimationFrame(() => inputRef.current?.focus());
+    const id = requestAnimationFrame(() => {
+      const el = inputRef.current;
+      if (el === null) return;
+      el.focus();
+      // Caret at the end of the carried text, not selecting it: the user is
+      // continuing a query they started in the composer, not replacing it.
+      el.setSelectionRange(el.value.length, el.value.length);
+    });
     return () => cancelAnimationFrame(id);
   }, [open]);
 
@@ -115,6 +189,12 @@ export function CommandPalette(): JSX.Element | null {
 
     for (const binding of KEYMAP) {
       if (binding.rung !== null) continue; // the rung jumps get their own group
+      /* THE PALETTE DOES NOT LIST THE COMMAND THAT OPENS THE PALETTE.
+         `search` dispatches through the same `handleKey` as everything else, so
+         picking it here closed this surface and immediately reopened it — a row
+         whose entire effect is to return you to where you already are. It is not
+         a reachable action from inside; it is a dead affordance. */
+      if (binding.id === 'search') continue;
       const label = COPY.keyboard.actions[binding.id];
       const m = q.length === 0 ? { score: 0, indices: [] } : fuzzyBest(q, [label]);
       if (m === null) continue;
@@ -221,7 +301,10 @@ export function CommandPalette(): JSX.Element | null {
     <ScrimOverlay className="ix-palette__scrim" onDismiss={close}>
       <div className="ix-palette" role="dialog" aria-modal="true" aria-label={COPY.search.title}>
         <div className="ix-palette__field">
-          <span className="ix-palette__slash caps ink-faint">{COPY.search.title}</span>
+          {/* THE SURFACE'S OWN NAME, and it names a panel — so it is --ink-dim
+              (5.61:1 at its worst ground) and not --ink-faint, which measures
+              3.01:1 and is declared decoration-only. */}
+          <span className="ix-palette__slash caps ink-dim">{COPY.search.title}</span>
           <input
             ref={inputRef}
             className="ix-palette__input"
@@ -265,12 +348,18 @@ export function CommandPalette(): JSX.Element | null {
           })}
         </div>
 
+        {/* THE FOOTER IS THE ONLY PLACE THE ENTER/ESC CONTRACT IS STATED, and a
+            count is a measurement. Both were on the decoration step: the hint at
+            3.01:1, and the index count on the faint tone of the mono primitive —
+            which `check-discipline.mjs` rule 12 fails outright, because there is
+            no such thing as a decorative measured number. It was one of three
+            live violations in the tree. */}
         <div className="ix-palette__ft">
-          <span className="ink-faint">{COPY.search.hint}</span>
+          <span className="ink-dim">{COPY.search.hint}</span>
           {index === null ? null : (
             <span className="ix-palette__count">
-              <Num value={index.items.length} format="int" tone="faint" />
-              <span className="ink-faint">{COPY.search.groups.nodes.toLowerCase()}</span>
+              <Num value={index.items.length} format="int" tone="dim" />
+              <span className="ink-dim">{COPY.search.groups.nodes.toLowerCase()}</span>
             </span>
           )}
         </div>
@@ -294,8 +383,10 @@ function RowBody({ row }: { row: Row }): JSX.Element {
           <span className="ix-palette__title">{row.query.query}</span>
           <span className="ix-palette__sub">{row.query.why}</span>
         </span>
-        <Chip tone="evidence" title={COPY.answer.goldTip}>
-          {COPY.answer.goldLabel}
+        {/* PLAIN NAME LEADS ON A FIRST-USE SURFACE. The technical term is the
+            second half of the tip and is unchanged in the receipt. */}
+        <Chip tone="evidence" title={`${dual('byConstruction')} — ${COPY.answer.goldTip}`}>
+          {plain('byConstruction')}
         </Chip>
       </>
     );
@@ -355,7 +446,8 @@ function RowBody({ row }: { row: Row }): JSX.Element {
       <Chip tone="dim" title={COPY.rungs.levels[item.addressAt].short}>
         {COPY.rungs.kinds[item.kind]}
       </Chip>
-      <Num value={item.degree} format="int" tone="faint" title={COPY.inspector.rows.degree.tip} />
+      {/* A degree is a measurement, so it is never on the decoration step. */}
+      <Num value={item.degree} format="int" tone="dim" title={COPY.inspector.rows.degree.tip} />
     </>
   );
 }

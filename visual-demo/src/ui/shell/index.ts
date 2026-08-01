@@ -35,7 +35,11 @@ export {
   type StagedQuestionsProps,
 } from './CorpusPanel';
 export { AnalystRail } from './AnalystMode';
-export { TimelineDock, timelineSummary, type TimelineDockProps } from './TimelineDock';
+/* `timelineSummary` was re-exported here and consumed by nothing — the axis
+   builds its own reading and the rail panel builds its own list. A dead
+   affordance is deleted, not documented (INV-3); the two edits had to land in
+   one commit or the build is red either way round. */
+export { TimelineDock, type TimelineDockProps } from './TimelineDock';
 export { HelpOverlay, type HelpOverlayProps } from './HelpOverlay';
 export { Walkthrough, startWalkthrough, dismissWalkthrough, type WalkthroughProps } from './Walkthrough';
 

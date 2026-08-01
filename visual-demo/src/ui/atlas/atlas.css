@@ -26,6 +26,99 @@
   line-height: var(--lh-ui);
 }
 
+/* TWO FORMS, AND ONE OF THEM IS ALWAYS ON SCREEN.
+   -----------------------------------------------------------------------------
+   `shell.css` used to carry `@media (max-width: 1500px) { .topbar__crumbs {
+   display: none } }` — the only surface that says where on the spine you are
+   standing, deleted at exactly the widths where the least context is visible.
+   The media query still exists; what it now chooses between is the full route
+   and the compact one, never between a breadcrumb and nothing.
+
+   The nav itself is never hidden, and the level selector below sits outside
+   both forms, so narrowing costs the reader the ancestors' NAMES and not the
+   ability to move between levels. */
+/* THE ROUTE IS THE PART THAT GIVES WAY. `min-width: 0` plus `overflow: hidden`
+   makes this the flex item the bar shrinks when the question, the workspace
+   switch and the identity have taken what they need — so the thing that gets
+   clipped under pressure is an ANCESTOR'S NAME, which the compact form and the
+   selector both still reach, and never the level control itself. */
+.rb-full {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--gap-tight);
+  min-width: 0;
+  overflow: hidden;
+}
+
+.rb-compact {
+  display: none;
+  align-items: center;
+  gap: var(--gap-row);
+  min-width: 0;
+}
+
+@media (max-width: 1500px) {
+  .rb-full {
+    display: none;
+  }
+  .rb-compact {
+    display: inline-flex;
+  }
+}
+
+.rb-compact-level {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--gap-tight);
+  min-height: var(--hit-row);
+  padding: 0 var(--pad-control);
+  border: var(--border-1) solid var(--line);
+  border-radius: var(--r-6);
+  background: var(--render-a06);
+  box-shadow: var(--edge-light); /* inset, top edge only */
+  flex: none;
+}
+
+.rb-compact-scope {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--gap-tight);
+  min-width: 0;
+}
+
+/* THE SCOPE TITLE IS THE ONLY THING IN THE COMPACT FORM THAT MAY GIVE WAY, AND
+   IT COULD NOT.
+   -----------------------------------------------------------------------------
+   `min-width: 0` was on `.rb-compact` and on `.rb-compact-scope` and stopped
+   there. `.rb-crumb` kept `min-width: auto`, which for a flex item resolves to
+   its min-content size — and `.rb-crumb` is `white-space: nowrap`, so the
+   document title's min-content IS its max-content. Measured at the passage rung:
+   the crumb refused to go below 454.3px while its parent had been squeezed to
+   0.0px, and the compact breadcrumb's natural width stayed pinned at 851px
+   inside a 900px frame. The whole top bar then measured 1602px against a
+   document 900px wide.
+
+   The other three children of this bar are `flex: none` ON PURPOSE — the level
+   readout, the four level stops and `Up` are what the compact form exists to
+   keep. This one is not, and now it can say so: the ellipsis machinery on
+   `.rb-label` has been there all along, and this is the declaration that lets
+   the shrink reach it.
+
+   NOT on `.rb-crumb` generally: in the full route the container clips, which is
+   the behaviour that note defends, and turning every ancestor crumb into an
+   independently-collapsing box is a different change than this finding. */
+.rb-compact-scope .rb-crumb {
+  min-width: 0;
+}
+
+/* `Inside` — the one word that turns `20 of 2,207` from a sample of the archive
+   into a complete count of one document. It labels the name beside it, so it is
+   on --ink-dim and not on the 3:1 decoration step. */
+.rb-compact-in {
+  color: var(--ink-dim);
+  flex: none;
+}
+
 .rb-step {
   display: inline-flex;
   align-items: center;
@@ -56,8 +149,30 @@
   background: var(--ink-a06);
 }
 
+/* THE ROOT IS A BUTTON AND IT WAS ON THE DECORATION STEP.
+   -----------------------------------------------------------------------------
+   MEASURED AGAINST THE TOP BAR'S OWN GROUND, which is --panel-bg compositing to
+   rgb 15.04 18.76 26.92, not against --surface: --ink-faint is 3.25:1 there and
+   --ink-dim is 6.07:1.
+
+   3.25:1 clears the 3:1 non-text floor and misses the 4.5:1 floor for text by a
+   wide margin, and a button's label is text. That is the whole finding: the
+   crumb was legible-as-decoration and under-floor as a control.
+
+   THE 2.70:1 THIS NOTE USED TO CITE WAS SUPERSEDED BEFORE THIS RULE WAS
+   WRITTEN. design-tokens.css §2 raised --ink-faint from 2.87 / 2.70 / 2.54 to
+   3.40 / 3.19 / 3.01 against void / surface / surface-2 in an earlier change; by
+   the time this button was re-pointed it was already at ~3.2:1, not 2.70:1.
+   Citing the pre-raise figure as the state this rule repaired is how the next
+   reader re-derives a baseline the token file no longer holds — and contrast is
+   the one class of number this repo computes mechanically (check-discipline §11).
+
+   De-emphasis is legitimate; spending a control's legibility on it is not. It
+   sits on the same --ink-dim as every other crumb now, and the emphasis it gave
+   up is carried by the terminal crumb's render light, which is a difference made
+   of attention rather than of legibility. */
 .rb-root {
-  color: var(--ink-faint);
+  color: var(--ink-dim);
 }
 
 .rb-label {
@@ -122,19 +237,156 @@
   }
 }
 
-/* The rungs below you. Drawn at latent weight because that is exactly what they
-   are: known to exist, resolved to nothing, and taking up their real place. */
-.rb-below {
+/* =============================================================================
+   1b. THE LEVEL SELECTOR — one radio group, two renderings
+   -----------------------------------------------------------------------------
+   This replaced the `aria-hidden` outline glyphs that used to sit here: the
+   levels below you, drawn at latent weight, as a depth gauge nobody could
+   operate — and which disappeared entirely at the passage rung, because there
+   is nothing below it, taking the last visible level control with it.
+
+   The four stops are the same gauge AND the control for it. Levels above you
+   stay at penumbra weight, levels below you stay latent, and all four are
+   pressable at every width. `.rb-levels--compact` is the top bar's horizontal
+   strip; `.rb-levels--rail` is Atlas Mode's altimeter column. One component,
+   two renderings — see LevelSelector in ./Breadcrumb.tsx.
+   ========================================================================== */
+
+.rb-levels {
   display: inline-flex;
+  min-width: 0;
+}
+
+.rb-levels--compact {
   align-items: center;
   gap: var(--gap-tight);
   padding-left: var(--gap-row);
   margin-left: var(--gap-tight);
   border-left: var(--border-1) solid var(--line-a40);
+  flex: none;
 }
 
-.rb-latent {
-  opacity: var(--latent-opacity);
+.rb-levels--rail {
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: var(--atlas-altimeter-h);
+}
+
+.rb-level {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-row);
+  /* THE FLOOR IS THE FLOOR. A stop is a real control at every width, so it gets
+     a real target at every width — the compact strip is four glyphs and it is
+     still four 32px things to press, not four 11px marks. */
+  min-height: var(--hit-row);
+  min-width: var(--hit-icon);
+  padding: 0 var(--pad-chip);
+  border-radius: var(--r-6);
+  /* Interactive labels do not live on the decoration step. */
+  color: var(--ink-dim);
+  font-size: var(--fs-13);
+  transition: color var(--t-fast) var(--ease-ui), background var(--t-fast) var(--ease-ui);
+}
+
+.rb-levels--compact .rb-level {
+  justify-content: center;
+}
+
+.rb-levels--rail .rb-level {
+  width: 100%;
+}
+
+.rb-level:hover {
+  color: var(--ink);
+  background: var(--ink-a06);
+}
+
+/* THE LATENT WEIGHT BELONGS TO THE RENDERING THAT STILL HAS A WORD IN IT.
+   -----------------------------------------------------------------------------
+   Levels you have already passed through are penumbra: readable, not attended
+   to. Levels below you are latent — the terrain never has holes and neither
+   does the spine.
+
+   IN THE RAIL that costs nothing, because `.rb-level-name` is beside the mark
+   at full --ink-dim and the glyph is a redundant second statement of a state the
+   word already carries.
+
+   IN THE COMPACT STRIP THE GLYPH IS THE ENTIRE CONTROL — `.rb-level-name` and
+   `.rb-level-holds` render only for `variant="rail"` — so the same rule was
+   painting a real control at --ink-dim × 0.55 over the top bar's --panel-bg
+   (0.72 --surface over --void, compositing to rgb 15.04 18.76 26.92). Measured:
+   2.67:1, under the 3:1 non-text floor, on two of the four stops at the island
+   rung and three of the four at the continent rung. That is the same floor this
+   file's own `.rb-root` note is about, re-introduced one control to the right.
+
+   So the strip keeps a depth ramp and keeps it above the floor: `is-above` at
+   full weight (6.07:1), `is-below` at --lod-1-opacity (4.70:1 — clear of the
+   4.5:1 TEXT floor, never mind the non-text one), `is-here` on the render light
+   with its own wash. Three visibly different weights, none of them illegible.
+   The five-state resolution ramp is a statement about TERRAIN, and a control is
+   not terrain. */
+.rb-levels--rail .rb-level.is-above .rb-level-glyph {
+  opacity: var(--lod-1-opacity);
+}
+
+.rb-levels--rail .rb-level.is-below .rb-level-glyph {
+  opacity: var(--lod-2-opacity);
+}
+
+.rb-levels--compact .rb-level.is-below .rb-level-glyph {
+  opacity: var(--lod-1-opacity);
+}
+
+/* THE MARK MUST NOT EAT THE STOP'S OWN TOOLTIP.
+   -----------------------------------------------------------------------------
+   `<Glyph>` renders `title={rung}` on its span unconditionally. In the compact
+   strip the glyph IS the button's whole content, so the pointer never rested on
+   anything but the glyph and the browser tooltip resolved to the raw engine
+   token — `island`, `asset` — instead of the stop's computed consequence
+   sentence. The same shadowing hit every `.rb-crumb`, where the step's own name
+   is the title, and `.rb-here` / `.rb-compact-level`.
+
+   Two failures in one: the sentence that names what a press will KEEP was
+   unreachable at exactly the widths the compact form exists for, and the surface
+   that leaked instead was the engine's lowercase vocabulary on the product's
+   primary level control — the dual-layer rule inverted.
+
+   `pointer-events: none` takes the mark out of hit-testing entirely, so the
+   button under it is what the pointer finds and what the tooltip reads. The mark
+   is decoration on a labelled control; it was never a hover target. */
+.rb .glyph,
+.rb-level .rb-level-glyph {
+  pointer-events: none;
+}
+
+.rb-level.is-here {
+  color: var(--ink);
+  font-weight: var(--fw-500);
+  background: var(--render-a12);
+}
+
+.rb-level-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* What a body at this level CONTAINS. Four words down one column, and together
+   they are the ontology ladder the mode exists to demonstrate. */
+.rb-level-holds {
+  margin-left: auto;
+  color: var(--ink-dim);
+  white-space: nowrap;
+  flex: none;
+}
+
+.rb-level-here {
+  margin-left: auto;
+  color: var(--render);
+  white-space: nowrap;
+  flex: none;
 }
 
 .rb-up {
@@ -142,6 +394,9 @@
   align-items: center;
   gap: var(--gap-tight);
   margin-left: var(--gap-row);
+  /* Never the item that gives way. The way up is the control a narrow frame
+     needs most; it was the one the old `display: none` took away first. */
+  flex: none;
 }
 
 /* =============================================================================
@@ -206,6 +461,61 @@
   font-size: var(--fs-11);
 }
 
+.rg-matching {
+  color: var(--ink-dim);
+}
+
+/* ---- what this register covers, and how to reach past the cap ----------- */
+
+/* `Listing — Tollstrand Battery` is the sentence that stops `20 of 2,207` being
+   read as a 1% sample of the archive: inside a named document that string is a
+   complete count. It was never on screen. */
+.rg-scope {
+  display: flex;
+  align-items: baseline;
+  gap: var(--gap-tight);
+  flex-wrap: wrap;
+  margin: 0;
+  min-width: 0;
+}
+
+.rg-scope-label {
+  color: var(--ink-dim);
+  flex: none;
+}
+
+.rg-find {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-tight);
+  min-width: 0;
+}
+
+/* THE CONTROL THAT MAKES THE CAP HONEST. It filters every body at the level,
+   not the twenty on show — see the note in RungLedger.tsx. Full --hit-min,
+   because a field you cannot hit is a field that does not exist. */
+.rg-filter {
+  flex: 1 1 12ch;
+  min-width: 8ch;
+  min-height: var(--hit-min);
+  padding: 0 var(--pad-control);
+  color: var(--ink);
+  background: var(--surface-2);
+  border: var(--border-1) solid var(--line);
+  border-radius: var(--r-6);
+  font-family: var(--ff-ui);
+}
+
+.rg-filter::placeholder {
+  color: var(--ink-dim);
+}
+
+.rg-empty,
+.rg-capped {
+  margin: 0;
+  max-width: 46ch;
+}
+
 .rg-row {
   display: flex;
   align-items: stretch;
@@ -256,13 +566,53 @@
   width: 100%;
 }
 
+/* THE NAME IS THE CONTROL, and that is the whole difference between a census
+   and a navigator. It was a `<span>` inside an `<li>` with no handler of any
+   kind, so the 501st asset had no route to the screen at all.
+
+   It is --fs-13 rather than --fs-12-5 because it is now an interactive label
+   and that is the size interactive labels are, and it carries --hit-row rather
+   than line-height alone because a name is what a thumb aims at. The negative
+   margin keeps the text optically flush with the figures under it: a control
+   needs padding, a list needs a straight left edge, and this is how both. */
 .rg-name {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-row);
+  flex-wrap: wrap;
+  width: 100%;
+  min-height: var(--hit-row);
+  padding: var(--pad-chip) var(--pad-chip);
+  margin-left: calc(-1 * var(--pad-chip));
+  border-radius: var(--r-6);
   color: var(--ink);
-  font-size: var(--fs-12-5);
+  font-size: var(--fs-13);
+  line-height: var(--lh-ui);
+  text-align: left;
   min-width: 0;
   /* NO ELLIPSIS, ANYWHERE. A proper noun that only appears here is not allowed
      to be shortened to fit a column that no longer exists. */
   overflow-wrap: anywhere;
+  transition: color var(--t-fast) var(--ease-ui), background var(--t-fast) var(--ease-ui);
+}
+
+.rg-name:hover {
+  background: var(--ink-a06);
+}
+
+/* SAID, NOT ONLY PAINTED. The held row already carries the render wash; a
+   reader who cannot see the wash — or who is reading the row through its
+   accessible name — gets the word. `aria-pressed` carries it to the twin. */
+.rg-held {
+  color: var(--render);
+  flex: none;
+}
+
+/* THE SECOND VERB, docked to the row's top so it stays beside the NAME rather
+   than drifting down a three-line manifest. */
+.rg-enter {
+  flex: none;
+  align-self: flex-start;
 }
 
 .rg-figs,
@@ -281,8 +631,13 @@
 }
 
 /* The word for what the figure counts. Never omitted, never abbreviated to a
-   glyph — this is the half that was missing. */
+   glyph — this is the half that was missing.
+
+   IT IS THE ONLY TEXT STATING WHAT THE NUMBER BESIDE IT IS, so it sits on
+   --ink-dim. It was on --ink-faint, the 3:1 decoration step, which made the
+   half of the pair that carries the meaning the harder half to read. */
 .rg-of-what {
+  color: var(--ink-dim);
   white-space: nowrap;
 }
 
@@ -336,11 +691,15 @@
   border-left: var(--border-1) solid var(--line);
 }
 
+/* The character offsets. They are the ONLY statement on the row of where these
+   bytes are in the source, and "slice the source here and you get this passage
+   back" is the passage rung's whole claim — so they are read, not decorated,
+   and they are on --ink-dim. */
 .rg-span {
   display: inline-flex;
   align-items: baseline;
   gap: var(--gap-tight);
-  color: var(--ink-faint);
+  color: var(--ink-dim);
 }
 
 /* THE BAR IS THE TOKEN COUNT. Width is `token_count / widest`, set from the
@@ -458,78 +817,19 @@
   box-shadow: var(--edge-light); /* inset, top edge only */
 }
 
+/* THE STOPS ARE `.rb-levels--rail`, NOT A SECOND SELECTOR.
+   -----------------------------------------------------------------------------
+   `.am-stop`, `.am-stop-btn`, `.am-stop-name`, `.am-stop-holds` and `.am-here`
+   were the altimeter's own copy of a control the top bar also has. Two copies
+   is two chances to disagree about which level is current, and the two DID
+   disagree about the floor: this one painted its stop labels `--ink-faint` at
+   `--fs-12-5` — a real button, below the contrast floor, under the size floor
+   for an interactive label — while the bar's crumbs were on --ink-dim.
+
+   All of that now comes from §1b. What is left here is where the column sits
+   inside the altimeter well, which is genuinely this surface's business. */
 .am-stops {
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  min-height: var(--atlas-altimeter-h);
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-
-.am-stop {
-  display: flex;
-  align-items: center;
-  min-width: 0;
-}
-
-.am-stop-btn {
-  display: flex;
-  align-items: center;
-  gap: var(--gap-row);
   width: 100%;
-  min-height: var(--hit-row);
-  padding: 0 var(--pad-chip);
-  border-radius: var(--r-6);
-  color: var(--ink-faint);
-  font-size: var(--fs-12-5);
-  transition: color var(--t-fast) var(--ease-ui), background var(--t-fast) var(--ease-ui);
-}
-
-.am-stop-btn:hover {
-  color: var(--ink-dim);
-  background: var(--ink-a06);
-}
-
-/* Rungs you have already passed through are penumbra: readable, not attended
-   to. Rungs below you are latent — the terrain never has holes and neither does
-   the spine. */
-.am-stop.is-above .am-stop-btn {
-  color: var(--ink-dim);
-  opacity: var(--lod-1-opacity);
-}
-
-.am-stop.is-below .am-stop-btn {
-  opacity: var(--lod-2-opacity);
-}
-
-.am-stop.is-here .am-stop-btn {
-  color: var(--ink);
-  font-weight: var(--fw-500);
-  background: var(--render-a12);
-}
-
-.am-stop-name {
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-/* What a body at this rung CONTAINS. Four words down one column, and together
-   they are the ontology ladder the mode exists to demonstrate. */
-.am-stop-holds {
-  margin-left: auto;
-  font-size: var(--fs-11);
-  white-space: nowrap;
-  flex: none;
-}
-
-.am-here {
-  margin-left: auto;
-  color: var(--render);
-  white-space: nowrap;
 }
 
 /* ---- the band ----------------------------------------------------------- */
@@ -621,6 +921,16 @@
   display: flex;
   align-items: center;
   gap: var(--gap-row);
+  flex-wrap: wrap;
+}
+
+/* WHERE THE REVERSE ACTIONS LIVE. One line, because the panel used to carry its
+   own `Ascend` beside the navigation row's `Up` — one move, two names, in one
+   column. A pointer costs a sentence; a duplicate costs the reader the ability
+   to tell two controls apart. */
+.am-reverse {
+  margin: 0;
+  max-width: 46ch;
 }
 
 .am-dwell {
@@ -636,4 +946,30 @@
   flex-direction: column;
   gap: 0;
   color: var(--evidence);
+}
+
+/* =============================================================================
+   THE FOOT MUST NOT SIT ON THE STOPS
+   -----------------------------------------------------------------------------
+   `.am-foot` is `position: sticky` with a `backdrop-filter`, which makes it a
+   painted layer over whatever scrolls under it — and what scrolls under it is
+   the level selector. Measured with a real click at 1440x1000: pressing
+   `Assets` at (1281,471) hit `.am-foot`, not the stop. A control that is visible
+   and not pressable is worse than an absent one, because the reader concludes
+   the product ignored them.
+
+   The column reserves the foot's own height as padding, so the last stop can
+   always scroll clear of it. `scroll-margin-block-end` does the same for a
+   keyboard user arriving by `scrollIntoView`.
+   ========================================================================== */
+.am .rb-levels--rail {
+  padding-block-end: var(--hit-min);
+  scroll-margin-block-end: var(--hit-min);
+}
+
+.am .am-foot {
+  /* It is furniture over a scroll region, so it is above the terrain and below
+     anything modal. Declared rather than inherited, because "whatever stacking
+     context happens to apply" is how it ended up over the stops. */
+  z-index: var(--z-hud);
 }

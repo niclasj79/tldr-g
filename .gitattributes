@@ -1,0 +1,50 @@
+# =============================================================================
+# THE PUBLIC REPO IS GENERATED, SO ITS LINE ENDINGS ARE A PROPERTY OF THE
+# GENERATOR — NOT OF WHOEVER RAN IT
+# =============================================================================
+#
+# `tools/sync_public_repo.py` copies bytes. It writes LF, because that is what
+# the source files hold. Git on Windows then offers to convert them to CRLF on
+# checkout, and the result is that ~20 files report as MODIFIED after every sync
+# with byte-identical content.
+#
+# That is not cosmetic. The public repo is the one place in this project where a
+# human reads a diff to decide what becomes visible to the world, and a diff
+# that is 20 files of nothing is a diff nobody reads carefully. It is the same
+# alarm-fatigue failure the detector rule names: a signal that fires every time
+# stops being a signal. It made a batch of 112 changed paths look like a large
+# release when only five files outside the demo had actually changed.
+#
+# So the generated tree declares its own line endings and stops depending on the
+# platform that generated it. `eol=lf` on the working tree as well as the index:
+# a sync run on Windows and a sync run in CI now produce the same bytes, and a
+# clean tree after a sync means the sync genuinely changed nothing.
+#
+# This file lives in `public/overlay/` rather than in the public repo directly,
+# because anything written into the public repo by hand is overwritten by the
+# next sync. The overlay is how the generator ships a file it owns.
+# =============================================================================
+
+* text=auto eol=lf
+
+# Binaries, so nothing tries to normalise them. The demo ships fonts and a
+# social card; the docs ship a diagram.
+*.png   binary
+*.jpg   binary
+*.jpeg  binary
+*.gif   binary
+*.ico   binary
+*.pdf   binary
+*.woff  binary
+*.woff2 binary
+*.ttf   binary
+*.otf   binary
+*.eot   binary
+*.zip   binary
+*.gz    binary
+
+# `.build-stamp.json` is a SHA-256 over source bytes. It is text and it is
+# small, but it is also the thing the freshness gate compares — normalising it
+# is correct precisely because the hash inside it is computed over the SOURCE,
+# not over this file.
+*.json  text eol=lf

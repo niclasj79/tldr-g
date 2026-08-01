@@ -466,14 +466,33 @@ def main(argv: list[str] | None = None) -> int:
     if args.no_graph:
         graph_db = None
 
-    report = run_audit(
-        provenance_db,
-        graph_db,
-        args.corpus_dir,
-        glob=args.glob,
-        allow_dangling=args.allow_dangling,
-        allow_unanchored=args.allow_unanchored,
-    )
+    # This tool ships in the public `tldr-g` package as a VERIFICATION tool, so
+    # its CLI contract is a clean error plus a defined exit code — never a
+    # traceback. A missing or unreadable DB is an input error, not an audit
+    # FAIL: it exits 2 (same class as the missing-`--provenance-db` usage error
+    # above) so a caller can distinguish "I gave you a bad path" from "the
+    # audit ran and the corpus did not pass" (exit 1). Before this, both
+    # printed a Python stacktrace and returned 1.
+    try:
+        report = run_audit(
+            provenance_db,
+            graph_db,
+            args.corpus_dir,
+            glob=args.glob,
+            allow_dangling=args.allow_dangling,
+            allow_unanchored=args.allow_unanchored,
+        )
+    except FileNotFoundError as exc:
+        print(f"ERROR: {exc}", file=sys.stderr)
+        return 2
+    except (PermissionError, IsADirectoryError) as exc:
+        print(f"ERROR: cannot read database: {exc}", file=sys.stderr)
+        return 2
+    except sqlite3.DatabaseError as exc:
+        # Covers "file is not a database", "unable to open database file", and
+        # the locked/corrupt cases — all of which are bad input, not a verdict.
+        print(f"ERROR: not a readable SQLite database: {exc}", file=sys.stderr)
+        return 2
 
     payload = json.dumps(report, indent=2)
     print(payload)

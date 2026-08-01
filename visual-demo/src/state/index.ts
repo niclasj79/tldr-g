@@ -27,7 +27,16 @@
 /* -----------------------------------------------------------------------------
  * 1. THE STORE. Everything downstream reads through this.
  * -------------------------------------------------------------------------- */
-export { useAtlas, useAtlasStore, parentIdOf, registerTestHookInstaller } from '@/state/store';
+export {
+  useAtlas,
+  useAtlasStore,
+  parentIdOf,
+  registerTestHookInstaller,
+  HISTORY_MAX,
+  LENSES,
+  RESULT_TABS,
+  TIMELINE_SCOPES,
+} from '@/state/store';
 export type {
   AtlasActions,
   AtlasCamera,
@@ -37,9 +46,25 @@ export type {
   AtlasQuery,
   AtlasState,
   AtlasUi,
+  Lens,
+  ResultTab,
   RungStackEntry,
+  SceneSnapshot,
+  TimelineScope,
   UiPanel,
 } from '@/state/store';
+
+/* -----------------------------------------------------------------------------
+ * 1b. THE FAILURE TAXONOMY. Four kinds, not seventeen codes — and which remedies
+ *     are honest for each.
+ * -------------------------------------------------------------------------- */
+export {
+  failureClassOf,
+  invalidatesResult,
+  knowsFailureClass,
+  remediesFor,
+} from '@/state/failure';
+export type { FailureClass, RemedyId } from '@/state/failure';
 
 /* -----------------------------------------------------------------------------
  * 2. THE LIFECYCLE MACHINE. Declared transitions; illegal ones throw in dev.
@@ -130,14 +155,18 @@ export {
   inflightCount,
   isHeld,
   isIdle,
+  readViewpoint,
+  registerCameraProbe,
+  registerFrameGate,
   registerIdleProbe,
   registerSettleGate,
   releaseHold,
   resetBridge,
+  runFrameGate,
   track,
   HOLD_TIMEOUT_MS,
 } from '@/state/bridge';
-export type { Checkpoint, IdleProbe, SettleGate } from '@/state/bridge';
+export type { CameraProbe, Checkpoint, FrameGate, IdleProbe, SettleGate, Viewpoint } from '@/state/bridge';
 
 /* -----------------------------------------------------------------------------
  * 9. THE SCENE HOOK. Real actions only; `scripts/shoot.mjs` is its only caller.

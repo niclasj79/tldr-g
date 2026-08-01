@@ -333,6 +333,18 @@ function figuresIn(root: Element | null): number[] {
   if (root === null) return [];
   const out: number[] = [];
   for (const el of Array.from(root.querySelectorAll<HTMLElement>('.num'))) {
+    /* WHAT IS PRINTED, NOT WHAT IS IN THE TREE.
+       This walked every `.num` descendant and tested nothing about visibility,
+       which was correct while the HUD never hid a cell and became a hole the
+       moment it started shedding them by breakpoint: a `display: none`
+       resolution partition still summed, still disagreed with a node count
+       nobody could see it beside, and `rampAgrees` — the product's one
+       cross-surface agreement assertion — reported on two figures that were
+       never on screen together.
+
+       `offsetParent === null` catches `display: none` on the element or any
+       ancestor, which is exactly how the shed ladder hides a cell. */
+    if (el.offsetParent === null && getComputedStyle(el).position !== 'fixed') continue;
     const n = Number((el.textContent ?? '').replace(/[^\d.-]/g, ''));
     if (Number.isFinite(n)) out.push(n);
   }
@@ -349,6 +361,15 @@ function figuresIn(root: Element | null): number[] {
  *   .num .mono .hash        the primitive itself, and its rails
  *   .key .keys              a keyboard glyph is a key cap, not a measurement
  *   .tg-label               engine labels are STRINGS; `Tollstrand 2` is a name
+ *   [data-engine-label]     the same fact, said structurally. The terrain's
+ *                           accessible twin renders the SAME node names into the
+ *                           DOM as an operable list, so `Q1 2024 settlement
+ *                           month` arrived at this check three times over — once
+ *                           per surface showing one name. A second class-name
+ *                           exemption would have to be added for every future
+ *                           surface that renders an engine label; an attribute
+ *                           marks the FACT, and a surface that renders one says
+ *                           so once.
  *   blockquote              a verbatim source span is evidence, not a readout —
  *                           and re-setting the corpus's own bytes in a mono
  *                           figure is exactly the rewriting the receipt forbids
@@ -357,7 +378,7 @@ function figuresIn(root: Element | null): number[] {
  *                           render it.
  */
 const MONO_EXEMPT =
-  '.num, .mono, .hash, .key, .keys, .tg-label, blockquote, [data-prose], svg, script, style';
+  '.num, .mono, .hash, .key, .keys, .tg-label, [data-engine-label], blockquote, [data-prose], svg, script, style';
 
 /**
  * A MEASURED-LOOKING numeral, which is a narrower thing than "a digit".

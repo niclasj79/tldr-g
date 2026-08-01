@@ -1,0 +1,2469 @@
+{
+ "threshold": 0.541,
+ "distinct_relations": 19947,
+ "distinct_coverage": 0.939,
+ "edge_coverage": 0.97,
+ "gap_distinct": 1211,
+ "gap_clusters": 381,
+ "p4_shipped_unknown": 19729,
+ "p4_reclaimed_by_embedding": 18519,
+ "per_domain": {
+  "clinical": {
+   "distinct_coverage": 0.95,
+   "edge_coverage": 0.993,
+   "distinct_relations": 1289
+  },
+  "code": {
+   "distinct_coverage": 0.959,
+   "edge_coverage": 0.998,
+   "distinct_relations": 390
+  },
+  "financial": {
+   "distinct_coverage": 0.967,
+   "edge_coverage": 0.991,
+   "distinct_relations": 2778
+  },
+  "legal_statute": {
+   "distinct_coverage": 0.996,
+   "edge_coverage": 1.0,
+   "distinct_relations": 454
+  },
+  "multilingual": {
+   "distinct_coverage": 0.909,
+   "edge_coverage": 0.977,
+   "distinct_relations": 3771
+  },
+  "news": {
+   "distinct_coverage": 0.869,
+   "edge_coverage": 0.971,
+   "distinct_relations": 3519
+  },
+  "regulatory": {
+   "distinct_coverage": 0.98,
+   "edge_coverage": 0.995,
+   "distinct_relations": 453
+  },
+  "scientific": {
+   "distinct_coverage": 0.986,
+   "edge_coverage": 0.995,
+   "distinct_relations": 948
+  },
+  "synthetic": {
+   "distinct_coverage": 1.0,
+   "edge_coverage": 1.0,
+   "distinct_relations": 47
+  },
+  "technical": {
+   "distinct_coverage": 0.977,
+   "edge_coverage": 0.99,
+   "distinct_relations": 8344
+  },
+  "telecom": {
+   "distinct_coverage": 0.965,
+   "edge_coverage": 0.993,
+   "distinct_relations": 1164
+  }
+ },
+ "extension_candidates": [
+  {
+   "members": [
+    "shows",
+    "treats",
+    "must have",
+    "cost",
+    "awards",
+    "pages",
+    "prices",
+    "view",
+    "sizes",
+    "taxes",
+    "watches"
+   ],
+   "size": 11,
+   "edge_freq": 79,
+   "nearest_family_below_thr": "occurred_on",
+   "nearest_sim": 0.518
+  },
+  {
+   "members": [
+    "launched a counteroffensive",
+    "advanced rapidly towards moscow",
+    "announced the start of a full-scale counteroffensive",
+    "began a counter-attack in",
+    "began a renewed offensive in",
+    "begann eine offensive in den westalpen",
+    "breached the capitol with",
+    "conducted a war of annihilation against the soviet union",
+    "conducted first bomb attack on",
+    "conducted heavy air raid on",
+    "continued to fire missiles and drop bombs on",
+    "declared neutrality at the start of the european war"
+   ],
+   "size": 49,
+   "edge_freq": 50,
+   "nearest_family_below_thr": "competes_outperforms",
+   "nearest_sim": 0.528
+  },
+  {
+   "members": [
+    "umfasst",
+    "ben\u00f6tigt",
+    "beeinflussen",
+    "f\u00f6rdert",
+    "ermordeten",
+    "schafft",
+    "umfassen",
+    "vorsieht",
+    "begrenzt",
+    "besagt",
+    "bestimmt als",
+    "muss mitteilen"
+   ],
+   "size": 29,
+   "edge_freq": 48,
+   "nearest_family_below_thr": "founded_by",
+   "nearest_sim": 0.531
+  },
+  {
+   "members": [
+    "rates lower",
+    "have produced lower returns for investors",
+    "is associated with lower rates of",
+    "reduced interest rates from",
+    "reduces median zero-investment return to",
+    "relaxed credit lending standards",
+    "are taxed at a lower rate than",
+    "can spend as little as",
+    "closed lower in all five sessions",
+    "cut interest rates by 0.75%",
+    "cut the federal funds rate by 75 basis points",
+    "declined by 38%"
+   ],
+   "size": 36,
+   "edge_freq": 46,
+   "nearest_family_below_thr": "transacts",
+   "nearest_sim": 0.478
+  },
+  {
+   "members": [
+    "erfordern",
+    "eroberte",
+    "erfordert",
+    "erhielt",
+    "entwickelt",
+    "fand im jahr 2025",
+    "verloren",
+    "ver\u00fcbten kriegsverbrechen",
+    "begannen vor",
+    "begonnen krieg gegen",
+    "erhalten",
+    "eroberten"
+   ],
+   "size": 27,
+   "edge_freq": 44,
+   "nearest_family_below_thr": "headquartered_in",
+   "nearest_sim": 0.528
+  },
+  {
+   "members": [
+    "launched lte service in",
+    "made the first 5g nr specification available by",
+    "opened first publicly available lte service in",
+    "started studying 5g nr in",
+    "was the first carrier to launch a commercial 5g nr network in",
+    "announced lte trials in",
+    "began large-scale commercial deployments in",
+    "began limited service for",
+    "completed a series of tests of voice over lte (volte) calls on china mobile's",
+    "demonstrated 4g lte for the first time in",
+    "had activation of c-band (n77/n78) delayed due to",
+    "launched lte-tdd services in february 2012 under the name"
+   ],
+   "size": 19,
+   "edge_freq": 37,
+   "nearest_family_below_thr": "transfers_to",
+   "nearest_sim": 0.502
+  },
+  {
+   "members": [
+    "showed no difference in",
+    "remains unchanged",
+    "had little effect on",
+    "was not associated with significant increases in",
+    "did not change significantly in",
+    "did not contain any allocation to",
+    "did not show a significant decrease",
+    "had no difference in",
+    "had no negative effect on",
+    "is never emitted as",
+    "made little progress toward",
+    "observed no new safety signals with"
+   ],
+   "size": 25,
+   "edge_freq": 33,
+   "nearest_family_below_thr": "improves",
+   "nearest_sim": 0.499
+  },
+  {
+   "members": [
+    "costs",
+    "aggregates cost at",
+    "has a bake cost that is",
+    "has ram cost of",
+    "stated the true cost was"
+   ],
+   "size": 5,
+   "edge_freq": 28,
+   "nearest_family_below_thr": "connects_to",
+   "nearest_sim": 0.527
+  },
+  {
+   "members": [
+    "caused the european union to lose",
+    "ist das einzige entscheidungsgremium der eu in",
+    "accused russia of using",
+    "blamed democrats for",
+    "calling on the government to revoke article 50 and stay in the eu",
+    "caused russia to divert thousands of troops from",
+    "confirmed russia had lost or withdrawn from",
+    "destroyed the port of",
+    "ends uk participation in",
+    "ensured that the united kingdom would leave the european union on",
+    "estimated economic losses of",
+    "generated 9.4 billion euros in gdp for"
+   ],
+   "size": 23,
+   "edge_freq": 27,
+   "nearest_family_below_thr": "caused",
+   "nearest_sim": 0.524
+  },
+  {
+   "members": [
+    "included calls for violence against",
+    "announced his intention to prepare an attack on",
+    "began air attacks in",
+    "called for residents to avoid",
+    "called for storming offices and killing",
+    "chanted anti-israeli slogans",
+    "condemned the violence and criticized trump for inciting the crowd",
+    "continued attacks on",
+    "continued night attacks",
+    "criticized republicans pushing for",
+    "declared that harsh measures in the east were",
+    "demanded that armed supporters be allowed to enter"
+   ],
+   "size": 22,
+   "edge_freq": 24,
+   "nearest_family_below_thr": "participated_in",
+   "nearest_sim": 0.509
+  },
+  {
+   "members": [
+    "does not work for",
+    "does not measure",
+    "is not recommended by",
+    "does not suppress",
+    "cannot fit",
+    "does not cover",
+    "does not inject",
+    "has no compression for",
+    "is medium for",
+    "is not recommended for",
+    "were recommended only for"
+   ],
+   "size": 11,
+   "edge_freq": 21,
+   "nearest_family_below_thr": "fails_on",
+   "nearest_sim": 0.537
+  },
+  {
+   "members": [
+    "demanded withdrawal of japanese troops from",
+    "ordered the dropping of atomic bombs on",
+    "retreated to",
+    "stated that the british government would end",
+    "decided to surrender",
+    "decided to withdraw allied forces from",
+    "declared martial law in",
+    "demanded that the uk pay",
+    "forced last ju 52 to leave",
+    "initiated a strategic retreat to",
+    "led japan to consider",
+    "ordered russian forces to leave"
+   ],
+   "size": 17,
+   "edge_freq": 21,
+   "nearest_family_below_thr": "has_prerequisite",
+   "nearest_sim": 0.428
+  },
+  {
+   "members": [
+    "met with trump's allies at",
+    "underestimated trump's support",
+    "agreed with trump that",
+    "alerted trump to the threat against",
+    "argued trump would let his anti-abortion allies implement",
+    "attributed trump's victory to",
+    "cited experts finding trump's rhetoric echoing",
+    "found that trump's victory rested on",
+    "stated that trump's rallies take on",
+    "told colleagues that trump expressed frustration about"
+   ],
+   "size": 10,
+   "edge_freq": 20,
+   "nearest_family_below_thr": "partnered_with",
+   "nearest_sim": 0.535
+  },
+  {
+   "members": [
+    "folgte",
+    "verhinderte",
+    "bedrohte",
+    "bildete",
+    "bremste",
+    "fluteten",
+    "kr\u00f6nte",
+    "lagen",
+    "lehnte ab",
+    "liegt bei",
+    "scheiterte",
+    "verk\u00fcndet"
+   ],
+   "size": 12,
+   "edge_freq": 18,
+   "nearest_family_below_thr": "preceded_by",
+   "nearest_sim": 0.538
+  },
+  {
+   "members": [
+    "accounted for 5% of its revenue from",
+    "accounted for 73.5% of global gdp (ppp) growth",
+    "accounted for only 26.5% of global gdp (ppp) growth",
+    "attracted 50% of risk capital investments in",
+    "derived 70% of its revenue from",
+    "held about 70 percent of global 5g base stations by",
+    "ranged between 51.5% and 59.6%",
+    "reinvested nearly all of their earnings in",
+    "rose to nearly 20%",
+    "tumbled 323.5 points or 5.5%",
+    "was 14.4%",
+    "was 15.2%"
+   ],
+   "size": 18,
+   "edge_freq": 18,
+   "nearest_family_below_thr": "headquartered_in",
+   "nearest_sim": 0.522
+  },
+  {
+   "members": [
+    "denounced the annexation as",
+    "demanded to ban",
+    "denied plans to invade",
+    "denounced referendums as",
+    "faced boycotts from",
+    "rejected invasion of",
+    "said that the counteroffensive dented the image of",
+    "severed diplomatic relations with",
+    "stated that he would not accept the results of the",
+    "voted to revoke",
+    "were expelled from",
+    "were repulsed in the battles of"
+   ],
+   "size": 12,
+   "edge_freq": 16,
+   "nearest_family_below_thr": "antonym",
+   "nearest_sim": 0.475
+  },
+  {
+   "members": [
+    "promised to roll back",
+    "approved the request and dismissed all charges",
+    "decided not to finance",
+    "decided to forgo dividends from",
+    "decided to restart",
+    "declined loan guarantee from",
+    "filed a motion to dismiss the case without prejudice",
+    "filed for chapter 11 bankruptcy",
+    "filed for chapter 7 bankruptcy",
+    "redirects full dividend back to",
+    "shipped but conservative-by-default",
+    "stated he would rescind"
+   ],
+   "size": 15,
+   "edge_freq": 16,
+   "nearest_family_below_thr": "married_to",
+   "nearest_sim": 0.486
+  },
+  {
+   "members": [
+    "added",
+    "must read",
+    "spielen rolle"
+   ],
+   "size": 3,
+   "edge_freq": 15,
+   "nearest_family_below_thr": "married_to",
+   "nearest_sim": 0.516
+  },
+  {
+   "members": [
+    "recovers only about half of",
+    "are mostly absent from",
+    "benefits little from",
+    "closed 16% of",
+    "closed around 50% of",
+    "fell more than 95% from",
+    "had 70% of current radiation output",
+    "landed about half of their fish from",
+    "remained at nearly 20%",
+    "varied between 73% and 80%",
+    "was 20% of",
+    "were approximately one-third less volatile than"
+   ],
+   "size": 13,
+   "edge_freq": 14,
+   "nearest_family_below_thr": "part_of",
+   "nearest_sim": 0.516
+  },
+  {
+   "members": [
+    "is vorsitzender of",
+    "is a notchback version of",
+    "bestanden in",
+    "fingierte vorf\u00e4lle",
+    "freisetzen",
+    "is vorsitzende of",
+    "sah vor",
+    "vorschlug",
+    "vort\u00e4uschten"
+   ],
+   "size": 9,
+   "edge_freq": 13,
+   "nearest_family_below_thr": "enables",
+   "nearest_sim": 0.526
+  },
+  {
+   "members": [
+    "ran for president in",
+    "abandoned efforts to run a centrist candidate in",
+    "became part of the electoral college for the first time in",
+    "became the democratic nominee",
+    "became the presumptive republican presidential nominee on",
+    "framed her campaign as",
+    "initially ran for re-election in",
+    "ran for president again after",
+    "ran independently for president as",
+    "was the first presidential nominee who did not participate in the primaries since",
+    "won the national popular vote with"
+   ],
+   "size": 11,
+   "edge_freq": 12,
+   "nearest_family_below_thr": "born_in",
+   "nearest_sim": 0.541
+  },
+  {
+   "members": [
+    "had higher 2-hour pain freedom rate than",
+    "and higher opioid use with cwi",
+    "has higher 90-day mortality compared to",
+    "provided better analgesia on",
+    "recovered at rates faster than anticipated",
+    "reported less frequent fatigue compared to",
+    "reported less pain during treatment compared to",
+    "reported lower pain compared to",
+    "were less likely to seek treatment",
+    "wished a speedy recovery to"
+   ],
+   "size": 10,
+   "edge_freq": 11,
+   "nearest_family_below_thr": "antonym",
+   "nearest_sim": 0.469
+  },
+  {
+   "members": [
+    "showed significant bone loss in",
+    "declines sharply within",
+    "drops dramatically",
+    "experienced the worst declines in their history",
+    "had significantly higher proportion of mature bone in alveolar crest region compared to",
+    "resulted in increased buccal bone height and enhanced bone maturation compared to",
+    "showed a median serum creatinine concentration change of",
+    "showed nonsignificant bone loss in",
+    "significantly declined from",
+    "were hospitalized with severe injuries during"
+   ],
+   "size": 10,
+   "edge_freq": 11,
+   "nearest_family_below_thr": "died_in",
+   "nearest_sim": 0.513
+  },
+  {
+   "members": [
+    "quarantined as",
+    "confirmed the virus had spread to",
+    "missed out on vaccinations",
+    "officially banned",
+    "quarantined military bases after",
+    "resulted in uveitis inactivity in",
+    "spiked beyond pre-pandemic levels",
+    "was censored by",
+    "were unable to shower"
+   ],
+   "size": 9,
+   "edge_freq": 10,
+   "nearest_family_below_thr": "works_at",
+   "nearest_sim": 0.539
+  },
+  {
+   "members": [
+    "bat italien um waffenstillstand",
+    "besetzten die franz\u00f6sische hauptstadt paris",
+    "durchbrachen s\u00fcdlich von saarbr\u00fccken die maginot-linie",
+    "entschied, den vormarsch der panzertruppe anzuhalten und die einschlie\u00dfung von d\u00fcnkirchen der",
+    "hat 2023 das niedrigste",
+    "ist nach j\u00fcrgen schmidhuber",
+    "reinforced italian forces in north africa",
+    "soll simulierte",
+    "sollten \u00fcberwiegen",
+    "\u00fcberschritten die seine"
+   ],
+   "size": 10,
+   "edge_freq": 10,
+   "nearest_family_below_thr": "born_in",
+   "nearest_sim": 0.511
+  },
+  {
+   "members": [
+    "had 38,024,465 confirmed cases and 703,961 deaths",
+    "had 38,633 apprentices in vocational training in",
+    "had an estimated under-reporting of 22.62% of total reported covid-19 mortality in 2020",
+    "had recorded 34,359,631 confirmed cases and 1,047,229 deaths from covid-19",
+    "is believed to have a larger outbreak than official numbers show",
+    "recorded more than 251,000 new covid cases, a 20% increase from the prior week and a 12% increase from the january peak",
+    "reported its one millionth case and nearly 49,000 reported deaths",
+    "reported over 400,000 cases of covid-19 infection with 23,091 deaths",
+    "surpassed 99 million cases of",
+    "the only two infectious diseases causing more than 10,000 deaths a year"
+   ],
+   "size": 10,
+   "edge_freq": 10,
+   "nearest_family_below_thr": "died_in",
+   "nearest_sim": 0.506
+  },
+  {
+   "members": [
+    "breaks in",
+    "break in",
+    "fall out almost free",
+    "fits medium with",
+    "relapsed in",
+    "returned -6.08% in"
+   ],
+   "size": 6,
+   "edge_freq": 9,
+   "nearest_family_below_thr": "born_in",
+   "nearest_sim": 0.516
+  },
+  {
+   "members": [
+    "installs pytorch on",
+    "installs dependencies for",
+    "has pypi downloads",
+    "installs common dependencies for",
+    "installs magma for",
+    "installs triton for"
+   ],
+   "size": 6,
+   "edge_freq": 9,
+   "nearest_family_below_thr": "processes_data",
+   "nearest_sim": 0.516
+  },
+  {
+   "members": [
+    "hatte ziel",
+    "gilt zwingend",
+    "hat 2023 das h\u00f6chste",
+    "hatten wenige",
+    "zog angriffsbefehl zur\u00fcck",
+    "zogen sich 1948 aus",
+    "zweck",
+    "z\u00e4hlt"
+   ],
+   "size": 8,
+   "edge_freq": 9,
+   "nearest_family_below_thr": "born_in",
+   "nearest_sim": 0.497
+  },
+  {
+   "members": [
+    "showed high placebo responses in",
+    "experienced massive withdrawal from",
+    "had a 25% increase in",
+    "had markedly elevated baseline gad-65 titers",
+    "saw a significant increase in",
+    "showed a more pronounced immediate post-pci increase in",
+    "showed high placebo responses among",
+    "was received by all patients"
+   ],
+   "size": 8,
+   "edge_freq": 9,
+   "nearest_family_below_thr": "measures_evaluates",
+   "nearest_sim": 0.51
+  },
+  {
+   "members": [
+    "announced he would vote 'no' on",
+    "criticized trump for his opposition to the bill",
+    "declined to evacuate",
+    "denied sending arms to",
+    "opposed the bipartisan bill",
+    "referenced how the democratic party had refused to allow",
+    "refused to intercede",
+    "stated that she would not support",
+    "withdrew nomination of"
+   ],
+   "size": 9,
+   "edge_freq": 9,
+   "nearest_family_below_thr": "selects_decides",
+   "nearest_sim": 0.476
+  },
+  {
+   "members": [
+    "appends trailer lines to",
+    "renders the map as",
+    "bakes a text map into",
+    "includes lod_z pinning slot for",
+    "produces 49 _follows edges in"
+   ],
+   "size": 5,
+   "edge_freq": 8,
+   "nearest_family_below_thr": "connects_to",
+   "nearest_sim": 0.524
+  },
+  {
+   "members": [
+    "is a known early-stage venture capital fund",
+    "is one of the largest australian funds in",
+    "are too small to raise capital in",
+    "has venture capital industry in"
+   ],
+   "size": 4,
+   "edge_freq": 8,
+   "nearest_family_below_thr": "transacts",
+   "nearest_sim": 0.533
+  },
+  {
+   "members": [
+    "lasted from",
+    "developed a 20 m (66 ft) crack",
+    "lasted about",
+    "remained largely unchanged during",
+    "vowed to fight to the last at",
+    "was satisfied with",
+    "was the longest battle"
+   ],
+   "size": 7,
+   "edge_freq": 8,
+   "nearest_family_below_thr": "occurred_on",
+   "nearest_sim": 0.521
+  },
+  {
+   "members": [
+    "assessed that the russian economy had started slipping into",
+    "kept the economy afloat but on an unsustainable trajectory",
+    "led putin to believe",
+    "noted that official russian statistics are",
+    "plummeted to record lows",
+    "reported gdp contraction of",
+    "said russia's gdp shrank by a combined",
+    "warned putin about a possible financial crisis due to"
+   ],
+   "size": 8,
+   "edge_freq": 8,
+   "nearest_family_below_thr": "transforms",
+   "nearest_sim": 0.469
+  },
+  {
+   "members": [
+    "are overwhelmingly",
+    "said they were advancing in every direction",
+    "showed a clear majority in favor of",
+    "was stunned with",
+    "were almost five times that of",
+    "were flabbergasted at"
+   ],
+   "size": 6,
+   "edge_freq": 7,
+   "nearest_family_below_thr": "synonym",
+   "nearest_sim": 0.535
+  },
+  {
+   "members": [
+    "builds images with",
+    "builds graph from",
+    "cannot generate without exposing",
+    "creates nodes for",
+    "generates files in",
+    "generates html views using"
+   ],
+   "size": 6,
+   "edge_freq": 7,
+   "nearest_family_below_thr": "combines_with",
+   "nearest_sim": 0.514
+  },
+  {
+   "members": [
+    "is 0.29 \u03bcs for",
+    "is 4.7 \u03bcs with",
+    "is the cheapest falsifier for",
+    "is the smallest",
+    "keeps in prd with light trim"
+   ],
+   "size": 5,
+   "edge_freq": 7,
+   "nearest_family_below_thr": "competes_outperforms",
+   "nearest_sim": 0.54
+  },
+  {
+   "members": [
+    "admet",
+    "bilden",
+    "choisit",
+    "dienen als",
+    "fungiert als",
+    "galten",
+    "permet de trouver"
+   ],
+   "size": 7,
+   "edge_freq": 7,
+   "nearest_family_below_thr": "has_property",
+   "nearest_sim": 0.539
+  },
+  {
+   "members": [
+    "advised officials to avoid",
+    "advised officials to ignore",
+    "advised residents near the eastern border to evacuate to",
+    "are never recommended",
+    "must avoid",
+    "warned residents to stay away from",
+    "was advised against for people under 30 in"
+   ],
+   "size": 7,
+   "edge_freq": 7,
+   "nearest_family_below_thr": "works_at",
+   "nearest_sim": 0.526
+  },
+  {
+   "members": [
+    "angegangen an",
+    "befahl angriff",
+    "ging verloren",
+    "gingen verloren",
+    "glichen an",
+    "starben bei",
+    "verbot angriffe"
+   ],
+   "size": 7,
+   "edge_freq": 7,
+   "nearest_family_below_thr": "born_in",
+   "nearest_sim": 0.533
+  },
+  {
+   "members": [
+    "announced russia's response to increased military aid to ukraine by",
+    "claimed ukraine as",
+    "described russian attacks on ukraine's healthcare system as",
+    "forced russia to rely more on",
+    "forced russia to reorient",
+    "labelled russia's destruction of ukrainian cultural property as",
+    "ordered the russian army to send"
+   ],
+   "size": 7,
+   "edge_freq": 7,
+   "nearest_family_below_thr": "acquired",
+   "nearest_sim": 0.458
+  },
+  {
+   "members": [
+    "authorised the commander of azovstal to surrender as necessary on",
+    "became the reich commissioner of",
+    "declared the siege of azovstal tactically complete on",
+    "renewed their bombardment of azovstal after allowing 100 civilians to depart on",
+    "said that ukrainian forces had secured 'combat control' of",
+    "said ukrainian forces had captured",
+    "surrendered in berlin"
+   ],
+   "size": 7,
+   "edge_freq": 7,
+   "nearest_family_below_thr": "ceo_of",
+   "nearest_sim": 0.475
+  },
+  {
+   "members": [
+    "caps speculative renders at",
+    "does to the offline axis what adaptive-render-allocation did to",
+    "hit its peak closing price of",
+    "is the render-axis calibration requirement for",
+    "reduces per-frame latency",
+    "returns the speculative bundle immediately",
+    "show mean microperimetry fluctuations of"
+   ],
+   "size": 7,
+   "edge_freq": 7,
+   "nearest_family_below_thr": "processes_data",
+   "nearest_sim": 0.536
+  },
+  {
+   "members": [
+    "closed over $1,000 for the first time on",
+    "closed over $100,000 for the first time on",
+    "closed over $200,000 for the first time on",
+    "closed over $500,000 for the first time on",
+    "exceeded 120,000 a day",
+    "surpassed 1 million confirmed infections on",
+    "traded above $140/barrel for the first time"
+   ],
+   "size": 7,
+   "edge_freq": 7,
+   "nearest_family_below_thr": "transacts",
+   "nearest_sim": 0.502
+  },
+  {
+   "members": [
+    "converge on branching factor of",
+    "converge pointwise to",
+    "determines empirical limits of",
+    "freezes the embedding dimension at",
+    "is budget-capped iteration over admitted edges",
+    "proves approximately zero for",
+    "seeds by cosine against"
+   ],
+   "size": 7,
+   "edge_freq": 7,
+   "nearest_family_below_thr": "competes_outperforms",
+   "nearest_sim": 0.507
+  },
+  {
+   "members": [
+    "equalised the scores against",
+    "scored the 83rd-minute winner for",
+    "scored the only goal for",
+    "was awarded a second penalty in the 115th minute against",
+    "were scored in 64 matches of the",
+    "were the most scored by a player in the",
+    "won the final after scoring all of their penalties against"
+   ],
+   "size": 7,
+   "edge_freq": 7,
+   "nearest_family_below_thr": "competes_outperforms",
+   "nearest_sim": 0.538
+  },
+  {
+   "members": [
+    "had no naturally occurring cases",
+    "never built",
+    "never called",
+    "never have",
+    "offer neither disease-modifying nor symptomatic motor benefits for",
+    "received a no-penalty sentence",
+    "suggests that none of the evaluated regimens"
+   ],
+   "size": 7,
+   "edge_freq": 7,
+   "nearest_family_below_thr": "has_prerequisite",
+   "nearest_sim": 0.523
+  },
+  {
+   "members": [
+    "is a regression risk area for",
+    "are a regression risk area for",
+    "is a regression risk for",
+    "is the risk profile"
+   ],
+   "size": 4,
+   "edge_freq": 6,
+   "nearest_family_below_thr": "expects_predicts",
+   "nearest_sim": 0.541
+  },
+  {
+   "members": [
+    "can more cheaply raise debt to finance their growth because",
+    "complained that they could not afford to provide",
+    "got banks to start lending again",
+    "planned tax increases to finance",
+    "recovered from the financial crisis faster than"
+   ],
+   "size": 5,
+   "edge_freq": 6,
+   "nearest_family_below_thr": "competes_outperforms",
+   "nearest_sim": 0.523
+  },
+  {
+   "members": [
+    "froze japanese assets along with",
+    "closed down nearly all commercial activity except",
+    "decided to suspend russia from",
+    "imposed an embargo on exports to",
+    "prohibited corporate pension funds from holding"
+   ],
+   "size": 5,
+   "edge_freq": 6,
+   "nearest_family_below_thr": "acquired",
+   "nearest_sim": 0.524
+  },
+  {
+   "members": [
+    "has no analog for",
+    "had no",
+    "has no budget for",
+    "has no evidence of",
+    "were not scanned"
+   ],
+   "size": 5,
+   "edge_freq": 6,
+   "nearest_family_below_thr": "replaces_supersedes",
+   "nearest_sim": 0.519
+  },
+  {
+   "members": [
+    "wiped out all community transmission of",
+    "announced closure of",
+    "banned all imports of",
+    "systematically destroy",
+    "was scrapped nationwide"
+   ],
+   "size": 5,
+   "edge_freq": 6,
+   "nearest_family_below_thr": "transfers_to",
+   "nearest_sim": 0.477
+  },
+  {
+   "members": [
+    "aimed to secure oil reserves and grain from",
+    "encouraged russia to",
+    "exports fossil fuels to",
+    "imposed an embargo on oil to",
+    "placed an embargo on oil products from",
+    "provided propellants for missiles to"
+   ],
+   "size": 6,
+   "edge_freq": 6,
+   "nearest_family_below_thr": "targets_aims",
+   "nearest_sim": 0.506
+  },
+  {
+   "members": [
+    "argued that trump's words endangered",
+    "considered his political opponents as",
+    "rarely challenged trump",
+    "said that it was not a coup, but that it did represent a danger to democracy in",
+    "testified that a secret service official warned trump",
+    "told trump it was too dangerous to go to the capitol"
+   ],
+   "size": 6,
+   "edge_freq": 6,
+   "nearest_family_below_thr": "prevents_constrains",
+   "nearest_sim": 0.536
+  },
+  {
+   "members": [
+    "asserted that balloting machines contained",
+    "claimed that balloting machines",
+    "made baseless predictions of voter fraud in",
+    "made false and misleading statements, including claims of electoral fraud in",
+    "told the fbi that he believed",
+    "were viewed negatively by many voters in"
+   ],
+   "size": 6,
+   "edge_freq": 6,
+   "nearest_family_below_thr": "has",
+   "nearest_sim": 0.528
+  },
+  {
+   "members": [
+    "became the second largest city in terms of area after",
+    "became the third largest city in terms of population after",
+    "has the second largest stock market as of january 2022",
+    "has the third largest stock market as of january 2022",
+    "ranked second in vaccination rate behind",
+    "retook towns to the east and west of"
+   ],
+   "size": 6,
+   "edge_freq": 6,
+   "nearest_family_below_thr": "acquired",
+   "nearest_sim": 0.529
+  },
+  {
+   "members": [
+    "declared south america the epicentre of the pandemic",
+    "experienced the pandemic's fifth wave peak with",
+    "faced a third wave of covid infections with cases rising in 14 countries",
+    "has the third-highest number of confirmed cases and second-highest death toll from covid-19 in the world",
+    "labelled it africa's 'worst pandemic week ever'",
+    "was the last continent to have confirmed cases of"
+   ],
+   "size": 6,
+   "edge_freq": 6,
+   "nearest_family_below_thr": "headquartered_in",
+   "nearest_sim": 0.504
+  },
+  {
+   "members": [
+    "had german as their mother tongue at a rate of",
+    "stemmed from ost- und westpreu\u00dfen at a rate of",
+    "stemmed from pommern at a rate of",
+    "stemmed from preu\u00dfischen provinzen brandenburg at a rate of",
+    "stemmed from sachsen at a rate of",
+    "stemmed from schlesien at a rate of"
+   ],
+   "size": 6,
+   "edge_freq": 6,
+   "nearest_family_below_thr": "born_in",
+   "nearest_sim": 0.529
+  },
+  {
+   "members": [
+    "has never taken",
+    "have never had a woman represent them on the board of",
+    "never gets",
+    "never reaches",
+    "never talks to",
+    "never touches"
+   ],
+   "size": 6,
+   "edge_freq": 6,
+   "nearest_family_below_thr": "has",
+   "nearest_sim": 0.537
+  },
+  {
+   "members": [
+    "attributed the decrease in illegal crossings to",
+    "faced traffic declines of",
+    "no longer had excess mortality by the end of"
+   ],
+   "size": 3,
+   "edge_freq": 5,
+   "nearest_family_below_thr": "prevents_constrains",
+   "nearest_sim": 0.486
+  },
+  {
+   "members": [
+    "f\u00fchrt dazu",
+    "st\u00e4rkten den sinn daf\u00fcr, welche bedeutung der krieg f\u00fcr",
+    "trug dazu bei"
+   ],
+   "size": 3,
+   "edge_freq": 5,
+   "nearest_family_below_thr": "born_in",
+   "nearest_sim": 0.531
+  },
+  {
+   "members": [
+    "hosted matches of the fifa world cup in",
+    "completed a hat-trick in the final of a world cup after",
+    "fifa confirmed that the final would be played in",
+    "won their third world cup and their first since"
+   ],
+   "size": 4,
+   "edge_freq": 5,
+   "nearest_family_below_thr": "born_in",
+   "nearest_sim": 0.528
+  },
+  {
+   "members": [
+    "liquid lod is",
+    "determines at what corpus size fs-lod starts outperforming",
+    "does not change liquid lod's primitive",
+    "picks the right lod per cluster based on"
+   ],
+   "size": 4,
+   "edge_freq": 5,
+   "nearest_family_below_thr": "processes_data",
+   "nearest_sim": 0.539
+  },
+  {
+   "members": [
+    "achieved much lower accuracy than",
+    "has fewer artillery pieces than",
+    "involves far lower risk than",
+    "is low-fidelity",
+    "were inaccurate for"
+   ],
+   "size": 5,
+   "edge_freq": 5,
+   "nearest_family_below_thr": "competes_outperforms",
+   "nearest_sim": 0.538
+  },
+  {
+   "members": [
+    "allowed fund managers to lay away",
+    "excluded hedge funds due to",
+    "had no funds in",
+    "reduce median zero-investment return to",
+    "were significantly relaxed"
+   ],
+   "size": 5,
+   "edge_freq": 5,
+   "nearest_family_below_thr": "transacts",
+   "nearest_sim": 0.539
+  },
+  {
+   "members": [
+    "announced unwillingness to play matches in",
+    "led some hospitals to stop accepting patients on",
+    "received no support from",
+    "refused permission to deploy",
+    "refused to send"
+   ],
+   "size": 5,
+   "edge_freq": 5,
+   "nearest_family_below_thr": "requires",
+   "nearest_sim": 0.531
+  },
+  {
+   "members": [
+    "became official enemy of germany after",
+    "envisioned anti-british alliance from",
+    "increased doubts among germans about",
+    "occupied without informing hitler",
+    "remained neutral but supported axis powers"
+   ],
+   "size": 5,
+   "edge_freq": 5,
+   "nearest_family_below_thr": "nationality",
+   "nearest_sim": 0.475
+  },
+  {
+   "members": [
+    "called the senate back into session",
+    "indicated her support for passing legislation which would restore",
+    "left the congressional safe room",
+    "urged people to go into the capitol",
+    "was acquitted by the senate in"
+   ],
+   "size": 5,
+   "edge_freq": 5,
+   "nearest_family_below_thr": "participated_in",
+   "nearest_sim": 0.482
+  },
+  {
+   "members": [
+    "capitulated after the tunisia campaign",
+    "completed the soviet encirclement of",
+    "described end of war as",
+    "signed a separate armistice with",
+    "signed armistice with allies at"
+   ],
+   "size": 5,
+   "edge_freq": 5,
+   "nearest_family_below_thr": "acquired",
+   "nearest_sim": 0.467
+  },
+  {
+   "members": [
+    "conducted brutal medical experiments on",
+    "performed cruel experiments on",
+    "uncovered evidence of war crimes in",
+    "were commuted to prison terms",
+    "were tried at the nuremberg trials"
+   ],
+   "size": 5,
+   "edge_freq": 5,
+   "nearest_family_below_thr": "died_in",
+   "nearest_sim": 0.509
+  },
+  {
+   "members": [
+    "damaged 10,460 buildings",
+    "damaged 4,000 buildings",
+    "had thousands of aftershocks distributed along",
+    "lost more aircraft than",
+    "sank ships with total tonnage of"
+   ],
+   "size": 5,
+   "edge_freq": 5,
+   "nearest_family_below_thr": "headquartered_in",
+   "nearest_sim": 0.534
+  },
+  {
+   "members": [
+    "declined in the uk in",
+    "remained limited as of",
+    "saw a decline in vaccinations",
+    "stated that the british government would not seek",
+    "stopped preserving"
+   ],
+   "size": 5,
+   "edge_freq": 5,
+   "nearest_family_below_thr": "acquired",
+   "nearest_sim": 0.481
+  },
+  {
+   "members": [
+    "deletes bottom-k sentences by",
+    "extracts topic list from",
+    "finds the right passages but doesn't encode",
+    "permanently deletes",
+    "silently truncates"
+   ],
+   "size": 5,
+   "edge_freq": 5,
+   "nearest_family_below_thr": "antonym",
+   "nearest_sim": 0.53
+  },
+  {
+   "members": [
+    "does not freeze ip work on",
+    "does not re-tile",
+    "is frozen per",
+    "is the highest-leverage ip cluster",
+    "reduce p95 latency from"
+   ],
+   "size": 5,
+   "edge_freq": 5,
+   "nearest_family_below_thr": "fails_on",
+   "nearest_sim": 0.525
+  },
+  {
+   "members": [
+    "filed the largest bankruptcy in",
+    "has the largest stock market as of january 2022",
+    "over 500 million cases",
+    "was convicted on all counts of fraud related to",
+    "was one of the largest bank failures in"
+   ],
+   "size": 5,
+   "edge_freq": 5,
+   "nearest_family_below_thr": "founded_by",
+   "nearest_sim": 0.526
+  },
+  {
+   "members": [
+    "found weakened support and turnout for harris from",
+    "gained six seats despite a slight decrease in vote share compared with",
+    "supported harris in 2024 than they did the democratic candidates in",
+    "were mostly repelled from the area",
+    "would have been more likely to vote for harris if she"
+   ],
+   "size": 5,
+   "edge_freq": 5,
+   "nearest_family_below_thr": "participated_in",
+   "nearest_sim": 0.488
+  },
+  {
+   "members": [
+    "had 10 waldorf and 77 special schools in",
+    "had 113 high schools in",
+    "had 433 primary and 165 integrated secondary schools in",
+    "had more than 130 private schools in the school year",
+    "had over 400,000 students in more than 840 general education schools in the school year"
+   ],
+   "size": 5,
+   "edge_freq": 5,
+   "nearest_family_below_thr": "founded_by",
+   "nearest_sim": 0.477
+  },
+  {
+   "members": [
+    "was not involved in any subsequent editorial decisions",
+    "declared no competing interests beyond"
+   ],
+   "size": 2,
+   "edge_freq": 4,
+   "nearest_family_below_thr": "founded_by",
+   "nearest_sim": 0.46
+  },
+  {
+   "members": [
+    "would not renew its sponsorship after",
+    "declared that no financial support was received from"
+   ],
+   "size": 2,
+   "edge_freq": 4,
+   "nearest_family_below_thr": "partnered_with",
+   "nearest_sim": 0.529
+  },
+  {
+   "members": [
+    "is the standard first-line treatment for",
+    "is a promising therapeutic strategy for",
+    "is acid for"
+   ],
+   "size": 3,
+   "edge_freq": 4,
+   "nearest_family_below_thr": "applies_to",
+   "nearest_sim": 0.504
+  },
+  {
+   "members": [
+    "abducted 100,000 to 300,000 girls and women as",
+    "evacuated about 100 survivors from",
+    "passed 100 million cases amid a surge in",
+    "raped women and girls in occupied territories"
+   ],
+   "size": 4,
+   "edge_freq": 4,
+   "nearest_family_below_thr": "participated_in",
+   "nearest_sim": 0.474
+  },
+  {
+   "members": [
+    "accused jpmorgan and deutsche bank of",
+    "accused trump of being",
+    "coerced the ceos of the nine largest banks to",
+    "sued jpmorgan chase"
+   ],
+   "size": 4,
+   "edge_freq": 4,
+   "nearest_family_below_thr": "acquired",
+   "nearest_sim": 0.473
+  },
+  {
+   "members": [
+    "agreed to a $722 million settlement with",
+    "settled the suit filed by picard",
+    "settled with the united states department of justice, u.s. securities and exchange commission, and the commodity futures trading commission for",
+    "signed neutrality pact with"
+   ],
+   "size": 4,
+   "edge_freq": 4,
+   "nearest_family_below_thr": "acquired",
+   "nearest_sim": 0.538
+  },
+  {
+   "members": [
+    "aimed to increase solar energy share to",
+    "increased to 82%",
+    "restored energy supply lines to",
+    "saves up to 97% of total energy"
+   ],
+   "size": 4,
+   "edge_freq": 4,
+   "nearest_family_below_thr": "partnered_with",
+   "nearest_sim": 0.526
+  },
+  {
+   "members": [
+    "are blind to",
+    "is nearly blind to",
+    "sees only",
+    "will remain blinded to"
+   ],
+   "size": 4,
+   "edge_freq": 4,
+   "nearest_family_below_thr": "prevents_constrains",
+   "nearest_sim": 0.53
+  },
+  {
+   "members": [
+    "assesses islands with the highest",
+    "form highest stratum of",
+    "is the highest greenhouse in",
+    "is the highest peak in"
+   ],
+   "size": 4,
+   "edge_freq": 4,
+   "nearest_family_below_thr": "born_in",
+   "nearest_sim": 0.516
+  },
+  {
+   "members": [
+    "began unloading weapons for",
+    "charged people with entering a restricted area while armed",
+    "decided to use atomic bombs with",
+    "said he didn't care that supporters had weapons"
+   ],
+   "size": 4,
+   "edge_freq": 4,
+   "nearest_family_below_thr": "acquired",
+   "nearest_sim": 0.499
+  },
+  {
+   "members": [
+    "belastete",
+    "lancierte",
+    "pr\u00e4sentierte",
+    "verwendet"
+   ],
+   "size": 4,
+   "edge_freq": 4,
+   "nearest_family_below_thr": "has_property",
+   "nearest_sim": 0.514
+  },
+  {
+   "members": [
+    "contributes 6.6% to the economy of",
+    "hit 6% in the us",
+    "is estimated to have killed six to more than 14 million",
+    "reported gdp growth of"
+   ],
+   "size": 4,
+   "edge_freq": 4,
+   "nearest_family_below_thr": "nationality",
+   "nearest_sim": 0.491
+  },
+  {
+   "members": [
+    "converts cosine-fill wins into",
+    "is a precomputed negative admissibility bitmatrix for",
+    "translates vectors into",
+    "uses precomputed per-band luts and integer-formula quantization for"
+   ],
+   "size": 4,
+   "edge_freq": 4,
+   "nearest_family_below_thr": "competes_outperforms",
+   "nearest_sim": 0.499
+  },
+  {
+   "members": [
+    "declared berlin as the",
+    "hosted the berliner gartenschau in",
+    "left berlin in",
+    "marked berlin's status as"
+   ],
+   "size": 4,
+   "edge_freq": 4,
+   "nearest_family_below_thr": "nationality",
+   "nearest_sim": 0.497
+  },
+  {
+   "members": [
+    "delivered a 6\u20133 decision in",
+    "released trial results",
+    "ruled 6-3 in favor of",
+    "scored three goals against"
+   ],
+   "size": 4,
+   "edge_freq": 4,
+   "nearest_family_below_thr": "selects_decides",
+   "nearest_sim": 0.533
+  },
+  {
+   "members": [
+    "did not have wealth declines",
+    "does not shrink with",
+    "recovered to 2007 levels",
+    "was still below pre-pandemic levels"
+   ],
+   "size": 4,
+   "edge_freq": 4,
+   "nearest_family_below_thr": "owns",
+   "nearest_sim": 0.535
+  },
+  {
+   "members": [
+    "directed the u.s. department of justice to investigate",
+    "ordered the doj to purge",
+    "promised to use the justice department to go after",
+    "signed an executive order directing federal banking regulators to investigate"
+   ],
+   "size": 4,
+   "edge_freq": 4,
+   "nearest_family_below_thr": "headquartered_in",
+   "nearest_sim": 0.526
+  },
+  {
+   "members": [
+    "does not require phone hardware to receive multiple channels in parallel",
+    "is a novel 5g paradigm that exploits",
+    "uses the e-utra protocols ofdma (downlink) and sc-fdma (uplink) on its",
+    "uses the utra protocols wcdma or td-scdma on its"
+   ],
+   "size": 4,
+   "edge_freq": 4,
+   "nearest_family_below_thr": "transfers_to",
+   "nearest_sim": 0.529
+  },
+  {
+   "members": [
+    "ended on may 8, 1945",
+    "reached the mandatory retirement age in",
+    "remained neutral until february 1945",
+    "was released at the end of"
+   ],
+   "size": 4,
+   "edge_freq": 4,
+   "nearest_family_below_thr": "occurred_on",
+   "nearest_sim": 0.538
+  },
+  {
+   "members": [
+    "estimates that after 1000 years",
+    "ranged annually between 100,000 and 145,000 from",
+    "was 1.02 percent as of 10 march 2023",
+    "were higher during the cambrian period"
+   ],
+   "size": 4,
+   "edge_freq": 4,
+   "nearest_family_below_thr": "replaces_supersedes",
+   "nearest_sim": 0.536
+  },
+  {
+   "members": [
+    "evacuated more than 11,000 people from",
+    "fled their homes",
+    "sent 50 buses to evacuate civilians from",
+    "were deported for extermination by"
+   ],
+   "size": 4,
+   "edge_freq": 4,
+   "nearest_family_below_thr": "headquartered_in",
+   "nearest_sim": 0.473
+  },
+  {
+   "members": [
+    "exceeded four million in the 1920s and reached its peak in 1942 with",
+    "increased to almost four million through",
+    "reached a record high of",
+    "reached record highs by"
+   ],
+   "size": 4,
+   "edge_freq": 4,
+   "nearest_family_below_thr": "occurred_on",
+   "nearest_sim": 0.453
+  },
+  {
+   "members": [
+    "follows shortcuts instead of stepping through",
+    "runs gap retrieval pass targeting only",
+    "triggers mode auto-transition",
+    "unblocks holistic-frame v0 substrate work"
+   ],
+   "size": 4,
+   "edge_freq": 4,
+   "nearest_family_below_thr": "preceded_by",
+   "nearest_sim": 0.529
+  },
+  {
+   "members": [
+    "increased his support from hispanics",
+    "increased his support near the mexican\u2013american border",
+    "outperformed his final polling numbers",
+    "shifted the race 2.7 percentage points in favor of"
+   ],
+   "size": 4,
+   "edge_freq": 4,
+   "nearest_family_below_thr": "founded_by",
+   "nearest_sim": 0.538
+  },
+  {
+   "members": [
+    "informed the house of commons that",
+    "stated that the british government would maintain",
+    "stated that the british government would seek",
+    "told nbc news that"
+   ],
+   "size": 4,
+   "edge_freq": 4,
+   "nearest_family_below_thr": "asserts",
+   "nearest_sim": 0.518
+  },
+  {
+   "members": [
+    "reached 95.2%",
+    "received only 2% of vc funding in the united states in",
+    "rose nearly 100 percent",
+    "won 46% of"
+   ],
+   "size": 4,
+   "edge_freq": 4,
+   "nearest_family_below_thr": "participated_in",
+   "nearest_sim": 0.515
+  },
+  {
+   "members": [
+    "was 49 per cent effective against",
+    "was 50.4 per cent effective",
+    "won 48 percent of voters who only voted in two or fewer of the previous four federal elections",
+    "won under 50 percent of voters who cast ballots in the previous four federal elections"
+   ],
+   "size": 4,
+   "edge_freq": 4,
+   "nearest_family_below_thr": "expects_predicts",
+   "nearest_sim": 0.5
+  },
+  {
+   "members": [
+    "is a youth theater in",
+    "is the most visited theater in"
+   ],
+   "size": 2,
+   "edge_freq": 3,
+   "nearest_family_below_thr": "headquartered_in",
+   "nearest_sim": 0.524
+  },
+  {
+   "members": [
+    "is supply-side twin of",
+    "is the bake-axis twin of"
+   ],
+   "size": 2,
+   "edge_freq": 3,
+   "nearest_family_below_thr": "synonym",
+   "nearest_sim": 0.525
+  },
+  {
+   "members": [
+    "processes russian crude",
+    "paid russia for hydrocarbons"
+   ],
+   "size": 2,
+   "edge_freq": 3,
+   "nearest_family_below_thr": "processes_data",
+   "nearest_sim": 0.526
+  },
+  {
+   "members": [
+    "agreed to hold debates on",
+    "said he would vote to",
+    "took liberal positions on"
+   ],
+   "size": 3,
+   "edge_freq": 3,
+   "nearest_family_below_thr": "participated_in",
+   "nearest_sim": 0.535
+  },
+  {
+   "members": [
+    "announced moving the 2022 pga championship from",
+    "bildete 2022",
+    "said that if the 2022 world cup were moved to november, they would seek compensation from"
+   ],
+   "size": 3,
+   "edge_freq": 3,
+   "nearest_family_below_thr": "replaces_supersedes",
+   "nearest_sim": 0.518
+  },
+  {
+   "members": [
+    "are open solely to",
+    "only sees",
+    "see only"
+   ],
+   "size": 3,
+   "edge_freq": 3,
+   "nearest_family_below_thr": "related_to",
+   "nearest_sim": 0.524
+  },
+  {
+   "members": [
+    "are sovereign-deployed",
+    "is shipped as the sovereign appliance default for water mode",
+    "withheld permission to deploy"
+   ],
+   "size": 3,
+   "edge_freq": 3,
+   "nearest_family_below_thr": "becomes",
+   "nearest_sim": 0.535
+  },
+  {
+   "members": [
+    "argued abortion rights referendums could help",
+    "ranked abortion policy as",
+    "voted for return to constitutional conditions in"
+   ],
+   "size": 3,
+   "edge_freq": 3,
+   "nearest_family_below_thr": "has_prerequisite",
+   "nearest_sim": 0.489
+  },
+  {
+   "members": [
+    "bedarf",
+    "parcourt",
+    "schuf"
+   ],
+   "size": 3,
+   "edge_freq": 3,
+   "nearest_family_below_thr": "born_in",
+   "nearest_sim": 0.486
+  },
+  {
+   "members": [
+    "believed that democrats could not connect to",
+    "claimed many african americans could not connect with",
+    "repeated a false claim that democrats support"
+   ],
+   "size": 3,
+   "edge_freq": 3,
+   "nearest_family_below_thr": "connects_to",
+   "nearest_sim": 0.529
+  },
+  {
+   "members": [
+    "can request the mme to set up connections to",
+    "enables handoff",
+    "uses the s1-ap protocol on the s1-mme interface with the"
+   ],
+   "size": 3,
+   "edge_freq": 3,
+   "nearest_family_below_thr": "works_at",
+   "nearest_sim": 0.534
+  },
+  {
+   "members": [
+    "captured the easternmost district of",
+    "continued eastwards onto",
+    "continued eastwards to"
+   ],
+   "size": 3,
+   "edge_freq": 3,
+   "nearest_family_below_thr": "headquartered_in",
+   "nearest_sim": 0.529
+  },
+  {
+   "members": [
+    "celebrated its 10-year anniversary",
+    "closed over $10,000 for the first time on",
+    "considered the strongest since 1975"
+   ],
+   "size": 3,
+   "edge_freq": 3,
+   "nearest_family_below_thr": "headquartered_in",
+   "nearest_sim": 0.52
+  },
+  {
+   "members": [
+    "closes dependency",
+    "don't emit commits",
+    "shut down last textile operations"
+   ],
+   "size": 3,
+   "edge_freq": 3,
+   "nearest_family_below_thr": "fails_on",
+   "nearest_sim": 0.53
+  },
+  {
+   "members": [
+    "could provide each soviet soldier with",
+    "met soviet troops at the elbe river",
+    "revealed the division of russian troops into"
+   ],
+   "size": 3,
+   "edge_freq": 3,
+   "nearest_family_below_thr": "participated_in",
+   "nearest_sim": 0.497
+  },
+  {
+   "members": [
+    "generates labels for",
+    "generates response for",
+    "generates training signal for"
+   ],
+   "size": 3,
+   "edge_freq": 3,
+   "nearest_family_below_thr": "has_attribute",
+   "nearest_sim": 0.536
+  },
+  {
+   "members": [
+    "had air superiority over",
+    "had more german fighters and bombers than",
+    "lost fewer aircraft than"
+   ],
+   "size": 3,
+   "edge_freq": 3,
+   "nearest_family_below_thr": "competes_outperforms",
+   "nearest_sim": 0.533
+  },
+  {
+   "members": [
+    "had little impact on the battlefield according to",
+    "said that there had been little progress on",
+    "was the first and last combat deployment of"
+   ],
+   "size": 3,
+   "edge_freq": 3,
+   "nearest_family_below_thr": "participated_in",
+   "nearest_sim": 0.484
+  },
+  {
+   "members": [
+    "has a 20-point injection map for",
+    "is used to draw one tree model 1,000 times at different coordinates",
+    "provides fast seed-set lookup for"
+   ],
+   "size": 3,
+   "edge_freq": 3,
+   "nearest_family_below_thr": "uses",
+   "nearest_sim": 0.54
+  },
+  {
+   "members": [
+    "have the lowest human development index",
+    "have the lowest life expectancy",
+    "receives the least precipitation in"
+   ],
+   "size": 3,
+   "edge_freq": 3,
+   "nearest_family_below_thr": "developed",
+   "nearest_sim": 0.535
+  },
+  {
+   "members": [
+    "hosted the bundesgartenschau in",
+    "hosted the internationale gartenausstellung in",
+    "ranked first among all bundesl\u00e4nder for"
+   ],
+   "size": 3,
+   "edge_freq": 3,
+   "nearest_family_below_thr": "participated_in",
+   "nearest_sim": 0.52
+  },
+  {
+   "members": [
+    "is shipped with water mode option",
+    "is the first one shipped",
+    "is the manual version of"
+   ],
+   "size": 3,
+   "edge_freq": 3,
+   "nearest_family_below_thr": "transfers_to",
+   "nearest_sim": 0.528
+  },
+  {
+   "members": [
+    "promised in his bloomberg speech",
+    "promised to leverage the power of the presidency for",
+    "repeatedly referred to his energy policy under the mantra"
+   ],
+   "size": 3,
+   "edge_freq": 3,
+   "nearest_family_below_thr": "founded_by",
+   "nearest_sim": 0.512
+  },
+  {
+   "members": [
+    "received no honoraria from",
+    "received no personal financial compensation from",
+    "received no salary support from"
+   ],
+   "size": 3,
+   "edge_freq": 3,
+   "nearest_family_below_thr": "participated_in",
+   "nearest_sim": 0.507
+  },
+  {
+   "members": [
+    "was initially skeptical about",
+    "was skeptical about",
+    "was skeptical of"
+   ],
+   "size": 3,
+   "edge_freq": 3,
+   "nearest_family_below_thr": "combines_with",
+   "nearest_sim": 0.528
+  },
+  {
+   "members": [
+    "accused qatari police of",
+    "sprayed officers with"
+   ],
+   "size": 2,
+   "edge_freq": 2,
+   "nearest_family_below_thr": "participated_in",
+   "nearest_sim": 0.49
+  },
+  {
+   "members": [
+    "adopted new labour reforms",
+    "reforms its anti-money laundering procedures"
+   ],
+   "size": 2,
+   "edge_freq": 2,
+   "nearest_family_below_thr": "acquired",
+   "nearest_sim": 0.509
+  },
+  {
+   "members": [
+    "and us congressman adam kinzinger said that",
+    "said of republican lawmakers"
+   ],
+   "size": 2,
+   "edge_freq": 2,
+   "nearest_family_below_thr": "founded_by",
+   "nearest_sim": 0.491
+  },
+  {
+   "members": [
+    "announced his intention to retire as ceo of",
+    "resigned as president of poland in"
+   ],
+   "size": 2,
+   "edge_freq": 2,
+   "nearest_family_below_thr": "ceo_of",
+   "nearest_sim": 0.51
+  },
+  {
+   "members": [
+    "approved the pfizer vaccine on",
+    "submitted an fda fast track application"
+   ],
+   "size": 2,
+   "edge_freq": 2,
+   "nearest_family_below_thr": "developed",
+   "nearest_sim": 0.501
+  },
+  {
+   "members": [
+    "are world-sealing bakes that",
+    "must bake pvs for"
+   ],
+   "size": 2,
+   "edge_freq": 2,
+   "nearest_family_below_thr": "combines_with",
+   "nearest_sim": 0.501
+  },
+  {
+   "members": [
+    "argued the bill would deny republicans the ability to run on",
+    "called on house and senate republicans to kill the bill"
+   ],
+   "size": 2,
+   "edge_freq": 2,
+   "nearest_family_below_thr": "prevents_constrains",
+   "nearest_sim": 0.53
+  },
+  {
+   "members": [
+    "attacked british somaliland",
+    "bombarded german troops near"
+   ],
+   "size": 2,
+   "edge_freq": 2,
+   "nearest_family_below_thr": "born_in",
+   "nearest_sim": 0.455
+  },
+  {
+   "members": [
+    "avoids 1070 thermal risk",
+    "minimize jitter to"
+   ],
+   "size": 2,
+   "edge_freq": 2,
+   "nearest_family_below_thr": "fails_on",
+   "nearest_sim": 0.504
+  },
+  {
+   "members": [
+    "becomes lane d's inner loop",
+    "provides lane b's primary fuel"
+   ],
+   "size": 2,
+   "edge_freq": 2,
+   "nearest_family_below_thr": "connects_to",
+   "nearest_sim": 0.541
+  },
+  {
+   "members": [
+    "blieben",
+    "entziehen"
+   ],
+   "size": 2,
+   "edge_freq": 2,
+   "nearest_family_below_thr": "located_in",
+   "nearest_sim": 0.51
+  },
+  {
+   "members": [
+    "called a snap general election in",
+    "called the house back into session"
+   ],
+   "size": 2,
+   "edge_freq": 2,
+   "nearest_family_below_thr": "participated_in",
+   "nearest_sim": 0.492
+  },
+  {
+   "members": [
+    "carves out what should remain deterministic even in extreme water, including",
+    "criticizes extreme water as"
+   ],
+   "size": 2,
+   "edge_freq": 2,
+   "nearest_family_below_thr": "requires",
+   "nearest_sim": 0.534
+  },
+  {
+   "members": [
+    "caused cabinet resignations, including those of",
+    "dismissed the cases of"
+   ],
+   "size": 2,
+   "edge_freq": 2,
+   "nearest_family_below_thr": "preceded_by",
+   "nearest_sim": 0.517
+  },
+  {
+   "members": [
+    "continued to tighten their grip on",
+    "remained stuck despite"
+   ],
+   "size": 2,
+   "edge_freq": 2,
+   "nearest_family_below_thr": "connects_to",
+   "nearest_sim": 0.538
+  },
+  {
+   "members": [
+    "couvrent de nombreux domaines",
+    "ne doivent pas d\u00e9passer"
+   ],
+   "size": 2,
+   "edge_freq": 2,
+   "nearest_family_below_thr": "has_property",
+   "nearest_sim": 0.526
+  },
+  {
+   "members": [
+    "crossed the don at",
+    "ran from leningrad to"
+   ],
+   "size": 2,
+   "edge_freq": 2,
+   "nearest_family_below_thr": "born_in",
+   "nearest_sim": 0.537
+  },
+  {
+   "members": [
+    "cullas",
+    "culls"
+   ],
+   "size": 2,
+   "edge_freq": 2,
+   "nearest_family_below_thr": "born_in",
+   "nearest_sim": 0.497
+  },
+  {
+   "members": [
+    "debt averaged",
+    "pays off the original loan with interest of"
+   ],
+   "size": 2,
+   "edge_freq": 2,
+   "nearest_family_below_thr": "owns",
+   "nearest_sim": 0.519
+  },
+  {
+   "members": [
+    "defined 'exit day' as",
+    "was the first unicorn exit in"
+   ],
+   "size": 2,
+   "edge_freq": 2,
+   "nearest_family_below_thr": "occurred_on",
+   "nearest_sim": 0.54
+  },
+  {
+   "members": [
+    "denied telling hutchinson about the incident",
+    "denied that trump grabbed the steering wheel or lunged toward an agent"
+   ],
+   "size": 2,
+   "edge_freq": 2,
+   "nearest_family_below_thr": "participated_in",
+   "nearest_sim": 0.469
+  },
+  {
+   "members": [
+    "did not order",
+    "does not ship"
+   ],
+   "size": 2,
+   "edge_freq": 2,
+   "nearest_family_below_thr": "participated_in",
+   "nearest_sim": 0.484
+  },
+  {
+   "members": [
+    "discovered missing foundation after",
+    "was architecturally absent"
+   ],
+   "size": 2,
+   "edge_freq": 2,
+   "nearest_family_below_thr": "founded_by",
+   "nearest_sim": 0.516
+  },
+  {
+   "members": [
+    "does not lead with",
+    "never uses"
+   ],
+   "size": 2,
+   "edge_freq": 2,
+   "nearest_family_below_thr": "prevents_constrains",
+   "nearest_sim": 0.534
+  },
+  {
+   "members": [
+    "durchlitt",
+    "speichert"
+   ],
+   "size": 2,
+   "edge_freq": 2,
+   "nearest_family_below_thr": "born_in",
+   "nearest_sim": 0.497
+  },
+  {
+   "members": [
+    "d\u00fcrfen nicht anders behandelt werden",
+    "herrschte ein warmes oder zumindest mild-gem\u00e4\u00dfigtes klima trotz"
+   ],
+   "size": 2,
+   "edge_freq": 2,
+   "nearest_family_below_thr": "married_to",
+   "nearest_sim": 0.537
+  },
+  {
+   "members": [
+    "emerged as the principal safety concern for",
+    "was heavily fortified due to fears of invasion by"
+   ],
+   "size": 2,
+   "edge_freq": 2,
+   "nearest_family_below_thr": "succeeded_by",
+   "nearest_sim": 0.533
+  },
+  {
+   "members": [
+    "fell from 1,304 in july 2016 to",
+    "was 58,702 in june 2016 and"
+   ],
+   "size": 2,
+   "edge_freq": 2,
+   "nearest_family_below_thr": "replaces_supersedes",
+   "nearest_sim": 0.484
+  },
+  {
+   "members": [
+    "fosters",
+    "minies"
+   ],
+   "size": 2,
+   "edge_freq": 2,
+   "nearest_family_below_thr": "headquartered_in",
+   "nearest_sim": 0.54
+  },
+  {
+   "members": [
+    "found that 12 million american adults believed",
+    "found that 20.5 percent of respondents believed"
+   ],
+   "size": 2,
+   "edge_freq": 2,
+   "nearest_family_below_thr": "nationality",
+   "nearest_sim": 0.467
+  },
+  {
+   "members": [
+    "gets depth via",
+    "rises from 18% in shallow layers to"
+   ],
+   "size": 2,
+   "edge_freq": 2,
+   "nearest_family_below_thr": "has_attribute",
+   "nearest_sim": 0.541
+  },
+  {
+   "members": [
+    "had 725 accommodations with 150,000 beds in",
+    "recorded 30.5 million overnight stays in"
+   ],
+   "size": 2,
+   "edge_freq": 2,
+   "nearest_family_below_thr": "born_in",
+   "nearest_sim": 0.465
+  },
+  {
+   "members": [
+    "had 9,355 apprentices in crafts in",
+    "had more than nine million visitors and about 23 million loans in"
+   ],
+   "size": 2,
+   "edge_freq": 2,
+   "nearest_family_below_thr": "founded_by",
+   "nearest_sim": 0.486
+  },
+  {
+   "members": [
+    "had fewer pilots than",
+    "lost more soldiers and material than in"
+   ],
+   "size": 2,
+   "edge_freq": 2,
+   "nearest_family_below_thr": "replaces_supersedes",
+   "nearest_sim": 0.437
+  },
+  {
+   "members": [
+    "had not moved forward in enforcing tarp's intent of funding",
+    "still deferred"
+   ],
+   "size": 2,
+   "edge_freq": 2,
+   "nearest_family_below_thr": "founded_by",
+   "nearest_sim": 0.519
+  },
+  {
+   "members": [
+    "had the worst january since 2000",
+    "reached a three-year low in"
+   ],
+   "size": 2,
+   "edge_freq": 2,
+   "nearest_family_below_thr": "occurred_on",
+   "nearest_sim": 0.497
+  },
+  {
+   "members": [
+    "has the highest energy prices in europe after",
+    "increased greenhouse gas emissions by nearly 50%"
+   ],
+   "size": 2,
+   "edge_freq": 2,
+   "nearest_family_below_thr": "occurred_on",
+   "nearest_sim": 0.48
+  },
+  {
+   "members": [
+    "is a phase iii trial for",
+    "is the technical keystone t3 of"
+   ],
+   "size": 2,
+   "edge_freq": 2,
+   "nearest_family_below_thr": "has_prerequisite",
+   "nearest_sim": 0.512
+  },
+  {
+   "members": [
+    "is a ui shell without",
+    "is shipped with water mode default"
+   ],
+   "size": 2,
+   "edge_freq": 2,
+   "nearest_family_below_thr": "has_part",
+   "nearest_sim": 0.541
+  },
+  {
+   "members": [
+    "is bias-corrected to",
+    "is the genuine delta of this doc in"
+   ],
+   "size": 2,
+   "edge_freq": 2,
+   "nearest_family_below_thr": "antonym",
+   "nearest_sim": 0.531
+  },
+  {
+   "members": [
+    "is rapid in",
+    "is the fastapi of"
+   ],
+   "size": 2,
+   "edge_freq": 2,
+   "nearest_family_below_thr": "transfers_to",
+   "nearest_sim": 0.515
+  },
+  {
+   "members": [
+    "is the finest grain for",
+    "is the natural kro grain"
+   ],
+   "size": 2,
+   "edge_freq": 2,
+   "nearest_family_below_thr": "has_property",
+   "nearest_sim": 0.539
+  },
+  {
+   "members": [
+    "is the first official match ball of",
+    "is the match ball for"
+   ],
+   "size": 2,
+   "edge_freq": 2,
+   "nearest_family_below_thr": "married_to",
+   "nearest_sim": 0.534
+  },
+  {
+   "members": [
+    "lag 2023 bei",
+    "projected gdp growth"
+   ],
+   "size": 2,
+   "edge_freq": 2,
+   "nearest_family_below_thr": "has_prerequisite",
+   "nearest_sim": 0.526
+  },
+  {
+   "members": [
+    "left largely unexplored",
+    "remain largely absent from"
+   ],
+   "size": 2,
+   "edge_freq": 2,
+   "nearest_family_below_thr": "born_in",
+   "nearest_sim": 0.501
+  },
+  {
+   "members": [
+    "lost amphibious vehicles during",
+    "was scuttled by its crews in"
+   ],
+   "size": 2,
+   "edge_freq": 2,
+   "nearest_family_below_thr": "participated_in",
+   "nearest_sim": 0.504
+  },
+  {
+   "members": [
+    "mainline where",
+    "mainlines where"
+   ],
+   "size": 2,
+   "edge_freq": 2,
+   "nearest_family_below_thr": "headquartered_in",
+   "nearest_sim": 0.529
+  },
+  {
+   "members": [
+    "only compounds because",
+    "would only fix"
+   ],
+   "size": 2,
+   "edge_freq": 2,
+   "nearest_family_below_thr": "made_of",
+   "nearest_sim": 0.531
+  },
+  {
+   "members": [
+    "opinions about brexit and rejoining eu",
+    "poll results"
+   ],
+   "size": 2,
+   "edge_freq": 2,
+   "nearest_family_below_thr": "nationality",
+   "nearest_sim": 0.52
+  },
+  {
+   "members": [
+    "ordered all leisure establishments to close on",
+    "ordered schools and universities closed"
+   ],
+   "size": 2,
+   "edge_freq": 2,
+   "nearest_family_below_thr": "died_in",
+   "nearest_sim": 0.532
+  },
+  {
+   "members": [
+    "overestimated biden's margin over trump",
+    "vastly underestimated trump's strength"
+   ],
+   "size": 2,
+   "edge_freq": 2,
+   "nearest_family_below_thr": "competes_outperforms",
+   "nearest_sim": 0.51
+  },
+  {
+   "members": [
+    "pleaded no contest to",
+    "was found guilty on all federal counts"
+   ],
+   "size": 2,
+   "edge_freq": 2,
+   "nearest_family_below_thr": "married_to",
+   "nearest_sim": 0.496
+  },
+  {
+   "members": [
+    "remains undefined in",
+    "renders no map"
+   ],
+   "size": 2,
+   "edge_freq": 2,
+   "nearest_family_below_thr": "fails_on",
+   "nearest_sim": 0.518
+  },
+  {
+   "members": [
+    "renders only the sub-graph of",
+    "renders the cross-domain connection for"
+   ],
+   "size": 2,
+   "edge_freq": 2,
+   "nearest_family_below_thr": "part_of",
+   "nearest_sim": 0.533
+  },
+  {
+   "members": [
+    "reported ceasefire violations in",
+    "reported that russian occupiers had"
+   ],
+   "size": 2,
+   "edge_freq": 2,
+   "nearest_family_below_thr": "participated_in",
+   "nearest_sim": 0.518
+  },
+  {
+   "members": [
+    "reported that most countries on the african continent will miss the goal of 70 per cent vaccination by the end of 2022",
+    "won less than half of voters who did not cast a vote in 2020 but did so in 2024"
+   ],
+   "size": 2,
+   "edge_freq": 2,
+   "nearest_family_below_thr": "has_prerequisite",
+   "nearest_sim": 0.455
+  },
+  {
+   "members": [
+    "scored his second goal in the 108th minute for",
+    "scored his third goal for"
+   ],
+   "size": 2,
+   "edge_freq": 2,
+   "nearest_family_below_thr": "born_in",
+   "nearest_sim": 0.476
+  },
+  {
+   "members": [
+    "souligne",
+    "t\u00e9moigne au"
+   ],
+   "size": 2,
+   "edge_freq": 2,
+   "nearest_family_below_thr": "born_in",
+   "nearest_sim": 0.499
+  },
+  {
+   "members": [
+    "suggested he was open to cutting",
+    "told lofgren that"
+   ],
+   "size": 2,
+   "edge_freq": 2,
+   "nearest_family_below_thr": "capable_of",
+   "nearest_sim": 0.537
+  },
+  {
+   "members": [
+    "told scholz that",
+    "told sund they would"
+   ],
+   "size": 2,
+   "edge_freq": 2,
+   "nearest_family_below_thr": "married_to",
+   "nearest_sim": 0.502
+  },
+  {
+   "members": [
+    "was part of the allied forces that landed in",
+    "were part of the allied forces that landed in"
+   ],
+   "size": 2,
+   "edge_freq": 2,
+   "nearest_family_below_thr": "participated_in",
+   "nearest_sim": 0.534
+  }
+ ]
+}

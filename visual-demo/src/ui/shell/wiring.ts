@@ -44,6 +44,8 @@ import { stopMomentum } from '@/interaction';
 import {
   createPerfSampler,
   readSavedViewFromHash,
+  registerCameraProbe,
+  registerFrameGate,
   registerIdleProbe,
   registerSettleGate,
   useAtlas,
@@ -82,6 +84,7 @@ export function useShellWiring(terrain: Terrain | null): void {
     lod,
     hover,
     selection,
+    selectionFramed,
     constellation,
     filters,
     dimmed,
@@ -94,6 +97,7 @@ export function useShellWiring(terrain: Terrain | null): void {
     lod: s.lod,
     hover: s.hover,
     selection: s.selection,
+    selectionFramed: s.selectionFramed,
     constellation: s.query.active?.constellation ?? null,
     filters: s.filters,
     /* THE WORLD IS NOT RESOLVED WHILE IT IS ARRIVING.
@@ -131,17 +135,22 @@ export function useShellWiring(terrain: Terrain | null): void {
   );
   useEffect(() => terrain?.setDimmed(dimmed), [terrain, dimmed]);
 
-  /* ---- frame a selection that arrived as a SET -------------------------- */
+  /* ---- frame a selection that arrived as a SET --------------------------
+   * ...UNLESS A LENS PUT IT THERE. A constellation arriving as a set is a
+   * result and deserves the camera; 162 nodes arriving because a date window
+   * was dragged is a filter, and flying to its bounding box is what turned the
+   * timeline into a machine for losing your place. `selectionFramed` is the
+   * store saying which of the two just happened.                            */
   const seen = useRef<string[]>([]);
   useEffect(() => {
     const arrived = selection.filter((id) => !seen.current.includes(id)).length;
     seen.current = [...selection];
-    if (terrain === null || arrived < 2 || isDescending()) return;
+    if (terrain === null || arrived < 2 || isDescending() || !selectionFramed) return;
     // Momentum outlives the hand. A fling still travelling cancels a flight
     // frame by frame and the camera simply never arrives.
     stopMomentum();
     void terrain.camera.fitTo([...selection], 96);
-  }, [terrain, selection]);
+  }, [terrain, selection, selectionFramed]);
 
   /* ---- the camera TARGET ------------------------------------------------
    * `camera` in the store is a target and a version counter, never a position.
@@ -169,9 +178,23 @@ export function useShellWiring(terrain: Terrain | null): void {
     if (terrain === null) return;
     registerSettleGate((ids) => settleIngest([...ids]));
     registerIdleProbe(() => terrain.camera.idle() && !isDescending() && motionIdle());
+    /* ---- the viewpoint, both directions -----------------------------------
+     * THE STORE'S `camera` IS A TARGET AND THE USER'S HAND IS NOT. A pan or a
+     * wheel-zoom moves the renderer's camera and writes nothing back, so a scene
+     * saved from the store field would save the last place the STORE pointed the
+     * camera — and `Back` would land somewhere the user never stood. The probe
+     * reads the live one; the framer is the same fit the descent uses, so a
+     * result and a rung arrive framed by one piece of code.                   */
+    registerCameraProbe(() => terrain.camera.get());
+    registerFrameGate(async (ids, pad) => {
+      stopMomentum();
+      await terrain.camera.fitTo([...ids], pad);
+    });
     return () => {
       registerSettleGate(null);
       registerIdleProbe(null);
+      registerCameraProbe(null);
+      registerFrameGate(null);
     };
   }, [terrain]);
 

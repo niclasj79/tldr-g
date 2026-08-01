@@ -49,6 +49,23 @@ import type {
   SigmaClass,
 } from '@/engine';
 
+/* -----------------------------------------------------------------------------
+ * COPY BLOCKS — one surface's prose per file.
+ *
+ * This deck was 1,600 lines and every surface in the product edited it, which
+ * made it the most contended file in the tree and the place where two unrelated
+ * revisions met. A block owns exactly one surface. The rule it serves is
+ * unchanged — no component authors a sentence — and it is now possible to revise
+ * the timeline's words without touching the receipt's.
+ * -------------------------------------------------------------------------- */
+import { a11y as a11yBlock } from '@/copy/blocks/a11y';
+import { guidance } from '@/copy/blocks/guidance';
+import { instruments } from '@/copy/blocks/instruments';
+import { intents as intentBlock } from '@/copy/blocks/intents';
+import { navigation } from '@/copy/blocks/navigation';
+import { search as searchBlock } from '@/copy/blocks/search';
+import { timeline as timelineBlock } from '@/copy/blocks/timeline';
+
 import type { KeyActionId, KeyGroup } from '@/state/keys';
 
 import type { ActionCopy, FailureCopy, RowCopy, StateCopy, TermCopy } from '@/copy/types';
@@ -151,6 +168,8 @@ const topbar = {
     tip: 'Real hit and lookup counters on the client’s response cache, keyed by bake. This is a different counter from the engine’s own render cache on the receipt; the two count different work.',
   },
   panels: { label: 'Panels' },
+  /** The segmented workspace switch that replaced the five equal-rank toggles. */
+  lenses: { label: 'Workspace' },
   help: { label: 'Help', title: 'Keyboard map and glossary' } satisfies ActionCopy,
   close: { label: 'Close corpus', title: 'Unload the corpus and return to the empty state' } satisfies ActionCopy,
 } as const;
@@ -515,6 +534,8 @@ const trust = {
   },
 
   verify: {
+    /** The fold this sits behind in the evidence trail. Plain name, technical second. */
+    title: 'Signature',
     action: { label: 'Verify', title: 'Recompute the payload hash and check the signature, locally' } satisfies ActionCopy,
     note: 'Verification runs locally, even against a live engine. You do not ask the party that produced a receipt whether the receipt is good.',
     checkedAt: { label: 'Checked', tip: 'When this verification was performed.' } satisfies RowCopy,
@@ -1040,6 +1061,8 @@ const search = {
  * ========================================================================== */
 
 const help = {
+  /** The control in the top bar. A word, not a glyph — `?` was a key hint, not a name. */
+  label: 'Help',
   title: 'How to read this',
   subtitle: product.thesis,
   sections: {
@@ -1069,27 +1092,32 @@ const help = {
 
 const keyboard = {
   title: 'Keyboard',
-  note: 'Eleven bindings, three groups, every one of them a verb the product performs.',
+  note: 'Four groups, and the groups are the product: move around, choose a workspace, read the result, ask something.',
   groups: {
-    navigate: 'Navigate',
-    panels: 'Panels',
-    query: 'Query',
+    navigate: 'Move around',
+    lenses: 'Workspaces',
+    result: 'Result detail',
+    query: 'Ask',
   } satisfies Record<KeyGroup, string>,
   /** Per action. Imperative, lowercase-first, no period — matches the map in state/keys. */
   actions: {
-    'rung-continent': 'jump to the continent rung',
-    'rung-island': 'jump to the island rung',
-    'rung-asset': 'jump to the asset rung',
-    'rung-passage': 'jump to the passage rung',
-    ascend: 'ascend one rung',
-    'clear-focus': 'clear focus and selection',
-    atlas: 'Atlas Mode — all four rungs at once',
-    inspector: 'Inspector',
-    receipt: 'Provenance — the render trace',
-    timeline: 'Timeline',
-    analyst: 'Analyst Mode',
-    help: 'this list, and the glossary',
-    search: 'command search',
+    'rung-continent': 'detail level: continents',
+    'rung-island': 'detail level: islands',
+    'rung-asset': 'detail level: documents',
+    'rung-passage': 'detail level: passages',
+    ascend: 'up one level',
+    back: 'back to the previous view',
+    'return-to-result': 'back to the result',
+    home: 'home — the whole map, nothing held',
+    'clear-focus': 'clear the selection',
+    'lens-explore': 'Explore — the map and its detail levels',
+    'lens-timeline': 'Timeline — the same map, read by date',
+    'lens-analyze': 'Analyze — filters and engine internals',
+    'tab-answer': 'Answer — the claim and how it was reached',
+    'tab-evidence': 'Evidence trail — the sources and the receipt',
+    'tab-inspect': 'Inspect — whatever is selected',
+    help: 'help, and the glossary',
+    search: 'search questions, places and commands',
     'run-query': 'render the staged question',
   } satisfies Record<KeyActionId, string>,
 } as const;
@@ -1402,11 +1430,232 @@ const walkthrough = {
   ],
 } as const;
 
+/* =============================================================================
+ * 24. THE WORKSPACE SPINE — lenses, result tabs, navigation, and the failure
+ *     remedies that replaced one button called `Recover`
+ * -----------------------------------------------------------------------------
+ * THE DUAL-LAYER RULE, AND WHY IT IS NOT DUMBING DOWN.
+ *
+ * This product's vocabulary is accurate and expensive: provenance, by
+ * construction, bake, latent, LOD, σ-class, strait, admitted, withheld,
+ * deterministic mode. Every one of them is the right word, and a first-time
+ * reader meets all ten before they have asked anything.
+ *
+ * So the rule is ORDER, not replacement: the plain-language name leads, the
+ * technical term follows it, and the technical term is never deleted — it is
+ * what the receipt says, what the engine calls it, and what you would search
+ * for. `Evidence trail · Provenance`, not `Evidence trail` and not `Provenance`.
+ * A reader who does not need the second half stops reading at the interpunct; a
+ * reader who does has been taught the word in place, once, next to the thing it
+ * names.
+ * ========================================================================== */
+
+const lenses = {
+  explore: {
+    label: 'Explore',
+    short: 'The map, and the level of detail you are reading it at.',
+    long:
+      'Explore is the resting workspace: the terrain, the four detail levels, and whatever you have selected. Every other workspace is a way of looking at this same map, and returns you to it.',
+  } satisfies TermCopy,
+  timeline: {
+    label: 'Timeline',
+    short: 'The same map, read by date.',
+    long:
+      'Timeline puts the dated claims on an axis and highlights where in the terrain they happened. It does not select or re-frame anything on its own — drag a window to preview a period, then apply it if it is the period you want.',
+  } satisfies TermCopy,
+  analyze: {
+    label: 'Analyze',
+    short: 'Filters, engine internals, and the numbers behind the picture.',
+    long:
+      'Analyze is the expert workspace: which relation classes are stroked, what the truth gate rejected, what the renderer is spending per frame. It replaces the result detail in the rail rather than being appended below it.',
+  } satisfies TermCopy,
+} as const;
+
+const tabs = {
+  /** Section marker over the three. Not a heading — the tabs name themselves. */
+  label: 'Result detail',
+  answer: {
+    label: 'Answer',
+    short: 'The claim, its confidence, and the chain of hops that carried it.',
+    long:
+      'What the engine concluded, how confident it is and why, the route it took through the graph, and an independent re-derivation of that route.',
+  } satisfies TermCopy,
+  evidence: {
+    label: 'Evidence',
+    short: 'Every source the answer stands on, and the signed receipt over them.',
+    long:
+      'The passages the answer is built from, grouped by the hop each one supports, plus the render trace: what was spent, what was admitted, what was connected and deliberately left out, and the signature covering all of it.',
+    /** The technical term, rendered after the plain one wherever there is room. */
+    technical: 'Provenance',
+  } satisfies TermCopy & { technical: string },
+  inspect: {
+    label: 'Inspect',
+    short: 'Whatever is selected on the map.',
+    long:
+      'The reading of one node: what it is, what it is joined to, how far it sits from the answer, and — for a passage — the verbatim source bytes with their hash.',
+  } satisfies TermCopy,
+  /** Shown on the Inspect tab when nothing is held. Not an error; an invitation. */
+  inspectEmpty: 'Nothing is selected. Click a node on the map, or a name in the answer, to read it here.',
+} as const;
+
+/**
+ * THE EVIDENCE TRAIL'S OWN VERBS.
+ *
+ * Three, and the split between them is the fix. `Evidence 3` used to be one
+ * control that counted three sources and opened the first — while also changing
+ * the detail level, the scope, the breadcrumb and the camera. "Where is this"
+ * and "what does it say" are different questions; only one of them should cost
+ * you your place.
+ */
+const evidence = {
+  read: { label: 'Read source', title: 'Open the document and highlight this span. Leaves this list — Back returns.' } satisfies ActionCopy,
+  locate: { label: 'Locate on map', title: 'Frame this passage on the terrain without leaving this list' } satisfies ActionCopy,
+  compare: {
+    label: 'Compare',
+    stop: 'Stop comparing',
+    title: 'Show this hop’s sources side by side. Two independent documents for one claim is the strongest thing this corpus can say.',
+  },
+  /** The two folds under the sources. A reason to open, not a second title. */
+  receiptFold: 'What this answer cost, and what it left out',
+  signatureFold: 'Check it yourself',
+  unattached: 'Paid for, not placed on the path',
+  unattachedTip:
+    'The budget spent on these quotes and this view cannot attach them to a hop. That is a fact about the render, so it is shown rather than tidied away.',
+} as const;
+
+const nav = {
+  label: 'Navigation',
+  back: { label: 'Back', title: 'Return to the view this one replaced' } satisfies ActionCopy,
+  /** With a place name from the engine. `Back to Tollstrand 2`. */
+  backTo: 'Back to',
+  up: { label: 'Up', title: 'Up one detail level' } satisfies ActionCopy,
+  home: { label: 'Home', title: 'The whole map at island level, nothing held. The answer is kept.' } satisfies ActionCopy,
+  toResult: { label: 'Back to result', title: 'Return to the view the answer was framed in' } satisfies ActionCopy,
+  /** The scene banner after a render displaced an exploration. */
+  displaced: 'This replaced the view you were in.',
+} as const;
+
+const result = {
+  /** The pinned header over every tab. */
+  asked: 'Asked',
+  askedTip: 'The question this result answers. It stays here so the answer is never read without it.',
+  edit: { label: 'Edit', title: 'Put this question back in the composer' } satisfies ActionCopy,
+  rerun: { label: 'Rerun', title: 'Render this question again' } satisfies ActionCopy,
+  /** The one-line trust state beside the answer, above every tab. */
+  trust: {
+    ok: 'Independently re-derived and matching',
+    pending: 'Re-deriving the path…',
+    notAChain: 'Not a single route — re-derivation does not apply',
+    noRoute: 'No route through admitted relations',
+    /** The state the whole taxonomy exists for. */
+    differs: 'Two surfaces of the engine disagree about this answer',
+    untrusted: 'This result is not trustworthy',
+    untrustedBody:
+      'An independent re-traversal of the graph between this answer’s own endpoints returned a different route than the receipt records. Until that is resolved the confidence figure and the by-construction check below are withdrawn — they were measured over a claim the engine now contradicts.',
+  },
+} as const;
+
+/**
+ * THE REMEDIES, ONE SET PER FAILURE KIND.
+ *
+ * `Recover` used to be the only button on every failure. It did not say what it
+ * would do, and on an integrity disagreement what it actually did was clear the
+ * alarm and leave the contradicted answer on screen still wearing a green
+ * by-construction badge — the interface vouching for a payload it had just
+ * disproved. Every verb below names its own consequence, and not one of them is
+ * "stop mentioning this".
+ */
+const remedies = {
+  classes: {
+    'no-answer': {
+      label: 'No answer found',
+      short: 'The engine looked and found nothing to build an answer from.',
+      long:
+        'This is not a fault. The question named something the corpus does not join, or joins only through claims the truth gate rejected. Nothing is broken and nothing needs retrying — the next move is a different question.',
+    } satisfies TermCopy,
+    render: {
+      label: 'Render failed',
+      short: 'One render did not complete.',
+      long:
+        'The corpus, the layout and the session are intact; a single request did not finish. The same question is worth asking again.',
+    } satisfies TermCopy,
+    integrity: {
+      label: 'Integrity disagreement',
+      short: 'Two surfaces of the engine disagree about the same claim.',
+      long:
+        'The result on screen is still there and is no longer trustworthy. This is the one failure that cannot be dismissed: look at the discrepancy, render it again, or discard the result.',
+    } satisfies TermCopy,
+    system: {
+      label: 'System failure',
+      short: 'The transport, the runtime or this interface failed.',
+      long:
+        'Something outside the render broke. The session may not be intact, so the remedies restore the connection or reset the instrument rather than re-asking a question.',
+    } satisfies TermCopy,
+  },
+  actions: {
+    'revise-question': { label: 'Revise the question', title: 'Put it back in the composer to edit' } satisfies ActionCopy,
+    'pick-sample': { label: 'Pick a verified question', title: 'Choose one of the corpus’s own set-up questions' } satisfies ActionCopy,
+    retry: { label: 'Retry', title: 'Render this question again' } satisfies ActionCopy,
+    'inspect-discrepancy': { label: 'Inspect the discrepancy', title: 'Show both routes and where they diverge' } satisfies ActionCopy,
+    rerun: { label: 'Render again', title: 'Re-run the question and re-check the route' } satisfies ActionCopy,
+    'discard-result': { label: 'Discard the result', title: 'Remove this answer and its receipt from the screen' } satisfies ActionCopy,
+    reconnect: { label: 'Reconnect', title: 'Return to the last good state and try the engine again' } satisfies ActionCopy,
+    reset: { label: 'Reset the instrument', title: 'Close the corpus and start from the empty state' } satisfies ActionCopy,
+  },
+  /** Shown once, under the remedies, when the code is one this build has no name for. */
+  unclassified:
+    'This build has no taxonomy entry for that code, so it is treated as a system failure — the most conservative reading.',
+} as const;
+
+/**
+ * PLAIN NAME FIRST, TECHNICAL TERM SECOND.
+ *
+ * One table, so the pairing cannot drift between the six places each of these
+ * words appears. `plain` leads in every first-use surface; `technical` is what
+ * the receipt, the engine and the glossary call it and is never dropped.
+ */
+const vocabulary = {
+  provenance: { plain: 'Evidence trail', technical: 'Provenance' },
+  byConstruction: { plain: 'Verified sample answer', technical: 'By construction' },
+  lod: { plain: 'Detail level', technical: 'LOD' },
+  strait: { plain: 'Cross-cluster connection', technical: 'Strait' },
+  withheld: { plain: 'Hidden by policy', technical: 'Withheld' },
+  admitted: { plain: 'Allowed into the answer', technical: 'Admitted' },
+  latent: { plain: 'Known, not resolved', technical: 'Latent' },
+  bake: { plain: 'Frozen layout', technical: 'Bake' },
+  sigma: { plain: 'Relation class', technical: 'σ-class' },
+  deterministic: { plain: 'Same answer every time', technical: 'Deterministic mode' },
+  quarantined: { plain: 'Rejected claim', technical: 'Quarantined' },
+} as const;
+
 export const COPY = {
+  /* ---- blocks: one surface per file, merged here ---------------------- */
+  /** The timeline lens: scope, window, the event list. */
+  timelineLens: timelineBlock,
+  /** Assistive-technology equivalents: the structured twin of the terrain. */
+  a11yTwin: a11yBlock,
+  /** Onboarding, help, and the walkthrough's task-based steps. */
+  guidance,
+  /** The HUD, the empty state, and the failure band. */
+  instruments,
+  /** Per-intent answer rendering: compare tables, event cards, grouped findings. */
+  intentViews: intentBlock,
+  /** Breadcrumb, rung selector, and the rung ledger. */
+  navigation,
+  /** Command search and its visible affordance. */
+  searchSurface: searchBlock,
+
   walkthrough,
   product,
   provenance,
   topbar,
+  lenses,
+  tabs,
+  evidence,
+  nav,
+  result,
+  remedies,
+  vocabulary,
   command,
   intents,
   modes,

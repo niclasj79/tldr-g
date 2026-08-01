@@ -86,7 +86,7 @@ import {
 } from '@/state/savedView';
 import { matchBinding } from '@/state/keys';
 import type { KeyEventLike } from '@/state/keys';
-import { awaitHold, runSettleGate, track } from '@/state/bridge';
+import { awaitHold, readViewpoint, runFrameGate, runSettleGate, track } from '@/state/bridge';
 import type { Checkpoint } from '@/state/bridge';
 import type { PerfReadout } from '@/state/perf';
 
@@ -100,6 +100,100 @@ export interface RungStackEntry {
   id: string;
   label: string;
 }
+
+/**
+ * THE WORKSPACE LENSES. Mutually exclusive, because they are PLACES.
+ *
+ * The product used to carry five independent switches in the top bar — Atlas,
+ * Inspector, Provenance, Timeline, Analyst — at equal rank, any subset of which
+ * could be lit at once. They are not equal-rank things. Two of them are
+ * workspaces you enter, one is a lens over the same data, one is detail about a
+ * result and one is detail about a selection; presenting them as five peers made
+ * managing the instrument the user's job before answering their question was.
+ *
+ * A lens is where you are working. You are in exactly one at a time, the way you
+ * are on exactly one rung at a time, and switching is a move rather than a
+ * toggle. `Explore` is the resting lens and the one everything returns to.
+ */
+export type Lens = 'explore' | 'timeline' | 'analyze';
+
+/** Every lens, in the order the switch renders them. */
+export const LENSES: readonly Lens[] = Object.freeze(['explore', 'timeline', 'analyze'] as const);
+
+/**
+ * THE RESULT TABS. Contextual detail about the answer on screen, one at a time.
+ *
+ * The rail used to stack every one of these vertically: in one measured state it
+ * was 6,409px of column against a 632px viewport, with the analyst controls
+ * several screens below a switch that had just been lit to reveal them. A column
+ * that long is a document, and a document is not an interface — you cannot see
+ * two of its sections at once anyway, so stacking them buys nothing and costs the
+ * ability to find any of them.
+ *
+ *   answer     what the engine claims, how confident it is, and how it got there
+ *   evidence   the receipt, the sources, and the signature over both
+ *   inspect    whatever node is selected
+ */
+export type ResultTab = 'answer' | 'evidence' | 'inspect';
+
+/**
+ * WHAT THE TIMELINE IS A TIMELINE OF.
+ *
+ * Ordered by how much of the world each one admits, because that is the order
+ * the control offers them in and broadening should always be the deliberate
+ * step. `answer` is the default whenever there is a result: an alternate lens
+ * preserves the current answer's scope unless the user explicitly widens it.
+ */
+export type TimelineScope = 'answer' | 'selection' | 'corpus';
+
+/** Every timeline scope, in widening order. */
+export const TIMELINE_SCOPES: readonly TimelineScope[] = Object.freeze([
+  'answer',
+  'selection',
+  'corpus',
+] as const);
+
+/** Every result tab, in rail order. */
+export const RESULT_TABS: readonly ResultTab[] = Object.freeze(['answer', 'evidence', 'inspect'] as const);
+
+/**
+ * A SAVED EXPLORATION SCENE — everything a render or a drill-down displaces.
+ *
+ * The failure this exists to end: after opening evidence at the passage rung, a
+ * new question rendered while the breadcrumb still read the old document and the
+ * old passage scope, so the new answer arrived inside an unrelated previous
+ * viewpoint. A render is a SCENE TRANSITION, not a payload swap — it deserves the
+ * same treatment a rung descent gets: save where you were, go somewhere
+ * deliberate, and offer the way back.
+ */
+export interface SceneSnapshot {
+  /**
+   * THE ENGINE'S OWN NAME FOR THE PLACE — a node label, or the question that was
+   * on screen. Never authored prose: the store holds no copy, and a return
+   * control that says `Back to Tollstrand 2` is naming something the engine
+   * named. Empty when the place has no name (the unscoped world), in which case
+   * the control falls back to the deck's own wording.
+   */
+  label: string;
+  rung: Rung;
+  stack: RungStackEntry[];
+  selection: string[];
+  focus: string | null;
+  /** The LIVE camera at the moment of capture, read off the renderer. May be null. */
+  viewpoint: { x: number; y: number; zoom: number } | null;
+  lens: Lens;
+  tab: ResultTab;
+}
+
+/**
+ * How deep the back stack goes.
+ *
+ * Not unlimited, and the reason is the same one that keeps `saveView` off
+ * `history.pushState`: a reverse action nobody can predict the destination of is
+ * a reverse action nobody uses. Eight is more than any observed session needed
+ * and short enough that "Back" always means somewhere you remember being.
+ */
+export const HISTORY_MAX = 8;
 
 /** Every panel that can be open. Booleans, because a panel is either there or it is not. */
 export interface AtlasUi {
@@ -201,6 +295,65 @@ export interface AtlasData {
   savedView: string | null;
   /** ADDITIVE. The result of the last `explainPath()`. */
   explain: AtlasExplain | null;
+
+  /* ---- ADDITIVE (the workspace spine: lens -> result -> tab -> history) --- */
+  /** ADDITIVE. Which workspace the user is in. Exactly one, always. */
+  lens: Lens;
+  /** ADDITIVE. Which detail surface the rail is showing. Exactly one, always. */
+  tab: ResultTab;
+  /**
+   * ADDITIVE. True once the user has chosen a tab BY HAND for the current result.
+   *
+   * This is the whole of "respect an intentional close for reruns of the same
+   * result, but reopen it for a new result": a new `query_id` clears the pin and
+   * the rail lands on Evidence again, while a re-run of the question you are
+   * already reading leaves you where you put yourself.
+   */
+  tabPinned: boolean;
+  /** ADDITIVE. Scenes displaced by a render, a drill-down or a lens. Newest last. */
+  history: SceneSnapshot[];
+  /**
+   * ADDITIVE. The scene the current result was framed in.
+   *
+   * `Return to result` aims here, so a drill-down four rungs deep always has one
+   * move back to the answer that sent it there — which is what makes descending
+   * into evidence safe enough to do.
+   */
+  resultScene: SceneSnapshot | null;
+
+  /* ---- ADDITIVE (the timeline lens: one window, two views over it) -------- */
+  /**
+   * ADDITIVE. What the timeline is a timeline OF.
+   *
+   * It used to be the whole corpus, always, and it announced that as
+   * `200 shown / 2,168 not shown` — a sample of an unbounded population, offered
+   * as if it were the population. Scope defaults to the current answer, because
+   * a lens over a result is a lens over THAT result unless the user broadens it.
+   */
+  timelineScope: TimelineScope;
+  /**
+   * ADDITIVE. The brushed window, as two fractions of the axis. `null` is "the
+   * whole span". SHARED, because the axis over the terrain and the event list in
+   * the rail are two views of one window and two copies would drift.
+   */
+  timelineWindow: { a: number; b: number } | null;
+  /**
+   * ADDITIVE. True once the user has APPLIED the window rather than previewed it.
+   *
+   * The old dock applied on `pointerup`: dragging one handle selected 162 nodes
+   * out of a 200-event sample and reframed the map into a blob, as a side effect
+   * of looking. Dragging is a preview now and applying is a press.
+   */
+  timelineApplied: boolean;
+
+  /**
+   * ADDITIVE. False when the selection was set by a LENS rather than by a person.
+   *
+   * The shell frames any selection that arrives as a set, which is right for a
+   * constellation and wrong for a date window — it is what turned "show me this
+   * period" into "throw the camera at 162 nodes". The wiring reads this.
+   */
+  selectionFramed: boolean;
 }
 
 /** THE ACTIONS. Names are fixed by the module contract. */
@@ -245,6 +398,67 @@ export interface AtlasActions {
   unload(to: 'FIRST-RUN' | 'EMPTY'): void;
   /** ADDITIVE. Dispatch a keyboard event through `KEYMAP`. Returns true if it was consumed. */
   handleKey(event: KeyEventLike): boolean;
+
+  /* ---- ADDITIVE (the workspace spine) --------------------------------- */
+  /**
+   * ADDITIVE. Enter a workspace lens.
+   *
+   * Saves the viewpoint on the way out of Explore and restores it on the way
+   * back, because a lens that reframes the map and then hands it back somewhere
+   * else has silently spent the user's orientation to show them a date axis.
+   */
+  setLens(lens: Lens): Promise<void>;
+  /**
+   * ADDITIVE. Show one result surface.
+   *
+   * @param opts.pin the user chose this by hand, so a re-run of the SAME result
+   *        must not move them off it. A new result clears the pin.
+   */
+  setTab(tab: ResultTab, opts?: { pin?: boolean }): void;
+  /** ADDITIVE. Capture the current scene onto the back stack, under a human label. */
+  pushScene(label: string): void;
+  /** ADDITIVE. Restore the most recently displaced scene. No-op on an empty stack. */
+  back(): Promise<void>;
+  /** ADDITIVE. The whole world, unscoped, at the island rung. The one guaranteed landmark. */
+  home(): Promise<void>;
+  /** ADDITIVE. Return to the scene the current result was framed in. */
+  returnToResult(): Promise<void>;
+  /** ADDITIVE. Frame a set of node ids through the renderer. Used by the result transition. */
+  frameIds(ids: readonly string[], paddingPx?: number): Promise<void>;
+  /**
+   * ADDITIVE. Throw the current result away.
+   *
+   * The remedy an INTEGRITY failure needs and the one the product did not have.
+   * When an independent re-traversal contradicts the receipt, the honest set of
+   * moves is look / re-render / discard — and `Recover` was none of the three: it
+   * cleared the alarm and left the contradicted answer on screen wearing a green
+   * badge. This removes the ANSWER, not the warning about it.
+   */
+  discardResult(): void;
+  /**
+   * ADDITIVE. Hold a node WITHOUT changing what the rail is showing.
+   *
+   * `selectNode` is a person pointing at something, and it takes them to the
+   * reading of what they pointed at — which is right for the map and wrong for a
+   * list. "Locate on map" in the evidence trail must light the passage and leave
+   * the reader in the list they are working through; without this it either
+   * moved the camera to a node that was not lit, or lit it and threw the list
+   * away. Neither is what the verb says.
+   *
+   * Also does not fly the camera, for the same reason a date window does not:
+   * the caller frames deliberately, or does not.
+   */
+  highlightNode(id: string | null): void;
+
+  /* ---- ADDITIVE (the timeline lens) ------------------------------------ */
+  /** ADDITIVE. Widen or narrow what the timeline covers, and re-fetch it. */
+  setTimelineScope(scope: TimelineScope): Promise<void>;
+  /** ADDITIVE. Move the brush. A PREVIEW — nothing is selected and nothing moves. */
+  setTimelineWindow(window: { a: number; b: number } | null): void;
+  /** ADDITIVE. Commit the previewed window: hold the nodes in it, without re-framing. */
+  applyTimelineWindow(): void;
+  /** ADDITIVE. Whole span, nothing held. The reverse of `applyTimelineWindow`. */
+  resetTimelineWindow(): void;
 }
 
 export type AtlasState = AtlasData & AtlasActions;
@@ -312,21 +526,89 @@ function computeLod(s: AtlasData): Record<string, LodState> {
 /**
  * The endpoints of an answer path, when the answer IS a chain.
  *
- * A chain visits n+1 distinct nodes over n hops and has exactly two nodes that
- * appear once. A `summarize` answer is a bundle of hops around one subject and
- * has neither property — which is a fact about the answer, not a failure, and
- * `explainPath` reports it as `not-a-chain` rather than inventing two ends.
+ * A `summarize` answer is a bundle of hops around one subject and is not a
+ * chain — which is a fact about the answer, not a failure, and `explainPath`
+ * reports it as `not-a-chain` rather than inventing two ends.
+ *
+ * -----------------------------------------------------------------------------
+ * WHY THE DEGREE TEST WAS NOT ENOUGH, AND WHAT IT COST
+ * -----------------------------------------------------------------------------
+ * This used to accept any path with n+1 distinct nodes and exactly two nodes of
+ * degree one. THAT TEST CANNOT TELL A CHAIN FROM A FORK. Take the two shapes at
+ * n = 2:
+ *
+ *     chain   a --> b --> c        degrees  a:1  b:2  c:1
+ *     fork    a --> r <-- b        degrees  a:1  r:2  b:1
+ *
+ * Identical signatures. The difference is DIRECTION: in a chain the middle node
+ * is the target of one hop and the SOURCE of the next; in a fork it is the
+ * target of both.
+ *
+ * The cost of missing that was the worst defect in the product. The corpus's own
+ * curated `compare` question is a fork by construction — two subjects joined by
+ * one shared regulator — and `buildStagedQueries()` says so in as many words
+ * ("the constellation should be a fork, not a chain"). This function called it a
+ * chain, handed `[a, b]` to `GET /graph/path`, and that traversal correctly
+ * returned a DIFFERENT route between two nodes that were never the ends of
+ * anything. The verdict came back `differs`, the app degraded with
+ * `PATH_DISAGREEMENT`, and a demo question shipped as a trust failure — while
+ * the engine had been right the whole way through.
+ *
+ * So the test is now directional continuity over the engine's own hop order. A
+ * fork reports `not-a-chain`, which is true, which is what the copy already
+ * said, and which is not an error.
  */
 function chainEndpoints(path: readonly PathStep[]): [string, string] | null {
   if (path.length === 0) return null;
+
+  /* ---- 1. IS IT A SIMPLE PATH AT ALL? (undirected) ----------------------
+     The hops do NOT arrive in traversal order — `index` is the order the render
+     assembled them, and the bridge answer's two hops arrive as
+     `Tollstrand -> Bruntorp` then `Rimsdal -> Tollstrand`, which is one chain
+     written middle-first. So the shape test is undirected: every node of degree
+     at most two, exactly two of degree one, and n+1 nodes over n hops. */
   const degree = new Map<string, number>();
   for (const step of path) {
     degree.set(step.from_id, (degree.get(step.from_id) ?? 0) + 1);
     degree.set(step.to_id, (degree.get(step.to_id) ?? 0) + 1);
   }
   if (degree.size !== path.length + 1) return null;
+  if ([...degree.values()].some((n) => n > 2)) return null;
   const ends = [...degree.entries()].filter(([, n]) => n === 1).map(([id]) => id);
-  return ends.length === 2 ? [ends[0], ends[1]] : null;
+  if (ends.length !== 2) return null;
+
+  /* ---- 2. IS IT A CHAIN, OR A FORK WEARING A CHAIN'S DEGREE SEQUENCE? ----
+     This is the half that was missing, and its absence is what shipped a curated
+     question as a trust failure. At n = 2 these three shapes are INDISTINGUISHABLE
+     by degree alone:
+
+         chain       r --> t --> b      t: in 1, out 1
+         fork        a <-- r --> b      r: in 0, out 2
+         collider    a --> r <-- b      r: in 2, out 0
+
+     The corpus's own `compare` question is a collider by construction — two
+     subjects joined by one shared regulator, and `buildStagedQueries()` says so
+     in as many words ("the constellation should be a fork, not a chain"). The
+     old degree test called it a chain, handed its two outer nodes to
+     `GET /graph/path`, and that traversal correctly returned a DIFFERENT route
+     between two nodes that were never the ends of anything. Verdict: `differs`.
+     The app raised `PATH_DISAGREEMENT` — the loudest thing it can say — over an
+     answer the engine had got right at every step.
+
+     An INTERNAL node of a chain is passed THROUGH: exactly one hop arrives and
+     exactly one leaves. A fork's or a collider's centre is not. */
+  const inDeg = new Map<string, number>();
+  const outDeg = new Map<string, number>();
+  for (const step of path) {
+    outDeg.set(step.from_id, (outDeg.get(step.from_id) ?? 0) + 1);
+    inDeg.set(step.to_id, (inDeg.get(step.to_id) ?? 0) + 1);
+  }
+  for (const [id, n] of degree) {
+    if (n !== 2) continue; // an END is allowed to be one-directional
+    if ((inDeg.get(id) ?? 0) !== 1 || (outDeg.get(id) ?? 0) !== 1) return null;
+  }
+
+  return [ends[0], ends[1]];
 }
 
 function sameEdgeSet(a: readonly PathStep[], b: readonly PathStep[]): boolean {
@@ -338,6 +620,23 @@ function sameEdgeSet(a: readonly PathStep[], b: readonly PathStep[]): boolean {
 /** Node kinds that sit on the containment spine. Entities and sources do not. */
 function isSpineNode(node: GraphNode): node is Extract<GraphNode, { kind: Rung }> {
   return node.kind !== 'entity' && node.kind !== 'source';
+}
+
+/**
+ * What to CALL the place the user is standing in, using only names the engine
+ * gave us.
+ *
+ * Order of preference: the thing they are holding, then the scope they are
+ * inside, then nothing. The last case is not a failure — the whole world at the
+ * island rung genuinely has no name, and inventing one ("Overview") would be the
+ * store authoring prose, which is the one thing it does not do.
+ */
+function placeName(s: Pick<AtlasData, 'stack' | 'focus' | 'view'>): string {
+  if (s.focus !== null) {
+    const held = s.view?.nodes.find((n) => n.id === s.focus);
+    if (held !== undefined) return held.label;
+  }
+  return s.stack.length === 0 ? '' : s.stack[s.stack.length - 1].label;
 }
 
 /* =============================================================================
@@ -446,6 +745,68 @@ export const useAtlas = create<AtlasState>()((set, get) => {
     return fetchView(rung, parentId, get().query.active);
   };
 
+  /* ---- the navigation stack --------------------------------------------- *
+   * Three tiny functions, and between them they are the whole of "every
+   * navigation action has a visible reverse action".                        */
+
+  /** Everything the current place consists of, including where the camera is standing. */
+  const snapshot = (label: string): SceneSnapshot => {
+    const s = get();
+    return {
+      label,
+      rung: s.rung,
+      stack: [...s.stack],
+      selection: [...s.selection],
+      focus: s.focus,
+      viewpoint: readViewpoint(),
+      lens: s.lens,
+      tab: s.tab,
+    };
+  };
+
+  /**
+   * Put a scene back on screen.
+   *
+   * The order matters and is not arbitrary: the VIEW is fetched before anything
+   * is committed, so a failed fetch leaves the user where they are rather than
+   * half-way between two places. The camera is moved LAST, after the payload it
+   * is being pointed at exists.
+   */
+  const restore = async (scene: SceneSnapshot): Promise<void> => {
+    try {
+      const parentId = scene.stack.length === 0 ? null : scene.stack[scene.stack.length - 1].id;
+      const view = await loadRung(scene.rung, parentId);
+      commit((s) => ({
+        rung: scene.rung,
+        stack: [...scene.stack],
+        view,
+        selection: [...scene.selection],
+        focus: scene.focus,
+        hover: null,
+        selectionFramed: true,
+        lens: scene.lens,
+        tab: scene.tab,
+        /* THE DERIVED FLAGS TRAVEL WITH THE LENS. A scene captured while the
+           timeline was open restores `lens: 'timeline'`, and leaving `ui` behind
+           would put the primary and its derivation out of step — which is
+           exactly the class of drift the lens was introduced to end. Restoring
+           both from one source is the only version of this that cannot rot. */
+        ui: { ...s.ui, timeline: scene.lens === 'timeline', analyst: scene.lens === 'analyze' },
+      }));
+      if (scene.viewpoint !== null) {
+        get().setCamera(scene.viewpoint.x, scene.viewpoint.y, scene.viewpoint.zoom);
+      }
+    } catch (err) {
+      fail(err);
+    }
+  };
+
+  /** Push a scene, keeping the stack short enough that `Back` is still predictable. */
+  const push = (label: string): void => {
+    const scene = snapshot(label);
+    set((s) => ({ history: [...s.history, scene].slice(-HISTORY_MAX) }));
+  };
+
   return {
     /* ===================================================================== *
      * INITIAL DATA
@@ -489,6 +850,15 @@ export const useAtlas = create<AtlasState>()((set, get) => {
     ingestedIds: [],
     savedView: null,
     explain: null,
+    lens: 'explore',
+    tab: 'answer',
+    tabPinned: false,
+    history: [],
+    resultScene: null,
+    timelineScope: 'answer',
+    timelineWindow: null,
+    timelineApplied: false,
+    selectionFramed: true,
 
     /* ===================================================================== *
      * LIFECYCLE
@@ -623,6 +993,18 @@ export const useAtlas = create<AtlasState>()((set, get) => {
         ingestedIds: [],
         explain: null,
         savedView: null,
+        /* THE HISTORY GOES WITH THE CORPUS. Every scene on the stack names a
+           rung, a scope and a selection inside a world that no longer exists;
+           offering `Back` to one of them would be offering a door onto nothing. */
+        lens: 'explore',
+        tab: 'answer',
+        tabPinned: false,
+        history: [],
+        resultScene: null,
+        timelineScope: 'answer',
+        timelineWindow: null,
+        timelineApplied: false,
+        selectionFramed: true,
       }));
     },
 
@@ -746,6 +1128,11 @@ export const useAtlas = create<AtlasState>()((set, get) => {
               console.error(`[state/store] openPassage("${passageId}") — that node is a ${node.kind}.`);
               return;
             }
+            /* READING A SOURCE IS A JOURNEY, SO IT LEAVES A WAY BACK.
+               This action changes the rung, the scope, the selection and the
+               camera in one step — the single most displacing move in the
+               product — and until now it left nothing behind. */
+            push(placeName(get()));
             const stack = await ancestorStack(node.asset_id);
             const view = await loadRung('passage', node.asset_id);
             commit((s) => ({
@@ -754,6 +1141,12 @@ export const useAtlas = create<AtlasState>()((set, get) => {
               view,
               selection: [passageId],
               focus: passageId,
+              /* WHAT YOU CAME TO READ IS WHAT THE RAIL SHOWS. Landing on the
+                 passage rung with the rail still on the receipt is the map
+                 changing under a panel that did not. */
+              tab: 'inspect',
+              tabPinned: true,
+              lens: 'explore',
               ui: { ...s.ui, inspector: true },
             }));
           } catch (err) {
@@ -788,23 +1181,140 @@ export const useAtlas = create<AtlasState>()((set, get) => {
       if (text.length === 0) return;
       await track(
         (async () => {
+          const before = get();
+          /* A RENDER IS A SCENE TRANSITION, NOT A PAYLOAD SWAP.
+             The bug this ends: after drilling into evidence at the passage rung,
+             a new question rendered while the breadcrumb still named the old
+             document and the old passage scope, so the answer arrived inside a
+             viewpoint that had nothing to do with it. Four moves, in order —
+             save where they were, clear what belonged to the old place, land on
+             a rung the answer is legible at, frame the whole path — and the
+             saved scene becomes `Return to previous view`. */
+          const sameQuestion = before.query.active?.query === text;
+          if (!sameQuestion) push(placeName(before));
+
           await enter('QUERYING', 'runQuery');
-          set((s) => ({ query: { ...s.query, staged: text, running: true, error: null } }));
+          set((s) => ({
+            query: { ...s.query, staged: text, running: true, error: null },
+            /* STALE FOCUS DOES NOT SURVIVE A NEW QUESTION. */
+            selection: sameQuestion ? s.selection : [],
+            focus: sameQuestion ? s.focus : null,
+            hover: null,
+          }));
           try {
             const active = await engine.postQuery(text);
             const trace = await engine.getRenderTrace(active.trace_id);
-            const view = await fetchView(get().rung, parentIdOf(get()), active);
-            commit(() => ({
+
+            /* THE RUNG THE ANSWER IS LEGIBLE AT.
+               An answer between two entities has nothing to say from the
+               continent rung, and everything to say from the island rung, which
+               is where straits are. A drill-down leaves us at `passage` scoped
+               to one document; rendering there would draw the constellation
+               inside a scope that excludes most of it. So a NEW question returns
+               to the unscoped island rung — the product's own home altitude —
+               while a re-run of the question already on screen holds still. */
+            const goHome = !sameQuestion && (get().stack.length > 0 || get().rung !== 'island');
+            const rung: Rung = goHome ? 'island' : get().rung;
+            const stack = goHome ? [] : get().stack;
+            const parentId = stack.length === 0 ? null : stack[stack.length - 1].id;
+            const view = await fetchView(rung, parentId, active);
+
+            commit((s) => ({
               query: { staged: text, active, running: false, error: null },
               trace,
+              rung,
+              stack,
               view,
               verify: null,
               tampered: false,
               explain: null,
+              /* THE RESULT STATE. A render that lands is a defined place, and
+                 this is what defines it: the evidence surface is selected, the
+                 pin is cleared so a NEW result opens it even if the last one was
+                 deliberately closed, and the lens returns to Explore because a
+                 date axis or a filter bank is not where a fresh answer is read. */
+              tab: sameQuestion && s.tabPinned ? s.tab : 'evidence',
+              tabPinned: sameQuestion ? s.tabPinned : false,
+              lens: 'explore',
             }));
+
+            /* THE RENDER IS DONE WHEN THE PAYLOAD IS DONE, NOT WHEN THE CAMERA
+               ARRIVES. This awaited the camera flight BEFORE leaving QUERYING,
+               which had two costs and one of them was a real regression:
+
+                 THE TERRAIN STAYED DIMMED through a 700ms flight, over an answer
+                 that had already landed. Dimming means "this has not been spent
+                 on yet"; it was still on screen after the spending had finished.
+
+                 A SECOND QUESTION HAD TO WAIT OUT THE FIRST'S FLIGHT before it
+                 could even start, because `runQuery` did not return until the
+                 camera had arrived.
+
+               NOTE WHAT THIS DOES NOT FIX. `verify-motion`'s MOTION LAW 2 — two
+               renders 120ms apart, the second superseding the first — fails
+               before this change and after it, and it fails identically on the
+               pre-pass build (498ms / 654ms, neither superseded), so it is not
+               this ordering and it is not this pass. The reveal simply does not
+               begin until its payload commits, and at a 120ms gap the first
+               payload has usually not landed yet, so the two runs never overlap
+               to interrupt. That is a real limit of the interruption model and it
+               is filed rather than papered over here.
+
+               So the machine reaches READY on the payload, and the choreography
+               runs after it, in READY.
+               The framing is still AWAITED, because the scene snapshot below has
+               to be taken from where the camera actually came to rest — or
+               `Back to result` returns to the viewpoint the question was asked
+               from rather than the one the answer was framed in. */
             await awaitHold('QUERYING:done');
             await enter('READY', 'runQuery');
+
+            /* FRAME THE COMPLETE ANSWER PATH — every node of it, not the
+               terminal. An answer whose first hop is off-camera is an answer the
+               picture cannot be checked against. */
+            const onPath = new Set<string>();
+            for (const step of active.constellation.path) {
+              onPath.add(step.from_id);
+              onPath.add(step.to_id);
+            }
+            if (active.constellation.bridge_entity_id !== null) {
+              onPath.add(active.constellation.bridge_entity_id);
+            }
+            await runFrameGate([...onPath], 112);
+
+            /* The place the answer was framed in, so a drill-down always has one
+               move home.
+
+               GUARDED, because this no longer runs inside QUERYING: a second
+               question may have started AND landed while this flight was in the
+               air, and writing this render's scene over the newer one would
+               leave `Back to result` pointing at an answer nobody is looking at.
+               The query id is what says which render this is. */
+            if (get().query.active?.query_id === active.query_id) {
+              set({ resultScene: snapshot(text) });
+            }
+
+            /* THE RE-DERIVATION IS A PROPERTY OF THE RESULT, NOT OF A PANEL.
+               It used to be fired by an effect inside the answer panel, which was
+               fine while that panel was always mounted — and became a silent hole
+               the moment a landing render selected the EVIDENCE surface instead.
+               The verdict simply did not run unless the reader happened to open
+               the Answer tab, so the strongest trust claim in the product became
+               conditional on a navigation nobody was asked to make, and the
+               pinned trust line above every tab had nothing to say.
+
+               It runs here, where the render is, unconditionally. It is a local
+               graph walk that costs nothing, it either agrees or it does not, and
+               the panel's own effect now finds the verdict already in hand. */
+            await get().explainPath();
           } catch (err) {
+            /* A RENDER THAT NEVER LANDED DISPLACED NOTHING, SO IT LEAVES NO WAY
+               BACK. The scene was pushed on the way IN, before the request, and
+               a failure means the user is still standing exactly where it was
+               taken — so `Back` would offer a door onto the room they are in.
+               A reverse action that does nothing visible is worse than an absent
+               one: it is the control teaching people not to trust it. */
+            if (!sameQuestion) set((s) => ({ history: s.history.slice(0, -1) }));
             const reason = toDegradedReason(err);
             set((s) => ({ query: { ...s.query, running: false, error: reason.what_failed } }));
             get().degrade(reason);
@@ -833,9 +1343,8 @@ export const useAtlas = create<AtlasState>()((set, get) => {
           const endpoints = chainEndpoints(answer);
 
           if (endpoints === null) {
-            commit((s) => ({
+            commit(() => ({
               explain: { steps: [], verdict: 'not-a-chain', endpoints: null, checked_at },
-              ui: { ...s.ui, inspector: true },
             }));
             return;
           }
@@ -856,11 +1365,16 @@ export const useAtlas = create<AtlasState>()((set, get) => {
               onPath.add(step.from_id);
               onPath.add(step.to_id);
             }
-            commit((s) => ({
+            /* THE VERDICT DOES NOT STEAL THE RAIL. It used to force the inspector
+               open, which on a disagreement pushed the reader onto a node panel
+               at the exact moment the ANSWER was the thing that had stopped being
+               trustworthy. The verdict is stated in the pinned header above every
+               tab, so it is already unmissable wherever the reader is. */
+            commit(() => ({
               explain: { steps, verdict, endpoints, checked_at },
               selection: [...onPath],
               focus: active.constellation.bridge_entity_id ?? endpoints[1],
-              ui: { ...s.ui, inspector: true },
+              selectionFramed: true,
             }));
 
             if (verdict === 'differs') {
@@ -937,23 +1451,96 @@ export const useAtlas = create<AtlasState>()((set, get) => {
       );
     },
 
+    /**
+     * Fetch the dated claims this lens is a lens OF.
+     *
+     * THE SCOPE IS A DECISION, NOT A SIDE EFFECT OF WHERE YOU HAPPEN TO BE.
+     * This used to key off `parentIdOf()` — the deepest breadcrumb entry — so
+     * the axis silently meant something different depending on how you had been
+     * navigating, and at the top of the world it meant "the whole corpus" and
+     * said so as `200 shown / 2,168 not shown`. A sample of an unbounded
+     * population presented as the population is the one thing a timeline must
+     * not do, so the scope is now explicit and defaults to the current answer.
+     */
     loadTimeline: async () => {
       await track(
         (async () => {
           const s = get();
           try {
-            const scopeId = parentIdOf(s);
+            /* The ids the current scope admits. `null` means the whole corpus,
+               which is the only scope this engine expresses as "unscoped". */
+            const scopeId =
+              s.timelineScope === 'corpus'
+                ? null
+                : s.timelineScope === 'selection'
+                  ? (s.focus ?? s.selection[0] ?? parentIdOf(s))
+                  : /* answer */ (s.query.active?.constellation.bridge_entity_id ??
+                     s.query.active?.constellation.path[0]?.from_id ??
+                     parentIdOf(s));
             const timeline = await engine.getTimeline({
               limit: 200,
               includeQuarantined: s.filters.showQuarantined,
               ...(scopeId === null ? {} : { scopeId }),
             });
-            set({ timeline });
+            set({ timeline, timelineWindow: null, timelineApplied: false });
           } catch (err) {
             fail(err);
           }
         })(),
       );
+    },
+
+    setTimelineScope: async (scope) => {
+      if (get().timelineScope === scope) return;
+      set({ timelineScope: scope, timeline: null, timelineWindow: null, timelineApplied: false });
+      await get().loadTimeline();
+    },
+
+    /** A PREVIEW. Deliberately writes one field and touches neither the selection
+        nor the camera — see `timelineApplied`. */
+    setTimelineWindow: (window) => {
+      /* MOVING THE BRUSH UN-APPLIES IT. `timelineApplied` was set true by
+         `applyTimelineWindow` and cleared only by a scope change or a reset, so
+         dragging after applying left the axis reading `Applied` over a window
+         that had not been — a state word describing the previous window. The
+         held selection is deliberately NOT cleared here: it is still a real
+         selection the user made, and dropping it on the first pixel of a drag
+         would be the lens taking something back without being asked. */
+      set((s) => ({ timelineWindow: window, timelineApplied: s.timelineApplied && window === null }));
+    },
+
+    applyTimelineWindow: () => {
+      const s = get();
+      const t = s.timeline;
+      const w = s.timelineWindow;
+      if (t === null) return;
+      if (w === null) {
+        get().resetTimelineWindow();
+        return;
+      }
+      const t0 = Date.parse(t.from);
+      const t1 = Date.parse(t.to);
+      if (!Number.isFinite(t0) || !Number.isFinite(t1) || t1 <= t0) return;
+      const lo = t0 + Math.min(w.a, w.b) * (t1 - t0);
+      const hi = t0 + Math.max(w.a, w.b) * (t1 - t0);
+      const ids: string[] = [];
+      for (const e of t.events) {
+        const at = Date.parse(e.at);
+        if (at >= lo && at <= hi && !ids.includes(e.node_id)) ids.push(e.node_id);
+      }
+      /* HELD, NOT FLOWN TO. `selectionFramed: false` is what stops the shell
+         throwing the camera at everything a date range happens to contain. */
+      commit(() => ({ selection: ids, focus: null, timelineApplied: true, selectionFramed: false }));
+    },
+
+    resetTimelineWindow: () => {
+      commit(() => ({
+        timelineWindow: null,
+        timelineApplied: false,
+        selection: [],
+        focus: null,
+        selectionFramed: true,
+      }));
     },
 
     /* ===================================================================== *
@@ -966,12 +1553,36 @@ export const useAtlas = create<AtlasState>()((set, get) => {
       set({ hover: id });
     },
 
+    /**
+     * Hold a node — and SHOW what was held.
+     *
+     * Selecting used to change the map and nothing else: the node lit up on the
+     * terrain while its reading began somewhere below the fold of a rail that
+     * was already several screens tall, so the observable result of a click was
+     * a colour change. The detail exists; the click now takes you to it.
+     *
+     * The tab is PINNED by this, because arriving at the inspector by pointing at
+     * something is as deliberate a choice as pressing the tab itself.
+     */
     selectNode: (id, additive = false) => {
       commit((s) => {
-        if (!additive) return { selection: [id], focus: id };
+        /* A HAND-MADE SELECTION IS NOT THE DATE WINDOW'S SELECTION.
+           `timelineApplied` says "the nodes on screen are the ones this window
+           admitted". Pointing at one node makes that false, and leaving the flag
+           set left the axis reading `Applied` over a selection the window had
+           nothing to do with — the same lie the pill was raised for, reached
+           through the other door. */
+        const toInspect = {
+          tab: 'inspect' as ResultTab,
+          tabPinned: true,
+          selectionFramed: true,
+          timelineApplied: false,
+        };
+        if (!additive) return { selection: [id], focus: id, ...toInspect };
         const has = s.selection.includes(id);
         const selection = has ? s.selection.filter((x) => x !== id) : [...s.selection, id];
-        return { selection, focus: has ? (selection[selection.length - 1] ?? null) : id };
+        const focus = has ? (selection[selection.length - 1] ?? null) : id;
+        return { selection, focus, ...(focus === null ? {} : toInspect) };
       });
     },
 
@@ -981,7 +1592,16 @@ export const useAtlas = create<AtlasState>()((set, get) => {
         focus: null,
         selection: [],
         hover: null,
+        selectionFramed: true,
+        timelineApplied: false,
         ui: { ...s.ui, search: false, help: false },
+        /* THE INSPECT TAB HAS NOTHING LEFT TO INSPECT. Leaving the rail on an
+           empty inspector after Esc is the panel reporting on the user rather
+           than on the engine — so it falls back to the surface the result state
+           defines, and the pin that put it there is released with it. */
+        ...(s.tab === 'inspect'
+          ? { tab: (s.query.active === null ? 'answer' : 'evidence') as ResultTab, tabPinned: false }
+          : {}),
       }));
     },
 
@@ -989,7 +1609,22 @@ export const useAtlas = create<AtlasState>()((set, get) => {
       set((s) => ({ camera: { x, y, zoom, version: s.camera.version + 1 } }));
     },
 
+    /**
+     * Flip a panel.
+     *
+     * TWO OF THESE ARE NO LONGER PANELS. `timeline` and `analyst` are lenses now
+     * — places, mutually exclusive with Explore and with each other — so the flag
+     * they used to own is derived from `lens` and this routes to `setLens()`
+     * rather than writing it directly. Everything that already calls
+     * `toggle('timeline')` (the scene driver, the dock's own Close, the keyboard)
+     * therefore keeps working and cannot leave the two out of step.
+     */
     toggle: (key) => {
+      if (key === 'timeline' || key === 'analyst') {
+        const want: Lens = key === 'timeline' ? 'timeline' : 'analyze';
+        void get().setLens(get().lens === want ? 'explore' : want);
+        return;
+      }
       set((s) => ({ ui: { ...s.ui, [key]: !s.ui[key] } }));
     },
 
@@ -1012,6 +1647,148 @@ export const useAtlas = create<AtlasState>()((set, get) => {
 
     setPerf: (p) => {
       set((s) => ({ perf: { ...s.perf, ...p } }));
+    },
+
+    /* ===================================================================== *
+     * THE WORKSPACE SPINE — lens, tab, and the way back out of both
+     * ===================================================================== */
+
+    /**
+     * Enter a lens.
+     *
+     * A LENS BORROWS THE VIEWPOINT AND GIVES IT BACK. Dragging a date window used
+     * to select 162 nodes out of a 200-event sample, reframe the map onto them,
+     * and then hand the map back exactly there when the panel closed — the user
+     * paid for a glance at the clock with their whole orientation. So leaving
+     * Explore saves the viewpoint and returning restores it, which is the same
+     * contract `Back` offers, applied to a move that never looked like one.
+     */
+    setLens: async (lens) => {
+      const s = get();
+      if (s.lens === lens) return;
+
+      if (s.lens === 'explore') {
+        // On the way out: remember where Explore was standing.
+        push(placeName(s));
+      }
+
+      set({ lens, ui: { ...s.ui, timeline: lens === 'timeline', analyst: lens === 'analyze' } });
+
+      if (lens === 'timeline' && get().timeline === null) await get().loadTimeline();
+
+      if (lens === 'explore') {
+        // On the way back: the top of the stack is the Explore scene we left.
+        const stack = get().history;
+        const last = stack[stack.length - 1];
+        if (last !== undefined && last.lens === 'explore') {
+          set({ history: stack.slice(0, -1) });
+          await restore(last);
+        }
+      }
+    },
+
+    setTab: (tab, opts = {}) => {
+      set((s) => (s.tab === tab && s.tabPinned === (opts.pin ?? s.tabPinned) ? s : { tab, tabPinned: opts.pin ?? s.tabPinned }));
+    },
+
+    pushScene: (label) => {
+      push(label);
+    },
+
+    back: async () => {
+      const stack = get().history;
+      const last = stack[stack.length - 1];
+      if (last === undefined) return;
+      set({ history: stack.slice(0, -1) });
+      await track(restore(last));
+    },
+
+    /**
+     * The one guaranteed landmark.
+     *
+     * The whole world at the island rung, unscoped, with nothing held — the view
+     * the product's thesis is legible at and the only place a lost user can be
+     * promised in advance. It does NOT throw the answer away: `Home` is a place,
+     * not a reset, and the receipt for the question you asked is still yours.
+     */
+    home: async () => {
+      const s = get();
+      if (s.rung !== 'island' || s.stack.length > 0 || s.selection.length > 0) {
+        push(placeName(s));
+      }
+      await track(
+        (async () => {
+          try {
+            const view = await loadRung('island', null);
+            commit((st) => ({
+              rung: 'island',
+              stack: [],
+              view,
+              selection: [],
+              focus: null,
+              hover: null,
+              lens: 'explore',
+              ui: { ...st.ui, timeline: false, analyst: false },
+              tab: (st.query.active === null ? 'answer' : 'evidence') as ResultTab,
+              tabPinned: false,
+            }));
+          } catch (err) {
+            fail(err);
+          }
+        })(),
+      );
+    },
+
+    returnToResult: async () => {
+      const scene = get().resultScene;
+      if (scene === null) return;
+      await track(restore(scene));
+    },
+
+    frameIds: async (ids, paddingPx) => {
+      await runFrameGate(ids, paddingPx);
+    },
+
+    highlightNode: (id) => {
+      commit(() => ({
+        selection: id === null ? [] : [id],
+        focus: id,
+        selectionFramed: false,
+        timelineApplied: false,
+      }));
+    },
+
+    discardResult: () => {
+      const s = get();
+      if (s.query.active === null) return;
+      commit((st) => ({
+        query: { staged: st.query.staged, active: null, running: false, error: null },
+        trace: null,
+        verify: null,
+        tampered: false,
+        explain: null,
+        resultScene: null,
+        selection: [],
+        focus: null,
+        hover: null,
+        tab: 'answer' as ResultTab,
+        tabPinned: false,
+        degraded: null,
+      }));
+      /* THE PICTURE GOES WITH IT. The terrain is still stroking a constellation
+         that belongs to a discarded render; re-fetching under the plain policy is
+         what makes "discarded" true on the map as well as in the rail. */
+      void track(
+        (async () => {
+          try {
+            const view = await loadRung(get().rung, parentIdOf(get()));
+            commit(() => ({ view }));
+          } catch (err) {
+            fail(err);
+          }
+        })(),
+      );
+      if (get().app === 'DEGRADED') void get().recover();
     },
 
     /* ===================================================================== *
@@ -1104,22 +1881,30 @@ export const useAtlas = create<AtlasState>()((set, get) => {
         case 'search':
           s.toggle('search');
           return true;
-        case 'atlas':
-          s.toggle('atlas');
+
+        /* ---- lenses: a press is a MOVE, and pressing the one you are in
+           returns you to Explore, which is the only lens that is a home. ---- */
+        case 'lens-explore':
+          void s.setLens('explore');
           return true;
-        case 'inspector':
-          s.toggle('inspector');
+        case 'lens-timeline':
+          void s.setLens(s.lens === 'timeline' ? 'explore' : 'timeline');
           return true;
-        case 'receipt':
-          s.toggle('receipt');
+        case 'lens-analyze':
+          void s.setLens(s.lens === 'analyze' ? 'explore' : 'analyze');
           return true;
-        case 'timeline':
-          s.toggle('timeline');
-          if (s.timeline === null) void s.loadTimeline();
+
+        /* ---- result tabs: pinned, because a keystroke is a deliberate act - */
+        case 'tab-answer':
+          s.setTab('answer', { pin: true });
           return true;
-        case 'analyst':
-          s.toggle('analyst');
+        case 'tab-evidence':
+          s.setTab('evidence', { pin: true });
           return true;
+        case 'tab-inspect':
+          s.setTab('inspect', { pin: true });
+          return true;
+
         case 'help':
           s.toggle('help');
           return true;
@@ -1128,6 +1913,15 @@ export const useAtlas = create<AtlasState>()((set, get) => {
           return true;
         case 'ascend':
           void s.ascend();
+          return true;
+        case 'back':
+          void s.back();
+          return true;
+        case 'home':
+          void s.home();
+          return true;
+        case 'return-to-result':
+          void s.returnToResult();
           return true;
         case 'run-query':
           if (s.query.staged.trim().length > 0) void s.runQuery(s.query.staged);
@@ -1141,8 +1935,16 @@ export const useAtlas = create<AtlasState>()((set, get) => {
           if (rung === null) return false;
           // Keep the scope when the breadcrumb already contains a legal parent
           // for the target rung; otherwise show the whole rung.
+          /* ONE RULE FOR THE MOVE, WHEREVER IT IS ASKED FOR.
+             This trusted the breadcrumb stack alone, while the pointer path had
+             moved to "descend into the selected parent or the current answer
+             scope". Two rules for one move means the keyboard and the mouse land
+             somewhere different from the same state, which is the kind of
+             difference nobody reports as a bug and everybody stops trusting. */
           const depth = RUNG_DEPTH[rung];
-          const scope = s.stack[depth - 1]?.id ?? null;
+          const scope =
+            s.stack[depth - 1]?.id ??
+            (depth === 0 ? null : (s.focus ?? s.selection[0] ?? null));
           void s.goToRung(rung, scope);
           return true;
         }

@@ -401,7 +401,7 @@ export function ReceiptPanel({
               value={st.token_budget}
               format="tokens"
               unit={COPY.common.units.tokens}
-              tone="faint"
+              tone="dim"
             />
           }
         />
@@ -484,7 +484,7 @@ export function ReceiptPanel({
           <Why note={COPY.receipt.citations.note}>
             <SectionLabel>{COPY.receipt.citations.title}</SectionLabel>
           </Why>
-          <Num value={t.citations.length} format="int" tone="faint" />
+          <Num value={t.citations.length} format="int" tone="dim" />
         </div>
         <CitationList
           citations={t.citations}
@@ -519,7 +519,7 @@ export function ReceiptPanel({
                     {COPY.sigma.classes[group.sigma].label}
                   </span>
                 </Tip>
-                <Num value={group.uses} format="int" tone="faint" />
+                <Num value={group.uses} format="int" tone="dim" />
               </div>
               <div className="pv-fams">
                 {group.families.map((f) => (
@@ -547,7 +547,7 @@ export function ReceiptPanel({
           summary={
             <span className="pv-disc-sum">
               {COPY.receipt.admitted.title}
-              <Num value={t.admitted.length} format="int" tone="faint" />
+              <Num value={t.admitted.length} format="int" tone="dim" />
             </span>
           }
         >
@@ -574,7 +574,7 @@ export function ReceiptPanel({
                     <Code code={rec.reason} text={admissionReasonText(rec.reason)} />
                   </Tip>
                   <Tip content={COPY.receipt.admitted.rows.score.tip}>
-                    <Num value={rec.score} format="float2" tone="faint" />
+                    <Num value={rec.score} format="float2" tone="dim" />
                   </Tip>
                 </div>
               </li>
@@ -715,7 +715,7 @@ export function ReceiptPanel({
               key={key}
               label={COPY.receipt.confidence.signals[key].label}
               title={COPY.receipt.confidence.signals[key].tip}
-              value={<Num value={CONFIDENCE_WEIGHTS[key] * 100} format="pct1" tone="faint" />}
+              value={<Num value={CONFIDENCE_WEIGHTS[key] * 100} format="pct1" tone="dim" />}
             />
           ))}
         </Disclosure>

@@ -101,7 +101,12 @@
   line-height: var(--lh-ui);
   text-transform: uppercase;
   letter-spacing: var(--tracking-caps);
-  color: var(--ink-faint);
+  /* A REAL <h2>, AND THE PRODUCT'S PRIMARY HEADING LANDMARK. It was set on the
+     faint step, at 11px, which put every panel name in the product below every
+     contrast floor there is — including for the screen-reader user navigating
+     by heading, who at least gets the text, and the low-vision user, who did
+     not. --ink-dim is the floor for anything that names something. */
+  color: var(--ink-dim);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -210,20 +215,46 @@
   max-width: 100%;
 }
 
+/* A HASH IS A CONTROL: pressing it copies the digest. Measured at 160x18 in a
+   result state, which is the second-smallest interactive element in the product
+   and is under WCAG 2.2's 24px floor on the axis that matters for a thumb.
+
+   IT CANNOT BE PADDED TO 36px WITHOUT BECOMING A BUTTON. A digest set inline
+   beside a label, on the mono rail, at the baseline of the row it belongs to, is
+   the whole reason the receipt reads as instrumentation. So it keeps its size
+   and gains pressable nothing around it: `--hit-slop` above and below, floored
+   at `--hit-floor`, painting exactly zero pixels. */
+button.hash {
+  position: relative;
+  /* THE BOX GROWS; THE TYPE DOES NOT MOVE. `align-items: baseline` above still
+     aligns the label, the scheme and the digest to one baseline inside a taller
+     box, so the row reads exactly as it did and the target clears the floor.
+
+     A ::before slop was tried first and is NOT sufficient here: hit-testing a
+     positioned pseudo-element against `elementFromPoint` returns whatever
+     sibling paints over it, so the extra area existed and could not be proven.
+     An affordance that cannot be measured is one nobody can defend. */
+  min-height: var(--hit-floor);
+}
+
 .hash-label {
   font-family: var(--ff-ui);
   font-size: var(--fs-11);
   font-weight: var(--fw-500);
   text-transform: uppercase;
   letter-spacing: var(--tracking-caps);
-  color: var(--ink-faint);
+  /* It names the value beside it. A caption that cannot be read is a hash you
+     cannot tell apart from the four others in the same panel. */
+  color: var(--ink-dim);
   flex: none;
 }
 
 /* The algorithm scheme is context, not the value being compared. It is set back
-   so the eye lands on the first characters of the digest itself. */
+   so the eye lands on the first characters of the digest itself — but `sha256:`
+   is also the half that says WHICH algorithm, so it is set back within the
+   readable range rather than out of it. */
 .hash-prefix {
-  color: var(--ink-faint);
+  color: var(--ink-dim);
   flex: none;
   margin-right: calc(var(--s-1) * -0.5);
 }
@@ -265,13 +296,17 @@ button.hash:hover .hash-v {
   display: inline-flex;
   align-items: center;
   gap: var(--gap-tight);
-  min-height: var(--hit-icon);
+  /* 24px was the DE FACTO floor for the two most common controls in the app —
+     every chip and every small button — which is under WCAG 2.2's 24x24 minimum
+     the moment any of them sits next to another one. --hit-min is 36px now and
+     chips use it like everything else. */
+  min-height: var(--hit-min);
   padding: 0 var(--pad-control);
   border: var(--border-1) solid var(--line);
   border-radius: var(--r-6);
   background: none;
   color: var(--ink-dim);
-  font-size: var(--fs-12-5);
+  font-size: var(--fs-13);
   font-weight: var(--fw-400);
   line-height: 1;
   white-space: nowrap;
@@ -309,7 +344,7 @@ button.chip:hover {
   padding: 0 var(--s-3);
   border: var(--border-1) solid transparent;
   border-radius: var(--r-6);
-  font-size: var(--fs-12-5);
+  font-size: var(--fs-13);
   font-weight: var(--fw-500);
   line-height: 1;
   color: var(--ink-dim);
@@ -318,10 +353,14 @@ button.chip:hover {
     background-color var(--t-fast) var(--ease-ui);
 }
 
+/* `sm` IS A DENSITY, NOT A SMALLER TARGET. It was 24px tall at 11px type, and
+   it is the size the product actually uses for its real verbs — Run, Recover,
+   Up, Next, Close corpus. A smaller label is a legitimate choice; a smaller
+   thing to press is not, so only the type and the padding shrink. */
 .btn-sm {
-  min-height: var(--hit-icon);
+  min-height: var(--hit-row);
   padding: 0 var(--s-2);
-  font-size: var(--fs-11);
+  font-size: var(--fs-12-5);
 }
 
 .btn-ghost:hover:not(:disabled) {
@@ -385,7 +424,8 @@ button.chip:hover {
   font-weight: var(--fw-500);
   text-transform: uppercase;
   letter-spacing: var(--tracking-caps);
-  color: var(--ink-faint);
+  /* A gauge whose label cannot be read is a gauge. */
+  color: var(--ink-dim);
 }
 
 .meter-track {
@@ -559,7 +599,7 @@ button.chip:hover {
   line-height: var(--lh-ui);
   text-transform: uppercase;
   letter-spacing: var(--tracking-caps);
-  color: var(--ink-faint);
+  color: var(--ink-dim);
 }
 
 .divider {
@@ -590,7 +630,7 @@ button.chip:hover {
   gap: var(--gap-row);
   min-height: var(--hit-row);
   color: var(--ink-dim);
-  font-size: var(--fs-12-5);
+  font-size: var(--fs-13);
   border-radius: var(--r-6);
   transition: color var(--t-fast) var(--ease-ui);
 }
@@ -599,10 +639,12 @@ button.chip:hover {
   color: var(--ink);
 }
 
+/* The caret is the ONLY affordance saying this row opens, so it is not
+   decoration and does not sit on the decorative step. */
 .disc-caret {
   display: inline-block;
-  color: var(--ink-faint);
-  font-size: var(--fs-12-5);
+  color: var(--ink-dim);
+  font-size: var(--fs-13);
   line-height: 1;
   transition: transform var(--t-fast) var(--ease-ui);
 }
@@ -710,7 +752,7 @@ button.chip:hover {
   align-items: center;
   justify-content: center;
   gap: var(--gap-tight);
-  min-height: var(--hit-icon);
+  min-height: var(--hit-row);
   padding: 0 var(--pad-control);
   border-radius: var(--r-6);
   font-family: var(--ff-mono);

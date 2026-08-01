@@ -4,7 +4,12 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "tp-vrg"
-version = "0.3.0"
+# This version tracks the CONTRACT SURFACE in this repo — the artifact formats,
+# the verification behaviour, and the adapter interface. It deliberately does
+# NOT track the engine binary's version (v0.1.x), because the two change for
+# different reasons and consumers depend on this one. See CHANGELOG.md
+# § Versioning for the rule.
+version = "0.4.0"
 description = "TLDR-G — open boundary contracts + offline verification for the knowledge rendering engine"
 readme = "README.md"
 license = "Apache-2.0"

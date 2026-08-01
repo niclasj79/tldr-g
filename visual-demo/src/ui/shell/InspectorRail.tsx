@@ -1,66 +1,43 @@
 /**
  * =============================================================================
- * TLDR-G VISUAL DEMO — THE INSPECTOR RAIL
+ * TLDR-G VISUAL DEMO — THE RAIL
  * =============================================================================
  *
- * Right, collapsible with `I`. THE ONLY PLACE DENSE DETAIL LIVES.
+ * Right, 320px, and it is no longer a document.
  *
  * A left rail would take the horizontal away from the terrain, which is the one
  * thing the terrain is not allowed to lose — `npm run check` fails the build on
  * one, and `window.__atlas.audit()` looks for the SHAPE of one at runtime in
- * case somebody builds it under a different name.
+ * case somebody builds it under a different name. That law is unchanged. What
+ * changed is what this column DOES with its height.
  *
  * -----------------------------------------------------------------------------
- * ORDER IS ARGUMENT
+ * IT USED TO STACK; NOW IT PINS AND SWITCHES
  * -----------------------------------------------------------------------------
- * The rail is stacked in the order a sceptic reads it, not in the order the
- * panels were built:
+ * The old rail appended every panel any switch had ever turned on, in a reading
+ * order that was argued for at length and was still 6,409px tall against a 632px
+ * viewport in one measured state. The order was right and the mechanism was
+ * wrong: you cannot read the fourth section while looking at the first, so
+ * putting them in one scroll bought nothing and cost the ability to find any of
+ * them.
  *
- *   ANSWER      what the engine claims, and its own confidence in it
- *   TRACE       what that claim cost — the receipt, and the count-down
- *   SIGNATURE   whether that trace is the one the engine produced
- *   INSPECTOR   whatever node is under the pointer or held        (`I`)
- *   QUARANTINE  what the truth gate threw away
- *   ANALYST     the controls that change what is drawn            (`G`)
+ * The column is now three bands:
  *
- * AND, WHEN NONE OF THAT EXISTS YET, the two panels the resting frame needs:
- * the corpus's own staged questions, and the census of the bake the map is drawn
- * against. They are LAST in the file and last in the column, because they are
- * what the rail holds while it waits rather than what it is for. Before them
- * this column was one QUESTION panel over ~700px of void on the frame everybody
- * sees first. See CorpusPanel.tsx.
- *
- * THE RECEIPT MOVED ABOVE THE SIGNATURE, and it is the one deliberate departure
- * from "verdict above evidence". The reason is a measurement: with the signature
- * block between them, the budget rows — rendered against stuffed context, and
- * the saving — sat below the fold of a 1440px frame in the one screenshot the
- * whole thesis rests on. The product's celebratory moment was invisible in the
- * scene named after it. The signature verdict is four rows and it now sits
- * directly under the arithmetic it is vouching for, which is close enough to be
- * read in the same glance.
- *
- * Every panel below the answer can be closed. The answer cannot, while there is
- * one, because a product that lets you hide the claim and keep the receipt has
- * the relationship backwards.
+ *   PINNED   the question, the answer, and the answer's trust state — plus the
+ *            reverse actions and the tab strip. Never scrolls away, because
+ *            every one of those is context for whatever is below it.
+ *   BODY     exactly ONE surface. A result tab, or the workspace lens that has
+ *            replaced them.
+ *   FOOT     the one destructive control in the product, under a rule.
  *
  * -----------------------------------------------------------------------------
- * ATLAS MODE IS A PANEL IN THIS COLUMN, NOT A SECOND COLUMN
+ * A LENS REPLACES THE RESULT DETAIL; IT DOES NOT APPEND TO IT
  * -----------------------------------------------------------------------------
- * It used to float its own 300px rail on top of the terrain, beside this one.
- * That is two columns of chrome on a product whose single layout law is that the
- * terrain owns the horizontal, and it cost exactly what you would expect: with
- * Atlas Mode open the unobstructed terrain was 69.7% of the window — under the
- * brief's 70% floor — while `audit()` was still reporting 80.4% because it
- * measured the canvas rect and never asked what was sitting on it.
- *
- * Hosted here it costs the terrain NOTHING: the rail is already 368px wide and
- * already beside the map rather than over it. Atlas Mode takes the top of the
- * column while it is open, because a mode you just entered is the thing you are
- * reading — the same rule Analyst Mode follows below.
- *
- * IT ALSO MEANS THE RAIL CAN BE OPEN WITHOUT THE INSPECTOR BEING ON. `I` toggles
- * the inspector's own panels; the column itself is up whenever anything wants to
- * live in it, or a lit Atlas switch in the top bar would open nothing.
+ * This is the rule that keeps the fix from unravelling. Analyst Mode used to add
+ * its controls BELOW everything already in the column, which is how a lit switch
+ * ended up showing none of itself. Entering a lens now takes the body — the
+ * question, the answer and the trust state stay pinned above it, because a lens
+ * is a way of looking at THIS result, not a different session.
  *
  * -----------------------------------------------------------------------------
  * TOUCH TURNS IT INTO A BOTTOM SHEET
@@ -77,53 +54,48 @@ import { useEffect, useRef } from 'react';
 import { COPY } from '@/copy';
 import { AtlasMode } from '@/ui/atlas';
 import { useAtlas, useAtlasStore } from '@/state';
-import {
-  InspectorBody,
-  QuarantinePanel,
-  ReceiptPanel,
-  VerificationPanel,
-} from '@/ui/provenance';
-import { Btn, Panel, Tip } from '@/ui/primitives';
+import { InspectorBody, QuarantinePanel } from '@/ui/provenance';
+import { Btn, Tip } from '@/ui/primitives';
 
 import { AnalystRail } from './AnalystMode';
 import { AnswerPanel } from './AnswerPanel';
 import { CorpusPanel, StagedQuestions } from './CorpusPanel';
-import { StagedPanel } from './StagedPanel';
+import { EvidenceTab } from './EvidenceTab';
+import { NavStack } from './NavStack';
+import { Orientation } from './Orientation';
+import { ResultTabs, panelIdFor } from './ResultTabs';
+import { TaskHeader } from './TaskHeader';
+/* The skip link's destination. Declared beside the control that jumps to it. */
+import { TASK_ANCHOR_ID } from './TerrainOutline';
+import { TimelinePanel } from './TimelinePanel';
+
+import './result.css';
 
 export interface InspectorRailProps {
   className?: string;
 }
 
 export function InspectorRail({ className }: InspectorRailProps): JSX.Element | null {
-  const { ui, hasAnswer, hasTrace, hasNode, hasCorpus, forming, queryId } = useAtlasStore((s) => ({
-    ui: s.ui,
+  const { lens, tab, hasAnswer, hasNode, hasCorpus, forming, queryId, quarantine } = useAtlasStore((s) => ({
+    lens: s.lens,
+    tab: s.tab,
     hasAnswer: s.query.active !== null,
-    hasTrace: s.trace !== null,
     hasNode: s.focus !== null || s.selection.length > 0 || s.hover !== null,
     hasCorpus: s.view !== null,
     forming: s.app === 'INGESTING' || s.app === 'SETTLING',
     queryId: s.query.active?.query_id ?? null,
+    quarantine: s.ui.quarantine,
   }));
 
-  /* NOTHING HAS BEEN ASKED AND NO MODE IS OPEN. This is the ONLY condition under
-     which the column has spare height to give away — the moment an answer, Atlas
-     Mode, Analyst Mode or the quarantine report arrives, every pixel below the
-     question belongs to it. Deliberately NOT keyed on hover: the node inspector
-     comes and goes with the pointer, and a column that rebuilds itself twice a
-     second while you read the map is worse than a column with a gap in it. */
-  const atRest = !hasAnswer && !ui.atlas && !ui.analyst && !ui.quarantine;
-
-  /* THE RAIL IS A SCROLL COLUMN AND A NEW ANSWER IS A NEW DOCUMENT.
-     Landing a render with the column still scrolled to wherever the last one was
-     read shows the middle of a receipt for a question that has been replaced. */
-  const rail = useRef<HTMLElement>(null);
+  /* A NEW SURFACE IS A NEW DOCUMENT. Landing a render, or switching tabs, with
+     the body still scrolled to wherever the last one was read shows the middle
+     of something that has been replaced. Only the BODY scrolls now, so this
+     scrolls the body — the question above it was never going anywhere. */
+  const body = useRef<HTMLDivElement>(null);
   useEffect(() => {
-    rail.current?.scrollTo({ top: 0 });
-  }, [queryId, ui.receipt]);
+    body.current?.scrollTo({ top: 0 });
+  }, [queryId, tab, lens]);
 
-  // NOTHING WANTS THE COLUMN, SO THE TERRAIN TAKES IT BACK. Atlas Mode lives in
-  // here now, so `I` alone no longer decides whether the rail exists.
-  if (!ui.inspector && !ui.atlas) return null;
   // BEFORE THE CORPUS THERE IS NOTHING TO INSPECT. A 320px glass column holding
   // one panel that says "nothing selected" is not a restrained empty state, it is
   // a sixth of the frame spent telling the user what they already know. The
@@ -131,90 +103,95 @@ export function InspectorRail({ className }: InspectorRailProps): JSX.Element | 
   if (!hasCorpus) return null;
   // AND NOT WHILE THE WORLD IS FORMING. During INGESTING and SETTLING the rail
   // had nothing in it but a hover hint for a map you cannot point at yet and a
-  // control that throws away the corpus currently landing — 368px of empty glass
+  // control that throws away the corpus currently landing — 320px of empty glass
   // beside the one screen where the terrain is the entire story. The chrome
   // arrives when it has something to say, which is the same rule FIRST-RUN uses.
   if (forming) return null;
 
   return (
-    <aside
-      ref={rail}
-      className={['shell__rail', 'u-scroll', className].filter(Boolean).join(' ')}
-      aria-label={COPY.inspector.title}
-    >
-      {/* THE MODE YOU ARE IN OWNS THE TOP OF THE COLUMN. */}
-      {ui.atlas ? <AtlasMode className="shell__atlas" /> : null}
+    <aside className={['shell__rail', className].filter(Boolean).join(' ')} aria-label={COPY.inspector.title}>
+      {/* ---- PINNED. Context for everything below, so it never scrolls away. */}
+      <div className="rail__pinned" id={TASK_ANCHOR_ID} tabIndex={-1}>
+        <TaskHeader />
+        <NavStack />
+        {lens === 'explore' ? <ResultTabs /> : null}
+      </div>
 
-      {!ui.inspector ? null : (
-        <>
-          {hasAnswer ? <AnswerPanel /> : <StagedPanel />}
-
-          {/* THE ARITHMETIC, THEN THE SIGNATURE OVER IT. See the header. */}
-          {ui.receipt ? (
-            <>
-              <ReceiptPanel />
-              {hasTrace ? <VerificationPanel /> : null}
-            </>
-          ) : null}
-
-          {/* THE MODE YOU JUST ENTERED OWNS THE TOP OF WHAT IS LEFT. With the
-              analyst controls under the node inspector, turning Analyst Mode on
-              put every control it adds below the fold — the switch was lit and
-              the frame it produced showed none of it. */}
-          <AnalystRail />
-
-          {/* NO EMPTY-INSPECTOR PANEL. A bordered box whose entire content is
-              "nothing is selected" is chrome reporting on the user rather than
-              on the engine, and it was taking a full panel's worth of the rail
-              on the resting screen. The affordance it carried is one line. */}
-          {hasNode ? (
-            <Panel title={COPY.inspector.title}>
-              <InspectorBody />
-            </Panel>
-          ) : null}
-
-          {ui.quarantine ? <QuarantinePanel /> : null}
-
-          {/* THE REST OF THE COLUMN, WHEN NOTHING HAS BEEN ASKED YET.
-              On the resting frame this rail held one QUESTION panel and then
-              ~700px of nothing, on the screen everybody sees first. These two
-              take that space with the corpus's own question set and the census
-              of the bake the map is drawn against — see CorpusPanel.tsx for what
-              was deliberately left out of them.
-
-              THEY YIELD THE MOMENT ANYTHING REAL ARRIVES. An answer, a mode, or
-              the quarantine report is what this column is for; a census of the
-              world is what it holds while it is waiting. They sit BELOW the node
-              inspector so that pointing at something never pushes its reading
-              under the fold. */}
-          {atRest ? (
-            <>
-              <StagedQuestions />
-              <CorpusPanel />
-            </>
-          ) : null}
-
-          {hasNode ? null : (
-            <p className="shell__railhint t-11 ink-faint" data-prose>
-              {COPY.hud.hoverHint}
-            </p>
-          )}
-
-          {/* THE ONE DESTRUCTIVE CONTROL IN THE PRODUCT, AT THE FOOT OF THE
-              COLUMN. It used to sit in the top bar, at the end of the
-              highest-value pixel row on the screen, next to the wordmark — a
-              control that throws the corpus away, one slip from the button that
-              renders. Down here it is reachable, it is named, and it is nowhere
-              near anything you press often. */}
-          <div className="shell__railfoot">
-            <Tip content={COPY.topbar.close.title}>
-              <Btn variant="ghost" size="sm" onClick={() => useAtlas.getState().unload('EMPTY')}>
-                {COPY.topbar.close.label}
-              </Btn>
-            </Tip>
+      {/* ---- BODY. Exactly one surface. --------------------------------- */}
+      <div ref={body} className="rail__body u-scroll">
+        {lens === 'timeline' ? (
+          <TimelinePanel />
+        ) : lens === 'analyze' ? (
+          <>
+            <AnalystRail />
+            {quarantine ? <QuarantinePanel /> : null}
+          </>
+        ) : !hasAnswer ? (
+          /* NOTHING HAS BEEN ASKED, AND THE ORDER IS THE ARGUMENT.
+             It used to lead with Atlas Mode — the altimeter, the ledger, the
+             guided descent — which is the EXPERT navigation surface, offered
+             first to the one reader guaranteed not to be an expert yet. A
+             newcomer needs, in this order: what to do, what they may ask, what
+             they are looking at, and only then the instrument for going
+             somewhere specific. */
+          <>
+            <Orientation />
+            <StagedQuestions />
+            <CorpusPanel />
+            <AtlasMode className="shell__atlas" />
+          </>
+        ) : tab === 'answer' ? (
+          <div id={panelIdFor('answer')} role="tabpanel" aria-labelledby="rail-tab-answer" tabIndex={-1}>
+            <AnswerPanel />
           </div>
-        </>
-      )}
+        ) : tab === 'evidence' ? (
+          <div id={panelIdFor('evidence')} role="tabpanel" aria-labelledby="rail-tab-evidence" tabIndex={-1}>
+            <EvidenceTab />
+          </div>
+        ) : (
+          <div id={panelIdFor('inspect')} role="tabpanel" aria-labelledby="rail-tab-inspect" tabIndex={-1}>
+            {hasNode ? (
+              <InspectorBody />
+            ) : (
+              /* NOT AN ERROR, AN INVITATION — AND NOT A DEAD END EITHER.
+                 The old rail printed a bordered box whose entire content was
+                 "nothing is selected": chrome reporting on the user rather than
+                 on the engine. One sentence was an improvement on that and was
+                 still a surface with nothing to do on it.
+
+                 An empty inspector is precisely the moment a reader wants to
+                 know WHAT IS HERE, so it holds the level's own ledger — the
+                 bodies at this detail level, ranked, searchable, and selectable.
+                 That also gives the ledger a permanent home: it lives in the
+                 Explore rail while nothing has been asked, and here once a
+                 result has taken that column, which are the only two states
+                 there are. A surface reachable in one state and not the other is
+                 how the altimeter and this ledger became unreachable in the
+                 first place. */
+              <>
+                <p className="rail__empty t-13 ink-dim" data-prose>
+                  {COPY.tabs.inspectEmpty}
+                </p>
+                <AtlasMode className="shell__atlas" />
+              </>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* ---- FOOT. The one destructive control in the product, under a rule.
+          It used to sit in the top bar, at the end of the highest-value pixel
+          row on the screen, next to the wordmark — a control that throws the
+          corpus away, one slip from the button that renders. Down here it is
+          reachable, it is named, and it is nowhere near anything you press
+          often. */}
+      <div className="rail__foot">
+        <Tip content={COPY.topbar.close.title}>
+          <Btn variant="ghost" size="sm" onClick={() => useAtlas.getState().unload('EMPTY')}>
+            {COPY.topbar.close.label}
+          </Btn>
+        </Tip>
+      </div>
     </aside>
   );
 }

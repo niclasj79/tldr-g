@@ -218,6 +218,130 @@ const code = files.filter((f) => ['.ts', '.tsx', '.css', '.glsl'].includes(extna
   }
 }
 
+// ── 11. The ink ramp meets its stated contrast floors ──────────────────────
+// A UX review measured the third ink step at 2.87 / 2.70 / 2.54 : 1 against the
+// three grounds, while it was carrying every inactive control label in the top
+// bar, all fifteen HUD cell labels, every <h2> panel title and the clickable root
+// of the breadcrumb — at 11 to 12.5px, permanently. "Elegant" and "nearly
+// unavailable" were the same decision.
+//
+// The floors are now declared here rather than asserted in a comment, because a
+// colour is one keystroke from being darkened again and nobody re-measures a
+// hex. This computes real WCAG relative luminance from the token file itself:
+//   --ink-dim   >= 4.5  it carries functional text, which is AA body text
+//   --ink-faint >= 3.0  it is decoration and non-text, which is the AA floor
+//                       for exactly that
+{
+  const tokens = await readFile(TOKEN_FILE, 'utf8')
+  const hexOf = (name) => {
+    const m = new RegExp(`${name}:\\s*(#[0-9A-Fa-f]{6})`).exec(tokens)
+    return m === null ? null : m[1]
+  }
+  // WCAG 2.x relative luminance. No approximation: the sRGB transfer curve, the
+  // real coefficients, the real 0.05 flare term.
+  const lum = (hex) => {
+    const ch = [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16) / 255)
+    const lin = ch.map((c) => (c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4))
+    return 0.2126 * lin[0] + 0.7152 * lin[1] + 0.0722 * lin[2]
+  }
+  const ratio = (a, b) => {
+    const [hi, lo] = lum(a) > lum(b) ? [a, b] : [b, a]
+    return (lum(hi) + 0.05) / (lum(lo) + 0.05)
+  }
+
+  const grounds = ['--void', '--surface', '--surface-2'].map((n) => [n, hexOf(n)])
+  const inks = [
+    ['--ink', 4.5],
+    ['--ink-dim', 4.5],
+    ['--ink-faint', 3.0],
+  ]
+  for (const [ink, floor] of inks) {
+    const fg = hexOf(ink)
+    if (fg === null) {
+      failures.push(`design-tokens.css does not declare ${ink} as a six-digit hex`)
+      continue
+    }
+    for (const [gname, bg] of grounds) {
+      if (bg === null) {
+        failures.push(`design-tokens.css does not declare ${gname} as a six-digit hex`)
+        continue
+      }
+      const r = ratio(fg, bg)
+      if (r + 1e-9 < floor) {
+        failures.push(
+          `${ink} on ${gname} is ${r.toFixed(2)}:1, under its ${floor}:1 floor. ` +
+            `If this step is meant to carry functional text it must clear 4.5; if it is ` +
+            `decoration it must still clear 3. Do not lower the floor — move the usage.`
+        )
+      }
+    }
+    notes.push(
+      `${ink}: ` + grounds.map(([g, bg]) => `${g.slice(2)} ${ratio(fg, bg).toFixed(2)}:1`).join(' · ')
+    )
+  }
+}
+
+// ── 12. A measured figure is never decorative ──────────────────────────────
+// <Num> exists to render a MEASUREMENT. There is no such thing as a decorative
+// one, so `tone="faint"` on a Num is always the wrong step — and it was how a
+// citation count, a truth-gate denominator and a marquee total all ended up
+// below every contrast floor while looking deliberate.
+//
+// THE HARNESSES ARE EXEMPT, and the exemption is narrow. `*/harness.tsx` are
+// development entries that are never mounted by the app — their own banners say
+// so — and they exist to lay out every tone of every primitive side by side,
+// which means rendering the faint one is the point rather than a mistake. The
+// exemption is by FILENAME rather than by an inline waiver, because a waiver a
+// component can grant itself is not a check.
+{
+  const shipped = code.filter((f) => extname(f) === '.tsx' && !/harness\.tsx$/.test(f))
+  for (const f of shipped) {
+    const text = await readFile(f, 'utf8')
+    const m = /<Num\b[^>]*?tone="faint"/s.exec(text)
+    if (m) {
+      failures.push(
+        `a measured figure on the decorative ink step — ${relative(ROOT, f)}: ${m[0].slice(0, 60)}…`
+      )
+    }
+  }
+}
+
+// ── 13. Hit targets clear the WCAG 2.2 minimum at every density ────────────
+// SC 2.5.8 is 24x24 CSS px and it is not a preference. In one measured result
+// state 18 of 19 visible focusables were under 44px and the two timeline brush
+// handles were 8px WIDE — and did not scale with density, so touch mode widened
+// every other target by 40% and left the two hardest ones alone.
+{
+  const tokens = await readFile(TOKEN_FILE, 'utf8')
+  const step = (name) => {
+    const m = new RegExp(`${name}:\\s*(\\d+(?:\\.\\d+)?)px`).exec(tokens)
+    return m === null ? null : Number(m[1])
+  }
+  const hit = (name) => {
+    // --hit-min: calc(var(--s-9) * var(--density-hit-scale));
+    const m = new RegExp(`${name}:\\s*calc\\(var\\((--s-\\d+)\\)`).exec(tokens)
+    return m === null ? null : step(m[1])
+  }
+  const FLOOR = 24
+  for (const name of ['--hit-min', '--hit-row', '--hit-icon']) {
+    const px = hit(name)
+    if (px === null) {
+      failures.push(`design-tokens.css does not declare ${name} as calc(var(--s-N) * …)`)
+    } else if (px < FLOOR) {
+      failures.push(
+        `${name} is ${px}px at comfortable density, under the ${FLOOR}px WCAG 2.2 minimum. ` +
+          `A smaller LABEL is a legitimate choice; a smaller thing to press is not.`
+      )
+    }
+  }
+  if (!tokens.includes('--hit-slop')) {
+    failures.push(
+      'design-tokens.css has no --hit-slop. Controls whose visual size is load-bearing ' +
+        '(an axis handle, a node name inside a sentence) need pressable area they do not paint.'
+    )
+  }
+}
+
 // ── report ─────────────────────────────────────────────────────────────────
 const unique = [...new Set(failures)]
 if (unique.length === 0) {

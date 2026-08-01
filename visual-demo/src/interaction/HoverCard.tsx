@@ -174,6 +174,27 @@ export const HoverCard = forwardRef<HTMLDivElement, HoverCardProps>(function Hov
   const mix = neighborhood !== null && neighborhood.nodeId === node.id ? neighborhood : null;
 
   const card = (
+    /* `aria-hidden` IS CORRECT, AND IT IS ONLY CORRECT NOW.
+       The review flagged this element for a good reason: it was the richest
+       per-node summary the product produced and it was withheld from assistive
+       technology, at a moment when nothing else in the tree offered a structured
+       reading of a node at all. That is no longer the state of the tree —
+       `<TerrainOutline/>` gives every node an operable row carrying its kind, its
+       degree, the relation joining it to the cursor and the actions available on
+       it, and it is driven by the same store this card reads.
+
+       So the argument for hiding it is now the ordinary one and it holds: this
+       card is POINTER-DRIVEN. It is positioned by a `pointermove` handler that
+       writes a transform straight onto the element, it appears and vanishes at
+       pointer rate, and its content is the hover target — which is exactly the
+       one piece of state the announcer refuses to speak, because a pointer
+       crossing 4,406 nodes would produce 4,406 utterances. Exposing a live
+       tooltip that changes sixty times a second would not add a reading; it would
+       drown the one the outline provides.
+
+       The rule this encodes: hide a surface from assistive technology only when
+       an equivalent one is exposed. Before the outline existed, this attribute
+       was a hole. */
     <div className="ix-card" ref={ref} role="tooltip" aria-hidden="true">
       <div className="ix-card__hd">
         {isSpineRung(node.kind) ? (
@@ -243,7 +264,10 @@ export const HoverCard = forwardRef<HTMLDivElement, HoverCardProps>(function Hov
           <div className="ix-card__mixhd">
             <span className="caps ink-faint">{COPY.sigma.title}</span>
             <span className="ix-card__hops">
-              <Num value={mix.hops} format="int" unit={COPY.common.units.hops} tone="faint" />
+              {/* --ink-dim, NOT --ink-faint. The hop count is the one figure on
+                  this card that says how far the lit neighbourhood actually
+                  reaches, and the faint step is decoration only. */}
+              <Num value={mix.hops} format="int" unit={COPY.common.units.hops} tone="dim" />
             </span>
           </div>
           <div className="ix-card__chips">

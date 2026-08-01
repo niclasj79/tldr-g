@@ -79,10 +79,15 @@ actually paid for. Three lights carry meaning and nothing else does:
 - **red** — fail-loud only. If the interface shows red, something is wrong and it says what and what
   to do about it.
 
-A question sits in the command bar **unrun**. That is deliberate. The first render is your act, and
-it is the moment the tagline stops being a slogan: you watch the engine choose a resolution per
+A question sits at the top of the rail **unrun**. That is deliberate. The first render is your act,
+and it is the moment the tagline stops being a slogan: you watch the engine choose a resolution per
 node, spend a budget doing it, and then account for every choice — including the nodes it reached
 and declined to pay for.
+
+**The question never leaves.** Once a render lands it stays pinned above every detail surface, in
+full, with the answer under it and the answer's verification state under that. The last one is not a
+convenience: a verification verdict is a property of the answer, so it travels with it and cannot be
+dismissed — only resolved by a clean re-render or by discarding the result.
 
 ---
 
@@ -184,24 +189,50 @@ computed from those two numbers and nothing else.
 
 ## Controls
 
+The map has **three workspaces**, the result has **three detail surfaces**, and every move has a
+reverse. That is the whole model, and the shortcut list is grouped by it rather than alphabetically,
+because the grouping is the thing worth learning.
+
+**Ask**
+
 | Key | Action |
 | --- | --- |
-| `/` | Command search |
+| `/` | Search questions, places and commands |
 | `Q` | Render the staged question |
-| `A` | Atlas Mode — all four rungs at once |
-| `I` | Inspector |
-| `P` | Provenance — the render trace |
-| `T` | Timeline |
-| `G` | Analyst Mode |
-| `?` | Keyboard map and glossary |
-| `1` `2` `3` `4` | Jump to the continent / island / asset / passage rung |
-| `Backspace` | Ascend one rung |
-| `Esc` | Clear focus and selection |
+
+**Workspaces** — mutually exclusive. Pressing the one you are in returns you to Explore.
+
+| Key | Action |
+| --- | --- |
+| `E` | **Explore** — the map and its detail levels |
+| `T` | **Timeline** — the same map, read by date |
+| `G` | **Analyze** — filters and engine internals |
+
+**Result detail** — one at a time, over a question and answer that never scroll away.
+
+| Key | Action |
+| --- | --- |
+| `A` | **Answer** — the claim and how it was reached |
+| `P` | **Evidence trail** — the sources and the receipt |
+| `I` | **Inspect** — whatever is selected |
+| `?` | Help, and the glossary |
+
+**Move around** — the last four are the reverse actions, and there is one for every move.
+
+| Key | Action |
+| --- | --- |
+| `1` `2` `3` `4` | Detail level: continents / islands / documents / passages |
+| `Backspace` | Up one level |
+| `B` | Back to the previous view |
+| `R` | Back to the result |
+| `H` | Home — the whole map, nothing held (the answer is kept) |
+| `Esc` | Clear the selection |
 
 Pointer: hover to preview, click to select, double-click to descend. The keyboard map is data
 (`src/state/keys.ts`) — the handler dispatches from it, the help overlay is generated from it, and
 every key hint in the product reads its glyphs out of it, so a shortcut and its label cannot
-disagree.
+disagree. The action ids say which KIND of thing they are (`lens-*`, `tab-*`), so the shape of that
+union alone tells you the product has three places and three details.
 
 ---
 
@@ -312,8 +343,10 @@ demo fall flat.
 2. Press **Q**. The constellation assembles and the terrain dims — everything off the answer path
    drops to ghost, and comes back when the render lands. The answer names an entity that is nowhere
    near the question on the map, because the path crossed a strait through a bridge entity.
-3. Press **P**. Read three rows: what the render cost, what stuffing the whole context would have
-   cost, and the ratio. Both figures are sums over rows on the same panel.
+3. The rail has already opened the **Evidence trail**, because that is what a landed render is
+   for. Every source the answer stands on, grouped by the hop it supports. Open the receipt fold and
+   read three rows: what the render cost, what stuffing the whole context would have cost, and the
+   ratio. Both figures are sums over rows on the same panel.
 4. Scroll to **Omitted but connected**. *This is what the engine reached and chose not to pay for,
    and every one of those nodes is drawn latent on the map behind this panel.*
 5. Press **Verify** — green, both halves. Then press **Alter a quote**: the real bytes change, the
@@ -326,8 +359,9 @@ Close with: *the answer is not the product. The receipt is.*
 
 1. Start from the empty state. The grid behind the panel is drawn at latent resolution: outline only,
    nothing spent. It is not a placeholder — it is the shape of an unresolved world.
-2. Ingest. Watch documents land and the layout settle, then press **A** for Atlas Mode: the same
-   world at four rungs at once.
+2. Ingest. Watch documents land and the layout settle. The rail holds the corpus's own question
+   set and the census of the bake the map is drawn against — what it holds while it is waiting,
+   rather than what it is for.
 3. Press **1 2 3 4**. Notice what does *not* happen: nothing is deleted and nothing jumps. Hue stays
    constant down the spine, so you always know which region you are in without reading a label.
 4. Hover a quiet node. Its label appears; its neighbours' do not. Labels are altitude-gated,

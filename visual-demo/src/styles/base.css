@@ -226,6 +226,12 @@ summary::marker {
   font-size: var(--fs-12-5);
   line-height: var(--lh-ui);
 }
+/* THE CONTROL SIZE. See design-tokens §9: a readout is scanned in a column, a
+   control label is read once under a pointer, and 12.5px was doing both jobs. */
+.t-13 {
+  font-size: var(--fs-13);
+  line-height: var(--lh-ui);
+}
 .t-14 {
   font-size: var(--fs-14);
   line-height: var(--lh-body);
@@ -280,6 +286,43 @@ summary::marker {
   line-height: var(--lh-ui);
   text-transform: uppercase;
   letter-spacing: var(--tracking-caps);
+}
+
+/* =============================================================================
+   HIT SLOP — the invisible half of a target
+   -----------------------------------------------------------------------------
+   For controls whose VISUAL size is load-bearing and cannot be padded to the
+   36px floor without becoming a different object: an 8px axis handle that has to
+   read as a hairline, a node name set inside a running sentence. The element
+   keeps its size; a ::before with no paint of its own extends the area a pointer
+   or a thumb may land in, out to the floor.
+
+   IT IS NOT A HOVER TARGET AND MUST NOT BECOME ONE. `pointer-events` stays on
+   the pseudo-element only, so the slop presses the control and nothing else — a
+   slop that also triggered hover would light nodes the pointer is not over.
+   ========================================================================== */
+/* `:where()` CONTRIBUTES ZERO SPECIFICITY, AND THAT IS THE WHOLE POINT.
+   As a plain `.u-hitslop` this rule is (0,1,0) — identical to any component's
+   own positioning rule — and base.css is emitted AFTER the component
+   stylesheets in the bundle, so the utility WON. Adding hit slop to the
+   timeline's brush handle silently replaced its `position: absolute` with
+   `relative`, `bottom: 0` stopped applying, and the control collapsed to 8x0px:
+   an accessibility fix that deleted the thing it was fixing.
+
+   A utility that can overwrite a component's layout is not a utility. This one
+   now loses every tie by construction, so hosts that are already positioned keep
+   their own positioning and hosts that are not get `relative` for free. */
+:where(.u-hitslop) {
+  position: relative;
+}
+
+.u-hitslop::before {
+  content: '';
+  position: absolute;
+  inset: calc(var(--hit-slop) * -1) calc(var(--hit-slop) * -0.5);
+  /* Never smaller than the WCAG 2.2 minimum, whatever the density is doing. */
+  min-height: var(--hit-floor);
+  border-radius: var(--r-6);
 }
 
 /* Screen-reader-only, for labels a sighted user reads from context. */

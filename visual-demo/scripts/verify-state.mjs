@@ -348,15 +348,43 @@ check('recover() returns to the state we came from', st().app === 'READY')
 section('9. KEYBOARD MAP, DENSITY, PERF SAMPLER')
 
 check('every binding has display glyphs and a label', S.KEYMAP.every((b) => b.keys.length > 0 && b.label.length > 0))
-check('the contract keys are all bound', ['/', 'a', 'i', 'p', 't', 'escape', 'q', 'g', '?', '1', '2', '3', '4', 'backspace'].every((k) => S.KEYMAP.some((b) => b.codes.includes(k))))
+check('the contract keys are all bound', ['/', 'a', 'i', 'p', 't', 'e', 'escape', 'q', 'g', '?', '1', '2', '3', '4', 'backspace', 'b', 'h', 'r'].every((k) => S.KEYMAP.some((b) => b.codes.includes(k))))
 check('a modifier hands the key back to the browser', S.matchBinding({ key: 'p', metaKey: true }) === null)
 check('typing in a field is not a shortcut', S.matchBinding({ key: '/', target: { tagName: 'INPUT' } }) === null)
 check('…but Escape still escapes it', S.matchBinding({ key: 'Escape', target: { tagName: 'INPUT' } })?.id === 'clear-focus')
-check('the help overlay and the KeyHint chips read the same table', S.keyHintFor('search').join('') === '/' && S.bindingFor('receipt').keys[0] === 'P')
+check('the help overlay and the KeyHint chips read the same table', S.keyHintFor('search').join('') === '/' && S.bindingFor('tab-evidence').keys[0] === 'P')
+
+// THE ACTION IDS SAY WHICH KIND OF THING THEY ARE NOW. `atlas`, `inspector`,
+// `receipt`, `timeline` and `analyst` were five ids at one rank standing for two
+// workspaces, a lens, a result surface and a selection surface. The union is
+// `lens-*` / `tab-*` / the reverse actions, and the shape of the union alone
+// says the product has three places and three details.
+check(
+  'the taxonomy is in the ids, not just in the labels',
+  S.KEYMAP.filter((b) => b.id.startsWith('lens-')).length === 3 &&
+    S.KEYMAP.filter((b) => b.id.startsWith('tab-')).length === 3,
+)
 
 const consumed = st().handleKey({ key: 'p' })
-check('handleKey() dispatches through the map', consumed === true && st().ui.receipt === true)
-st().handleKey({ key: 'p' })
+check('handleKey() dispatches through the map', consumed === true && st().tab === 'evidence')
+
+// A LENS IS A MOVE, NOT A TOGGLE. Pressing the lens you are already in returns
+// you to Explore, which is the only lens that is a home; pressing a different
+// one is a place change and the two are not the same gesture.
+st().handleKey({ key: 't' })
+check('a lens key enters that lens', st().lens === 'timeline')
+st().handleKey({ key: 't' })
+check('…and pressing it again returns to Explore', st().lens === 'explore')
+await S.drain()
+
+// EVERY MOVE HAS A REVERSE ACTION, and the keyboard is where a reverse action
+// has to be, because the moment you need one is the moment you notice.
+check(
+  'the reverse actions are all bound',
+  ['back', 'home', 'return-to-result', 'ascend', 'clear-focus'].every((id) =>
+    S.KEYMAP.some((b) => b.id === id),
+  ),
+)
 
 st().setDensity('compact')
 check('density is a real state change', st().density === 'compact')

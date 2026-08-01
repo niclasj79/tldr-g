@@ -192,7 +192,81 @@ export async function awaitHold(at: Checkpoint): Promise<void> {
 }
 
 /* =============================================================================
- * 4. IN-FLIGHT TRACKING
+ * 4. THE VIEWPOINT — reading the live camera, and framing a set of ids
+ * -----------------------------------------------------------------------------
+ * A fourth thing genuinely needs to cross the line, and it is the one the
+ * navigation stack is built on: WHERE THE USER WAS LOOKING.
+ *
+ * The store's `camera` field is a TARGET and a version counter — it changes only
+ * when something deliberately moves the camera, and it says nothing at all about
+ * where a hand-driven pan or a wheel-zoom left the viewpoint. Saving a scene from
+ * it would save the last place the store pointed the camera rather than the place
+ * the user is actually standing, so "Return to previous view" would return to
+ * somewhere they never were. That is worse than having no back at all: a reverse
+ * action that lands somewhere unexpected teaches people not to trust the control.
+ *
+ * So the renderer registers a reader for its own live camera, and a framer that
+ * fits a set of ids the same way the descent does. Both are optional; with
+ * neither registered the navigation stack still restores rung, scope, selection
+ * and focus, and simply leaves the viewpoint alone — which is the honest
+ * degradation, not a broken one.
+ * ========================================================================== */
+
+/** A place the camera can be standing. World units, not pixels. */
+export interface Viewpoint {
+  x: number;
+  y: number;
+  zoom: number;
+}
+
+/** Reads the renderer's CURRENT camera — not the store's target. */
+export type CameraProbe = () => Viewpoint | null;
+
+/** Frames a set of node ids, the way a descent or a constellation is framed. */
+export type FrameGate = (ids: readonly string[], paddingPx?: number) => Promise<void> | void;
+
+let cameraProbe: CameraProbe | null = null;
+let frameGate: FrameGate | null = null;
+
+/** Register the renderer's live-camera reader — normally `() => terrain.camera.get()`. */
+export function registerCameraProbe(probe: CameraProbe | null): void {
+  cameraProbe = probe;
+}
+
+/** Where the camera is standing right now, or `null` when nothing can say. */
+export function readViewpoint(): Viewpoint | null {
+  if (cameraProbe === null) return null;
+  try {
+    return cameraProbe();
+  } catch {
+    return null;
+  }
+}
+
+/** Register the renderer's framer — normally `(ids, pad) => terrain.camera.fitTo([...ids], pad)`. */
+export function registerFrameGate(gate: FrameGate | null): void {
+  frameGate = gate;
+}
+
+/**
+ * Frame a set of ids. Resolves immediately when nothing is registered.
+ *
+ * A framer that throws is reported and swallowed, for the same reason the settle
+ * gate's is: a camera that failed to arrive must not take down the answer it was
+ * being pointed at.
+ */
+export async function runFrameGate(ids: readonly string[], paddingPx?: number): Promise<void> {
+  if (frameGate === null || ids.length === 0) return;
+  try {
+    await frameGate(ids, paddingPx);
+  } catch (err) {
+    // eslint-disable-next-line no-console
+    console.error('[state/bridge] the frame gate threw; the result is fine, the camera is not.', err);
+  }
+}
+
+/* =============================================================================
+ * 5. IN-FLIGHT TRACKING
  * -----------------------------------------------------------------------------
  * `settled()` needs to know whether the store is mid-action. Rather than a
  * boolean that somebody will forget to clear, every async action registers its
@@ -238,6 +312,8 @@ export async function drain(timeoutMs = 30_000): Promise<void> {
 export function resetBridge(): void {
   settleGate = null;
   idleProbe = null;
+  cameraProbe = null;
+  frameGate = null;
   releaseHold();
   inflight.clear();
 }

@@ -1,0 +1,38 @@
+{
+  "pack": "legal",
+  "version": 1,
+  "extends": "core",
+  "description": "Legal / statutory / regulatory domain relations, seeded from the closure test's legal-statute (real GDPR) + regulatory registers. The lean core already covered real statutory text at ~100% distinct; this pack names the deontic residue (obligation/prohibition/right/penalty/supersession) that a statute-heavy corpus benefits from.",
+  "families": {
+    "obligates": {
+      "description": "a law, regulation, or clause obligates, requires, or mandates a party to act or comply",
+      "head_types": ["law", "concept", "organization"],
+      "tail_types": ["person", "organization", "concept"],
+      "tier": "semantic", "sigma_family": "causal"
+    },
+    "prohibits": {
+      "description": "a law or clause prohibits, forbids, bans, or restricts an action or party",
+      "head_types": ["law", "concept"],
+      "tail_types": ["person", "organization", "concept"],
+      "tier": "semantic", "sigma_family": "causal"
+    },
+    "grants_right": {
+      "description": "a law or authority grants, confers, or provides a right, permission, entitlement, or exemption to a party",
+      "head_types": ["law", "concept", "organization"],
+      "tail_types": ["person", "organization"],
+      "tier": "semantic", "sigma_family": "authorial"
+    },
+    "penalizes": {
+      "description": "a law imposes a penalty, fine, sanction, or liability for a violation or breach",
+      "head_types": ["law", "concept", "organization"],
+      "tail_types": ["person", "organization", "concept"],
+      "tier": "semantic", "sigma_family": "episodic"
+    },
+    "overrules_supersedes": {
+      "description": "a ruling, law, or authority overrules, repeals, amends, or supersedes another law, ruling, or provision",
+      "head_types": ["law", "concept", "organization"],
+      "tail_types": ["law", "concept"],
+      "tier": "semantic", "sigma_family": "temporal"
+    }
+  }
+}

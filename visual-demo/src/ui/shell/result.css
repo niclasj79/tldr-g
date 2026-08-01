@@ -1,0 +1,515 @@
+/* =============================================================================
+   TLDR-G VISUAL DEMO — THE RESULT SURFACE
+   -----------------------------------------------------------------------------
+   The rail's pinned header, its tab strip, its reverse actions, and the two
+   surfaces that were rebuilt around them.
+
+   It is a separate stylesheet from `shell.css` for the same reason the copy deck
+   was split into blocks: one file that every surface edits is the file where two
+   unrelated revisions meet. `shell.css` owns the FRAME; this owns what the rail
+   does inside it.
+
+   Nothing here invents a colour, a duration or a radius. Every value is a token.
+   ========================================================================== */
+
+/* =============================================================================
+   1. THE TASK HEADER — the question, and it never disappears
+   ========================================================================== */
+
+.task {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-tight);
+  min-width: 0;
+}
+
+.task__composer {
+  min-width: 0;
+}
+
+.task__cancel {
+  align-self: flex-end;
+}
+
+.task__askedrow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--gap-row);
+  min-width: 0;
+}
+
+.task__label {
+  color: var(--ink-dim);
+}
+
+.task__acts {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-tight);
+  flex: none;
+}
+
+/* THE QUESTION WRAPS. It never truncates, at any width, in any state. A question
+   you can read two thirds of is a question you have to remember, and the whole
+   reason this block exists is that the composer used to elide it at 1280px and
+   lose it entirely near 1024px. */
+.task__q {
+  margin: 0;
+  color: var(--ink);
+  font-weight: var(--fw-500);
+  overflow-wrap: anywhere;
+}
+
+.task__a {
+  margin: 0;
+  color: var(--ink-dim);
+  overflow-wrap: anywhere;
+}
+
+/* The answer was measured over bytes that have since moved. */
+.task__a[data-struck='true'] {
+  text-decoration: line-through;
+  text-decoration-color: var(--alarm);
+  color: var(--ink-faint);
+}
+
+.task__trust {
+  margin: 0;
+}
+
+/* =============================================================================
+   THE UNTRUSTED BLOCK — the one thing in this product with no dismiss control
+   -----------------------------------------------------------------------------
+   `verify-invalid` used to be `verify-valid` plus one 210px card in a corner:
+   the answer stayed at full luminance, the gauge kept reading 0.87 in --render
+   teal, and a green badge kept saying `Matches the by-construction answer` over
+   bytes the product had just proved were edited after signing. Pressing Recover
+   cleared the band and left all of that in place.
+
+   So this is not an annotation on the result. It is a band across the top of it,
+   inside the pinned header, on every tab, and the only things that remove it are
+   a clean re-render and discarding the result.
+   ========================================================================== */
+.task__untrusted {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-tight);
+  padding: var(--pad-row) var(--pad-control);
+  border: var(--border-1) solid var(--alarm-a56);
+  border-left-width: var(--edge-answer-casing);
+  border-radius: var(--r-6);
+  background: var(--alarm-a12);
+}
+
+.task__untrusted p {
+  margin: 0;
+}
+
+/* The whole header goes cold when the result cannot be trusted. Not louder:
+   COLDER, because the failure is that the interface was vouching for something,
+   and the fix is that it stops. */
+.task[data-untrusted='true'] .task__a {
+  color: var(--ink-faint);
+}
+
+/* =============================================================================
+   2. THE TAB STRIP
+   ========================================================================== */
+
+.rtabs {
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+  min-width: 0;
+  border-bottom: var(--border-1) solid var(--line);
+}
+
+.rtabs__tab {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--gap-tight);
+  flex: 1 1 0;
+  min-width: 0;
+  min-height: var(--hit-min);
+  padding: 0 var(--pad-control);
+  /* The selected tab is joined to its panel by a 1.5px rule that overlaps the
+     strip's own hairline. --lod-0-stroke, because it is the same weight the
+     product uses everywhere for "this one, right now". */
+  border-bottom: var(--lod-0-stroke) solid transparent;
+  margin-bottom: calc(var(--lod-0-stroke) * -1);
+  color: var(--ink-dim);
+  font-size: var(--fs-13);
+  font-weight: var(--fw-500);
+  line-height: 1;
+  white-space: nowrap;
+  transition: color var(--t-fast) var(--ease-ui), border-color var(--t-fast) var(--ease-ui);
+}
+
+.rtabs__tab:hover {
+  color: var(--ink);
+}
+
+.rtabs__tab[data-active='true'] {
+  color: var(--ink);
+  border-bottom-color: var(--render);
+}
+
+.rtabs__name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.rtabs__n {
+  flex: none;
+}
+
+/* An Inspect tab with nothing selected. A hollow mark, not a count: there is
+   nothing to count, and printing `0` would be a measurement of an absence. */
+.rtabs__dot {
+  flex: none;
+  width: var(--s-1);
+  height: var(--s-1);
+  border: var(--border-1) solid var(--ink-faint);
+  border-radius: var(--r-full);
+}
+
+.rtabs__tip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--gap-row);
+}
+
+/* =============================================================================
+   3. THE REVERSE ACTIONS
+   ========================================================================== */
+
+.nav {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-tight);
+  min-width: 0;
+  flex-wrap: wrap;
+}
+
+.nav__tip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--gap-row);
+}
+
+/* =============================================================================
+   4. THE EVIDENCE TRAIL
+   ========================================================================== */
+
+.ev {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-row);
+  min-width: 0;
+}
+
+.ev__tech {
+  font-weight: var(--fw-400);
+  text-transform: none;
+  letter-spacing: var(--tracking-normal);
+}
+
+.ev__hops,
+.ev__srcs {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-row);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ev__hop {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-tight);
+  min-width: 0;
+}
+
+.ev__src {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-tight);
+  padding: var(--pad-row);
+  border: var(--border-1) solid var(--line-a40);
+  border-left: var(--edge-answer-casing) solid var(--evidence-a32);
+  border-radius: var(--r-6);
+  background: var(--evidence-a06);
+  min-width: 0;
+}
+
+/* SIDE BY SIDE, ONLY WHERE IT MEANS SOMETHING. Two independent documents
+   supporting one claim is the strongest thing this corpus can say and it had no
+   affordance at all; a hop with one source has nothing to compare. */
+.ev__hop[data-comparing='true'] .ev__srcs {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
+  align-items: start;
+}
+
+.ev__quote {
+  margin: 0;
+  padding: 0;
+  color: var(--ink);
+  border-left: 0;
+  overflow-wrap: anywhere;
+}
+
+.ev__meta {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-row);
+  flex-wrap: wrap;
+  min-width: 0;
+}
+
+.ev__why {
+  margin: 0;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.ev__acts {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-tight);
+  flex-wrap: wrap;
+}
+
+.ev__fold {
+  border-top: var(--border-1) solid var(--line-a40);
+  padding-top: var(--pad-row);
+}
+
+/* =============================================================================
+   5. THE TIMELINE LENS, RAIL SIDE
+   ========================================================================== */
+
+.tl {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-row);
+  min-width: 0;
+}
+
+.tl__scopes {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  padding: var(--border-1);
+  border: var(--border-1) solid var(--line);
+  border-radius: var(--r-6);
+  background: var(--panel-bg-2);
+}
+
+.tl__scope {
+  flex: 1 1 0;
+  min-width: 0;
+  min-height: var(--hit-row);
+  padding: 0 var(--pad-chip);
+  border: var(--border-1) solid transparent;
+  border-radius: calc(var(--r-6) - var(--border-1));
+  color: var(--ink-dim);
+  font-size: var(--fs-12-5);
+  font-weight: var(--fw-500);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: color var(--t-fast) var(--ease-ui), background-color var(--t-fast) var(--ease-ui);
+}
+
+.tl__scope:hover {
+  color: var(--ink);
+  background: var(--ink-a06);
+}
+
+.tl__scope[data-active='true'] {
+  color: var(--ink);
+  background: var(--ink-a12);
+  border-color: var(--line);
+}
+
+.tl__hint,
+.tl__trunc {
+  margin: 0;
+  max-width: var(--shell-measure);
+}
+
+.tl__win {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--gap-row);
+  flex-wrap: wrap;
+}
+
+.tl__acts {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-tight);
+  flex-wrap: wrap;
+}
+
+.tl__events {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.tl__event + .tl__event {
+  border-top: var(--border-1) solid var(--line-a40);
+}
+
+/* AN EVENT IS AN OBJECT. It used to be a `title` attribute on a 1px tick: you
+   could see that something happened in 2023 and you could not open it, name it,
+   or find it on the map. */
+.tl__eventbtn {
+  display: flex;
+  align-items: baseline;
+  gap: var(--gap-row);
+  width: 100%;
+  min-height: var(--hit-row);
+  padding: var(--pad-row) var(--pad-chip);
+  border-radius: var(--r-6);
+  text-align: left;
+  color: var(--ink-dim);
+  transition: color var(--t-fast) var(--ease-ui), background-color var(--t-fast) var(--ease-ui);
+}
+
+.tl__eventbtn:hover {
+  color: var(--ink);
+  background: var(--ink-a06);
+}
+
+.tl__event[data-held='true'] .tl__eventbtn {
+  color: var(--ink);
+  background: var(--render-a12);
+}
+
+.tl__at {
+  flex: none;
+  color: var(--ink-faint);
+}
+
+.tl__event[data-held='true'] .tl__at {
+  color: var(--render);
+}
+
+.tl__what {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+/* =============================================================================
+   GLASS IS FOR FLOATING OVER THE TERRAIN, NOT FOR STACKING INSIDE A SCROLLER
+   -----------------------------------------------------------------------------
+   Every `.panel` is 72% translucent with a 12px `backdrop-filter`, which is
+   exactly right for a panel lying on the map: the world keeps moving behind the
+   instrument reading it. Inside the rail it is wrong twice over.
+
+   FIRST, THERE IS NO TERRAIN BEHIND THEM. The rail is already glass over the
+   map; a panel inside it samples the RAIL, not the world, so the blur buys
+   nothing and costs contrast.
+
+   SECOND, AND THIS IS THE DEFECT A TEST DRIVE FOUND: a `backdrop-filter` inside
+   an `overflow: auto` container composites against a backdrop the browser
+   recomputes as the column scrolls, and stacked translucent panels then sample
+   each OTHER. Scrolled a couple of hundred pixels, the corpus census was drawn
+   over the staged questions with both legible through one another — three
+   panels' worth of text in one panel's space. It is not a layout bug; the boxes
+   never overlapped. It is a paint bug, and the honest fix is to stop asking for
+   a blur where there is nothing legitimate to blur.
+
+   The glass metaphor is intact where it means something: the rail, the top bar,
+   the HUD and anything floating on the stage all keep it.
+   ========================================================================== */
+
+.rail__pinned .panel,
+.rail__body .panel {
+  background: var(--surface);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+
+/* Same argument, same fix, for the two nested surfaces that carry it. */
+.rail__pinned .panel .panel,
+.rail__body .panel .panel {
+  background: var(--surface-2);
+}
+
+/* =============================================================================
+   6. THE ORIENTATION CARD
+   -----------------------------------------------------------------------------
+   Three numbered lines, stated before anything is pressed. See Orientation.tsx
+   for why the walkthrough alone was not enough: a tour has to be STARTED, and
+   the reader most likely to need one is the reader who will never start it.
+   ========================================================================== */
+
+.orient__lede {
+  margin: 0;
+  max-width: var(--shell-measure);
+}
+
+.orient__steps {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-row);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: none;
+}
+
+.orient__step {
+  display: grid;
+  grid-template-columns: var(--hit-icon) minmax(0, 1fr);
+  align-items: start;
+  gap: var(--gap-row);
+}
+
+/* The numeral is the ORDER, which is the only thing this card is really for. It
+   is a <Num> like every other figure in the product, in the question light —
+   violet is what is not yet known, and a step you have not taken is exactly
+   that. */
+.orient__n {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--hit-icon);
+  height: var(--hit-icon);
+  border: var(--border-1) solid var(--curiosity-a32);
+  border-radius: var(--r-full);
+  background: var(--curiosity-a06);
+}
+
+.orient__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-tight);
+  min-width: 0;
+}
+
+.orient__title {
+  color: var(--ink);
+  font-weight: var(--fw-500);
+}
+
+.orient__note {
+  margin: 0;
+  max-width: var(--shell-measure);
+}
+
+.orient__walk {
+  width: 100%;
+  justify-content: center;
+}

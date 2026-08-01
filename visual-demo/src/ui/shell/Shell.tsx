@@ -60,15 +60,14 @@ export function Shell(): JSX.Element {
   useKeyboard();
   useSavedViewHash();
 
-  const { app, atlasOpen, timelineOpen, reducedMotion, railOpen, busy } = useAtlasStore((s) => ({
+  const { app, lens, reducedMotion, railOpen, busy } = useAtlasStore((s) => ({
     app: s.app,
-    atlasOpen: s.ui.atlas,
-    timelineOpen: s.ui.timeline,
+    lens: s.lens,
     reducedMotion: s.reducedMotion,
-    /* THE RAIL IS OPEN IF ANYTHING IS IN IT. Atlas Mode is hosted there now, so
-       a rail that only tracked `ui.inspector` would report itself closed while
-       carrying the whole guided descent. */
-    railOpen: s.ui.inspector || s.ui.atlas,
+    /* THE RAIL IS OPEN WHENEVER THERE IS A CORPUS, because the composer lives in
+       it now. A collapsible question is a question that can be lost, and this is
+       the one control the product cannot afford to hide behind a toggle. */
+    railOpen: s.view !== null && s.app !== 'INGESTING' && s.app !== 'SETTLING',
     busy: s.app === 'QUERYING',
   }));
 
@@ -99,6 +98,11 @@ export function Shell(): JSX.Element {
     // followed by the next ingest, so React frequently never renders the EMPTY
     // frame in between and an effect keyed on `app` would miss the transition
     // entirely. The store's own event cannot be missed.
+    //
+    // MOST OF WHAT THIS USED TO DO IS `unload()`'s JOB NOW: the lens, the tab,
+    // the history and the result scene are reset where the corpus is closed,
+    // which is the only place that can know they belong to it. What is left here
+    // is the two transient overlays that are not corpus state at all.
     let last = useAtlas.getState().app;
     return useAtlas.subscribe((s) => {
       const now = s.app;
@@ -107,7 +111,7 @@ export function Shell(): JSX.Element {
       if (now !== 'EMPTY' && now !== 'FIRST-RUN') return;
       queueMicrotask(() => {
         const st = useAtlas.getState();
-        for (const panel of ['atlas', 'receipt', 'timeline', 'analyst', 'quarantine', 'help'] as const) {
+        for (const panel of ['quarantine', 'help', 'search'] as const) {
           if (st.ui[panel]) st.toggle(panel);
         }
       });
@@ -145,7 +149,7 @@ export function Shell(): JSX.Element {
             the point under the pointer. */}
         <main
           className="shell__stage"
-          data-atlas={atlasOpen}
+          data-lens={lens}
           aria-label={busy ? COPY.a11y.terrainBusy : COPY.a11y.terrain}
         >
           <TerrainCanvas options={{ autoFrame: false }} />
@@ -178,7 +182,11 @@ export function Shell(): JSX.Element {
               ramp is gone the same way, for the same reason. What is left is one
               optional axis and one small key that says what this rung MEANS. */}
           <div className="shell__dock">
-            <TimelineDock className="shell__timeline" />
+            {/* THE AXIS BELONGS TO ITS LENS. It used to be a panel that could be
+                left open over any workspace — including one it had nothing to do
+                with — which is how five captures in a row carried a timeline
+                slab over a scene about something else. */}
+            {lens === 'timeline' ? <TimelineDock className="shell__timeline" /> : null}
             {/* ONE OWNER FOR THE RUNG SENTENCE. Atlas Mode prints the ontology of
                 the current rung in its own rail; the legend printed the identical
                 sentence 800px away at the foot of the same frame, at every rung.
@@ -197,7 +205,7 @@ export function Shell(): JSX.Element {
                 in both places is what produced three disagreeing node counts in
                 one frame. The grammar of the ramp is taught by the walkthrough
                 and the help overlay, which is where an explanation belongs. */}
-            {atlasOpen || timelineOpen ? null : <RungLegend className="shell__legend" />}
+            {lens === 'explore' ? <RungLegend className="shell__legend" /> : null}
           </div>
 
           {app === 'EMPTY' ? <EmptyScreen /> : null}

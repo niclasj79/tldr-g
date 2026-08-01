@@ -15,7 +15,8 @@ Envelope shape (attestation_version 1):
 
     {
       "attestation_version": 1,
-      "payload_type": "portable_artifact" | "render_trace",
+      "payload_type": "portable_artifact" | "render_trace" |
+                      "rcg_divergence_census" | "verification_trace",
       "payload": {...},                      # the artifact, verbatim
       "payload_hash": "sha256:<hex>",        # over canonical JSON of payload
       "signed_at": "<ISO-8601 UTC>",
@@ -54,7 +55,17 @@ from tp_vrg.data_dir import get_data_dir
 logger = logging.getLogger(__name__)
 
 ATTESTATION_VERSION = 1
-PAYLOAD_TYPES = ("portable_artifact", "render_trace")
+PAYLOAD_TYPES = (
+    "portable_artifact",
+    "render_trace",
+    "rcg_divergence_census",
+    # The last mile: per-claim grounding verdicts for one answer, with the
+    # candidate set each verdict was scoped to and the pinned decomposer + NLI
+    # model ids. Built by tp_vrg.output_verifier (engine-only); this module
+    # only needs to know the type exists, so the public engine-free package
+    # can still verify such an envelope's integrity offline.
+    "verification_trace",
+)
 
 _IMPORT_HINT = (
     "the 'cryptography' package is required for signed exports. "
@@ -341,14 +352,22 @@ def build_render_trace(answer_id: str, provenance) -> dict[str, Any]:
     else:
         coverage = "partial"
 
-    trace: dict[str, Any] = {
-        "trace_version": 1,
-        "answer_id": answer["answer_id"],
-        "query_text": answer["query_text"],
-        "answered_at": answer["answered_at"],
-        "model_label": answer["model_label"],
-        "provenance_coverage": coverage,
-        "citations": [
+    # Resolution disclosure (coref-verbatim-contamination fix): a cited chunk
+    # segment may be a RESOLVED rendering (coref / defined-term resolution
+    # applied), not verbatim source text. Disclose it per citation so the signed
+    # trace never implies a resolved chunk is verbatim — the verbatim document is
+    # each source's seq=0 segment, content_hash is over the verbatim bytes, and the
+    # reversible overlay records every substitution. A segment's text is verbatim
+    # UNLESS it is a chunk (seq>0) of a source whose resolution overlay is present.
+    citations_out: list[dict[str, Any]] = []
+    any_resolved = False
+    for c in citations:
+        seq = c.get("seq")
+        has_overlay = bool(c.get("has_overlay"))
+        is_verbatim = not (has_overlay and seq is not None and seq > 0)
+        if not is_verbatim:
+            any_resolved = True
+        citations_out.append(
             {
                 "cite_order": c.get("cite_order"),
                 "segment_id": c.get("segment_id"),
@@ -356,10 +375,28 @@ def build_render_trace(answer_id: str, provenance) -> dict[str, Any]:
                 "source_uri": c.get("source_uri"),
                 "text": c.get("text"),
                 "evidence_snippet": c.get("evidence_snippet"),
+                "verbatim": is_verbatim,
+                "content_hash": c.get("content_hash"),
             }
-            for c in citations
-        ],
+        )
+
+    trace: dict[str, Any] = {
+        "trace_version": 1,
+        "answer_id": answer["answer_id"],
+        "query_text": answer["query_text"],
+        "answered_at": answer["answered_at"],
+        "model_label": answer["model_label"],
+        "provenance_coverage": coverage,
+        "citations": citations_out,
     }
+    if any_resolved:
+        trace["resolution_disclosure"] = (
+            "One or more cited segments are RESOLVED renderings (coref / "
+            "defined-term resolution applied), not verbatim source text. The "
+            "verbatim document for each source is its seq=0 segment; content_hash "
+            "is over the verbatim bytes; a reversible resolution overlay records "
+            "every substitution. Verify cited text against the verbatim source."
+        )
     if temporal_summary is not None:
         trace["temporal_summary"] = temporal_summary
     return trace

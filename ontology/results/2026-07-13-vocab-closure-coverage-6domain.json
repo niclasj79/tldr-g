@@ -1,0 +1,807 @@
+{
+ "threshold": 0.541,
+ "distinct_relations": 12289,
+ "distinct_coverage": 0.972,
+ "edge_coverage": 0.986,
+ "gap_distinct": 341,
+ "gap_clusters": 144,
+ "p4_shipped_unknown": 12082,
+ "p4_reclaimed_by_embedding": 11742,
+ "per_domain": {
+  "financial": {
+   "distinct_coverage": 0.967,
+   "edge_coverage": 0.989,
+   "distinct_relations": 2789
+  },
+  "regulatory": {
+   "distinct_coverage": 0.98,
+   "edge_coverage": 0.994,
+   "distinct_relations": 454
+  },
+  "scientific": {
+   "distinct_coverage": 0.986,
+   "edge_coverage": 0.995,
+   "distinct_relations": 958
+  },
+  "synthetic": {
+   "distinct_coverage": 1.0,
+   "edge_coverage": 1.0,
+   "distinct_relations": 49
+  },
+  "technical": {
+   "distinct_coverage": 0.977,
+   "edge_coverage": 0.989,
+   "distinct_relations": 8451
+  },
+  "telecom": {
+   "distinct_coverage": 0.964,
+   "edge_coverage": 0.992,
+   "distinct_relations": 1164
+  }
+ },
+ "extension_candidates": [
+  {
+   "members": [
+    "shows",
+    "treats",
+    "must have",
+    "cost",
+    "prices",
+    "sizes",
+    "taxes",
+    "watches"
+   ],
+   "size": 8,
+   "edge_freq": 60,
+   "nearest_family_below_thr": "occurred_on",
+   "nearest_sim": 0.518
+  },
+  {
+   "members": [
+    "launched lte service in",
+    "made the first 5g nr specification available by",
+    "opened first publicly available lte service in",
+    "started studying 5g nr in",
+    "was the first carrier to launch a commercial 5g nr network in",
+    "announced lte trials in",
+    "began large-scale commercial deployments in",
+    "began limited service for",
+    "completed a series of tests of voice over lte (volte) calls on china mobile's",
+    "demonstrated 4g lte for the first time in",
+    "had activation of c-band (n77/n78) delayed due to",
+    "launched lte-tdd services in february 2012 under the name"
+   ],
+   "size": 20,
+   "edge_freq": 38,
+   "nearest_family_below_thr": "transfers_to",
+   "nearest_sim": 0.502
+  },
+  {
+   "members": [
+    "costs",
+    "has a bake cost that is",
+    "has ram cost of"
+   ],
+   "size": 3,
+   "edge_freq": 26,
+   "nearest_family_below_thr": "connects_to",
+   "nearest_sim": 0.527
+  },
+  {
+   "members": [
+    "rates lower",
+    "have produced lower returns for investors",
+    "reduces median zero-investment return to",
+    "are taxed at a lower rate than",
+    "can spend as little as",
+    "get low",
+    "lowers mortgage rates to",
+    "needed to put up as little as 10 percent before 1929",
+    "struggle to lower",
+    "underwrote bonds of",
+    "was 7% below",
+    "was last big lender to settle with"
+   ],
+   "size": 14,
+   "edge_freq": 21,
+   "nearest_family_below_thr": "transacts",
+   "nearest_sim": 0.478
+  },
+  {
+   "members": [
+    "does not work for",
+    "does not measure",
+    "does not suppress",
+    "cannot fit",
+    "does not cover",
+    "does not inject",
+    "has no compression for",
+    "is medium for"
+   ],
+   "size": 8,
+   "edge_freq": 16,
+   "nearest_family_below_thr": "fails_on",
+   "nearest_sim": 0.537
+  },
+  {
+   "members": [
+    "appends trailer lines to",
+    "renders the map as",
+    "bakes a text map into",
+    "files the original and then adds fs-lod + reading-order fiber as",
+    "includes lod_z pinning slot for",
+    "produces 49 _follows edges in"
+   ],
+   "size": 6,
+   "edge_freq": 9,
+   "nearest_family_below_thr": "connects_to",
+   "nearest_sim": 0.524
+  },
+  {
+   "members": [
+    "recovers only about half of",
+    "are mostly absent from",
+    "closed 16% of",
+    "closed around 50% of",
+    "fell more than 95% from",
+    "lost 50% during",
+    "was 20% of",
+    "were approximately one-third less volatile than"
+   ],
+   "size": 8,
+   "edge_freq": 9,
+   "nearest_family_below_thr": "part_of",
+   "nearest_sim": 0.516
+  },
+  {
+   "members": [
+    "breaks in",
+    "break in",
+    "fall out almost free",
+    "fits medium with",
+    "returned -6.08% in"
+   ],
+   "size": 5,
+   "edge_freq": 8,
+   "nearest_family_below_thr": "born_in",
+   "nearest_sim": 0.516
+  },
+  {
+   "members": [
+    "is a known early-stage venture capital fund",
+    "is one of the largest australian funds in",
+    "are too small to raise capital in",
+    "has venture capital industry in"
+   ],
+   "size": 4,
+   "edge_freq": 8,
+   "nearest_family_below_thr": "transacts",
+   "nearest_sim": 0.533
+  },
+  {
+   "members": [
+    "is 0.29 \u03bcs for",
+    "is 4.7 \u03bcs with",
+    "is single-db for",
+    "is the cheapest falsifier for",
+    "is the smallest",
+    "keeps in prd with light trim"
+   ],
+   "size": 6,
+   "edge_freq": 8,
+   "nearest_family_below_thr": "competes_outperforms",
+   "nearest_sim": 0.54
+  },
+  {
+   "members": [
+    "closed over $1,000 for the first time on",
+    "closed over $10,000 for the first time on",
+    "closed over $100,000 for the first time on",
+    "closed over $200,000 for the first time on",
+    "closed over $500,000 for the first time on",
+    "decided not to finance",
+    "filed for chapter 11 bankruptcy",
+    "reached record highs by both deal value and deal count"
+   ],
+   "size": 8,
+   "edge_freq": 8,
+   "nearest_family_below_thr": "transacts",
+   "nearest_sim": 0.502
+  },
+  {
+   "members": [
+    "has never run its thesis on",
+    "has no evidence of",
+    "have never had",
+    "never built",
+    "never called",
+    "never reaches",
+    "never talks to",
+    "never touches"
+   ],
+   "size": 8,
+   "edge_freq": 8,
+   "nearest_family_below_thr": "derived_from",
+   "nearest_sim": 0.521
+  },
+  {
+   "members": [
+    "remains unchanged",
+    "does not shrink with",
+    "had no difference in",
+    "remains the long-horizon north star",
+    "still deferred"
+   ],
+   "size": 5,
+   "edge_freq": 7,
+   "nearest_family_below_thr": "works_at",
+   "nearest_sim": 0.532
+  },
+  {
+   "members": [
+    "converge on branching factor of",
+    "converge pointwise to",
+    "determines empirical limits of",
+    "freezes the embedding dimension at",
+    "is budget-capped iteration over admitted edges",
+    "proves approximately zero for",
+    "seeds by cosine against"
+   ],
+   "size": 7,
+   "edge_freq": 7,
+   "nearest_family_below_thr": "competes_outperforms",
+   "nearest_sim": 0.507
+  },
+  {
+   "members": [
+    "added",
+    "must read"
+   ],
+   "size": 2,
+   "edge_freq": 6,
+   "nearest_family_below_thr": "married_to",
+   "nearest_sim": 0.516
+  },
+  {
+   "members": [
+    "is a regression risk area for",
+    "are a regression risk area for",
+    "is a regression risk for",
+    "is the risk profile"
+   ],
+   "size": 4,
+   "edge_freq": 6,
+   "nearest_family_below_thr": "expects_predicts",
+   "nearest_sim": 0.541
+  },
+  {
+   "members": [
+    "are never recommended",
+    "must avoid",
+    "never gets",
+    "never have",
+    "never market-list",
+    "never uses"
+   ],
+   "size": 6,
+   "edge_freq": 6,
+   "nearest_family_below_thr": "antonym",
+   "nearest_sim": 0.535
+  },
+  {
+   "members": [
+    "deletes bottom-k sentences by",
+    "extracts topic list from",
+    "finds the right passages but doesn't encode",
+    "permanently deletes",
+    "silently truncates",
+    "systematically destroy"
+   ],
+   "size": 6,
+   "edge_freq": 6,
+   "nearest_family_below_thr": "antonym",
+   "nearest_sim": 0.53
+  },
+  {
+   "members": [
+    "liquid lod is",
+    "determines at what corpus size fs-lod starts outperforming",
+    "does not change liquid lod's primitive",
+    "picks the right lod per cluster based on"
+   ],
+   "size": 4,
+   "edge_freq": 5,
+   "nearest_family_below_thr": "processes_data",
+   "nearest_sim": 0.539
+  },
+  {
+   "members": [
+    "allowed fund managers to lay away",
+    "excluded hedge funds due to",
+    "had no funds in",
+    "prohibited corporate pension funds from holding",
+    "reduce median zero-investment return to"
+   ],
+   "size": 5,
+   "edge_freq": 5,
+   "nearest_family_below_thr": "transacts",
+   "nearest_sim": 0.539
+  },
+  {
+   "members": [
+    "builds graph from",
+    "creates nodes for",
+    "does not do decentralized graph learning",
+    "generates html views using",
+    "renders only the sub-graph of"
+   ],
+   "size": 5,
+   "edge_freq": 5,
+   "nearest_family_below_thr": "connects_to",
+   "nearest_sim": 0.536
+  },
+  {
+   "members": [
+    "cannot generate without exposing",
+    "don't emit commits",
+    "is never emitted as",
+    "renders no map",
+    "unblocks holistic-frame v0 substrate work"
+   ],
+   "size": 5,
+   "edge_freq": 5,
+   "nearest_family_below_thr": "has_prerequisite",
+   "nearest_sim": 0.531
+  },
+  {
+   "members": [
+    "caps speculative renders at",
+    "does to the offline axis what adaptive-render-allocation did to",
+    "is the render-axis calibration requirement for",
+    "reduces per-frame latency",
+    "returns the speculative bundle immediately"
+   ],
+   "size": 5,
+   "edge_freq": 5,
+   "nearest_family_below_thr": "processes_data",
+   "nearest_sim": 0.536
+  },
+  {
+   "members": [
+    "did not contain any allocation to",
+    "has no budget for",
+    "provides zero",
+    "were not scanned",
+    "will not transfer"
+   ],
+   "size": 5,
+   "edge_freq": 5,
+   "nearest_family_below_thr": "owns",
+   "nearest_sim": 0.539
+  },
+  {
+   "members": [
+    "does not require phone hardware to receive multiple channels in parallel",
+    "is a novel 5g paradigm that exploits",
+    "provides zero hallucination",
+    "uses the e-utra protocols ofdma (downlink) and sc-fdma (uplink) on its",
+    "uses the utra protocols wcdma or td-scdma on its"
+   ],
+   "size": 5,
+   "edge_freq": 5,
+   "nearest_family_below_thr": "transfers_to",
+   "nearest_sim": 0.529
+  },
+  {
+   "members": [
+    "accounted for 5% of its revenue from",
+    "derived 70% of its revenue from",
+    "held about 70 percent of global 5g base stations by",
+    "reinvested nearly all of their earnings in"
+   ],
+   "size": 4,
+   "edge_freq": 4,
+   "nearest_family_below_thr": "headquartered_in",
+   "nearest_sim": 0.522
+  },
+  {
+   "members": [
+    "achieved much lower accuracy than",
+    "involves far lower risk than",
+    "is low-fidelity",
+    "significantly declined from"
+   ],
+   "size": 4,
+   "edge_freq": 4,
+   "nearest_family_below_thr": "competes_outperforms",
+   "nearest_sim": 0.538
+  },
+  {
+   "members": [
+    "converts cosine-fill wins into",
+    "is a precomputed negative admissibility bitmatrix for",
+    "translates vectors into",
+    "uses precomputed per-band luts and integer-formula quantization for"
+   ],
+   "size": 4,
+   "edge_freq": 4,
+   "nearest_family_below_thr": "competes_outperforms",
+   "nearest_sim": 0.499
+  },
+  {
+   "members": [
+    "does not ship",
+    "is shipped with water mode option",
+    "is the first one shipped",
+    "shipped but conservative-by-default"
+   ],
+   "size": 4,
+   "edge_freq": 4,
+   "nearest_family_below_thr": "transfers_to",
+   "nearest_sim": 0.518
+  },
+  {
+   "members": [
+    "follows shortcuts instead of stepping through",
+    "only the trailing directory",
+    "runs gap retrieval pass targeting only",
+    "triggers mode auto-transition"
+   ],
+   "size": 4,
+   "edge_freq": 4,
+   "nearest_family_below_thr": "preceded_by",
+   "nearest_sim": 0.529
+  },
+  {
+   "members": [
+    "had a 25% increase in",
+    "is too generous given the project's own 25k < 5k evidence",
+    "reached a record high of",
+    "recovered to 2007 levels"
+   ],
+   "size": 4,
+   "edge_freq": 4,
+   "nearest_family_below_thr": "improves",
+   "nearest_sim": 0.532
+  },
+  {
+   "members": [
+    "is supply-side twin of",
+    "is the bake-axis twin of"
+   ],
+   "size": 2,
+   "edge_freq": 3,
+   "nearest_family_below_thr": "synonym",
+   "nearest_sim": 0.525
+  },
+  {
+   "members": [
+    "accused jpmorgan and deutsche bank of",
+    "coerced the ceos of the nine largest banks to",
+    "sued jpmorgan chase"
+   ],
+   "size": 3,
+   "edge_freq": 3,
+   "nearest_family_below_thr": "acquired",
+   "nearest_sim": 0.473
+  },
+  {
+   "members": [
+    "agreed to a $722 million settlement with",
+    "settled the suit filed by picard",
+    "settled with the united states department of justice, u.s. securities and exchange commission, and the commodity futures trading commission for"
+   ],
+   "size": 3,
+   "edge_freq": 3,
+   "nearest_family_below_thr": "acquired",
+   "nearest_sim": 0.538
+  },
+  {
+   "members": [
+    "are blind to",
+    "is nearly blind to",
+    "sees only"
+   ],
+   "size": 3,
+   "edge_freq": 3,
+   "nearest_family_below_thr": "prevents_constrains",
+   "nearest_sim": 0.53
+  },
+  {
+   "members": [
+    "are open solely to",
+    "only sees",
+    "see only"
+   ],
+   "size": 3,
+   "edge_freq": 3,
+   "nearest_family_below_thr": "related_to",
+   "nearest_sim": 0.524
+  },
+  {
+   "members": [
+    "can request the mme to set up connections to",
+    "enables handoff",
+    "uses the s1-ap protocol on the s1-mme interface with the"
+   ],
+   "size": 3,
+   "edge_freq": 3,
+   "nearest_family_below_thr": "works_at",
+   "nearest_sim": 0.534
+  },
+  {
+   "members": [
+    "declines sharply within",
+    "drops dramatically",
+    "stopped preserving"
+   ],
+   "size": 3,
+   "edge_freq": 3,
+   "nearest_family_below_thr": "transforms",
+   "nearest_sim": 0.514
+  },
+  {
+   "members": [
+    "discovered missing foundation after",
+    "was architecturally absent",
+    "was reverted due to"
+   ],
+   "size": 3,
+   "edge_freq": 3,
+   "nearest_family_below_thr": "founded_by",
+   "nearest_sim": 0.516
+  },
+  {
+   "members": [
+    "has a 20-point injection map for",
+    "is used to draw one tree model 1,000 times at different coordinates",
+    "provides fast seed-set lookup for"
+   ],
+   "size": 3,
+   "edge_freq": 3,
+   "nearest_family_below_thr": "uses",
+   "nearest_sim": 0.54
+  },
+  {
+   "members": [
+    "has the largest stock market as of january 2022",
+    "has the second largest stock market as of january 2022",
+    "has the third largest stock market as of january 2022"
+   ],
+   "size": 3,
+   "edge_freq": 3,
+   "nearest_family_below_thr": "headquartered_in",
+   "nearest_sim": 0.526
+  },
+  {
+   "members": [
+    "are sovereign-deployed",
+    "is shipped as the sovereign appliance default for water mode"
+   ],
+   "size": 2,
+   "edge_freq": 2,
+   "nearest_family_below_thr": "becomes",
+   "nearest_sim": 0.535
+  },
+  {
+   "members": [
+    "are world-sealing bakes that",
+    "must bake pvs for"
+   ],
+   "size": 2,
+   "edge_freq": 2,
+   "nearest_family_below_thr": "combines_with",
+   "nearest_sim": 0.501
+  },
+  {
+   "members": [
+    "assesses islands with the highest",
+    "form highest stratum of"
+   ],
+   "size": 2,
+   "edge_freq": 2,
+   "nearest_family_below_thr": "born_in",
+   "nearest_sim": 0.516
+  },
+  {
+   "members": [
+    "avoids 1070 thermal risk",
+    "minimize jitter to"
+   ],
+   "size": 2,
+   "edge_freq": 2,
+   "nearest_family_below_thr": "fails_on",
+   "nearest_sim": 0.504
+  },
+  {
+   "members": [
+    "becomes lane d's inner loop",
+    "provides lane b's primary fuel"
+   ],
+   "size": 2,
+   "edge_freq": 2,
+   "nearest_family_below_thr": "connects_to",
+   "nearest_sim": 0.541
+  },
+  {
+   "members": [
+    "carves out what should remain deterministic even in extreme water, including",
+    "criticizes extreme water as"
+   ],
+   "size": 2,
+   "edge_freq": 2,
+   "nearest_family_below_thr": "requires",
+   "nearest_sim": 0.534
+  },
+  {
+   "members": [
+    "closes dependency",
+    "shut down last textile operations"
+   ],
+   "size": 2,
+   "edge_freq": 2,
+   "nearest_family_below_thr": "fails_on",
+   "nearest_sim": 0.53
+  },
+  {
+   "members": [
+    "criticized the u.s. government for",
+    "directed the u.s. department of justice to investigate"
+   ],
+   "size": 2,
+   "edge_freq": 2,
+   "nearest_family_below_thr": "nationality",
+   "nearest_sim": 0.538
+  },
+  {
+   "members": [
+    "cullas",
+    "culls"
+   ],
+   "size": 2,
+   "edge_freq": 2,
+   "nearest_family_below_thr": "born_in",
+   "nearest_sim": 0.497
+  },
+  {
+   "members": [
+    "debt averaged",
+    "pays off the original loan with interest of"
+   ],
+   "size": 2,
+   "edge_freq": 2,
+   "nearest_family_below_thr": "owns",
+   "nearest_sim": 0.519
+  },
+  {
+   "members": [
+    "does not lead with",
+    "has no analog"
+   ],
+   "size": 2,
+   "edge_freq": 2,
+   "nearest_family_below_thr": "prevents_constrains",
+   "nearest_sim": 0.534
+  },
+  {
+   "members": [
+    "does not preserve",
+    "does not re-tile"
+   ],
+   "size": 2,
+   "edge_freq": 2,
+   "nearest_family_below_thr": "replaces_supersedes",
+   "nearest_sim": 0.532
+  },
+  {
+   "members": [
+    "generates labels for",
+    "generates training signal for"
+   ],
+   "size": 2,
+   "edge_freq": 2,
+   "nearest_family_below_thr": "has_attribute",
+   "nearest_sim": 0.536
+  },
+  {
+   "members": [
+    "gets depth via",
+    "rises from 18% in shallow layers to"
+   ],
+   "size": 2,
+   "edge_freq": 2,
+   "nearest_family_below_thr": "has_attribute",
+   "nearest_sim": 0.541
+  },
+  {
+   "members": [
+    "has theoretical peak download speeds of",
+    "is the highest-leverage ip cluster"
+   ],
+   "size": 2,
+   "edge_freq": 2,
+   "nearest_family_below_thr": "competes_outperforms",
+   "nearest_sim": 0.523
+  },
+  {
+   "members": [
+    "is a ui shell without",
+    "is shipped with water mode default"
+   ],
+   "size": 2,
+   "edge_freq": 2,
+   "nearest_family_below_thr": "has_part",
+   "nearest_sim": 0.541
+  },
+  {
+   "members": [
+    "is bias-corrected to",
+    "is the genuine delta of this doc in"
+   ],
+   "size": 2,
+   "edge_freq": 2,
+   "nearest_family_below_thr": "antonym",
+   "nearest_sim": 0.531
+  },
+  {
+   "members": [
+    "is narrative keystone n4 and technical keystone t6 of",
+    "is the technical keystone t3 of"
+   ],
+   "size": 2,
+   "edge_freq": 2,
+   "nearest_family_below_thr": "derived_from",
+   "nearest_sim": 0.526
+  },
+  {
+   "members": [
+    "is the finest grain for",
+    "is the natural kro grain"
+   ],
+   "size": 2,
+   "edge_freq": 2,
+   "nearest_family_below_thr": "has_property",
+   "nearest_sim": 0.539
+  },
+  {
+   "members": [
+    "is the manual version of",
+    "is the master framework index"
+   ],
+   "size": 2,
+   "edge_freq": 2,
+   "nearest_family_below_thr": "instance_of",
+   "nearest_sim": 0.507
+  },
+  {
+   "members": [
+    "mainline where",
+    "mainlines where"
+   ],
+   "size": 2,
+   "edge_freq": 2,
+   "nearest_family_below_thr": "headquartered_in",
+   "nearest_sim": 0.529
+  },
+  {
+   "members": [
+    "only compounds because",
+    "would only fix"
+   ],
+   "size": 2,
+   "edge_freq": 2,
+   "nearest_family_below_thr": "made_of",
+   "nearest_sim": 0.531
+  },
+  {
+   "members": [
+    "reduce p95 latency from",
+    "shows only isolated five-minute passes"
+   ],
+   "size": 2,
+   "edge_freq": 2,
+   "nearest_family_below_thr": "processes_data",
+   "nearest_sim": 0.525
+  }
+ ]
+}
