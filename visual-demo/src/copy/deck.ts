@@ -1068,6 +1068,51 @@ const help = {
   label: 'Help',
   title: 'How to read this',
   subtitle: product.thesis,
+
+  /* ===========================================================================
+   * WHAT THIS IS — the question the product never answered in the product.
+   * ---------------------------------------------------------------------------
+   * Help opened straight into "how to read the terrain", which answers the
+   * second question for a reader who has not been given the first. Somebody
+   * arriving cold at a coloured map with a question box does not need the hue
+   * legend yet; they need to know what the thing in front of them IS.
+   *
+   * WHAT THIS COPY MAY AND MAY NOT CLAIM. Every sentence below restates a claim
+   * the deck already makes elsewhere — the render/retrieve distinction, the
+   * shortest sufficient view, the receipt, the synthetic corpus. Nothing here
+   * introduces a new capability claim, because Help is the one surface a sceptic
+   * reads closely and it is the worst possible place to be caught over-claiming.
+   * The engine half is deliberately separated from the demo half, and the demo
+   * half says plainly that the corpus is invented.
+   * ======================================================================== */
+  about: {
+    title: 'What is TLDR-G?',
+    /** One sentence, before any elaboration. */
+    lede: 'A knowledge rendering engine. Given a question, it renders the shortest sufficient view of a corpus — rather than retrieving a pile of documents and leaving the reading to you.',
+    points: [
+      {
+        id: 'render',
+        title: 'It renders, it does not retrieve',
+        body: 'Search hands you candidates ranked by similarity and stops. This engine decides how much of the corpus the question actually needs, spends resolution where the answer lives, and leaves everything else at a lower detail level — visible, in place, and cheap. The map you are looking at IS the answer being composed, not a picture of one.',
+      },
+      {
+        id: 'topology',
+        title: 'It keeps the shape of what it read',
+        body: 'Documents are not a flat pile. They sit in clusters, they reference each other, and one named thing appears in many of them. That structure is preserved and drawn: regions, the corridors between them, and the entities that cross. An answer that spans two clusters shows you that it did.',
+      },
+      {
+        id: 'receipt',
+        title: 'Every answer carries its receipt',
+        body: 'What was rendered, what it cost, which passages support each claim, and a hash over the exact source bytes those passages came from. You can re-derive the answer path independently and see whether the two agree. When they do not, the interface says so instead of hiding it.',
+      },
+      {
+        id: 'demo',
+        title: 'What is real here, and what is not',
+        body: 'The corpus is SYNTHETIC — an invented Nordic energy archive, labelled as such on every screen, so that nothing you read is mistaken for a claim about a real company. The engine over it is not invented: the rendering, the resolution ramp, the provenance and the verification are the real mechanisms, running locally in your browser.',
+      },
+    ],
+  },
+
   sections: {
     reading: {
       title: 'Reading the terrain',

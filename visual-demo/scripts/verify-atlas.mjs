@@ -176,6 +176,47 @@ async function main() {
       `${floor.tabsInside} [role=tab] inside, in a tablist: ${floor.insideTablist}`,
     )
 
+    /* THE GROUND RULE UNDER THE LAST STOP.
+       The three level stops cannot distinguish "looking at the assets in this
+       island" from "standing on one of them" — both light the asset mark,
+       because both ARE the asset rung. The rule is the missing fact. Asserted as
+       a rule under the ASSET stop and nowhere else, because a fourth mark in the
+       strip would re-assert the ladder the three-rung spine removed. */
+    const ground = await page.evaluate(() => {
+      const rules = [...document.querySelectorAll('.rb-level-ground')].filter(
+        (e) => e.getClientRects().length > 0,
+      )
+      const lit = rules.filter((e) => e.classList.contains('is-on'))
+      const stops = [...document.querySelectorAll('.rb-level')].filter(
+        (e) => e.getClientRects().length > 0,
+      )
+      /* PER SELECTOR, not globally. The level strip renders TWICE — the top
+         bar's compact form and the rail's — so a global "is this the last stop"
+         test fails on the first selector's asset stop for the wrong reason. Each
+         group is checked against its own last stop. */
+      const onLastStop = rules.every((r) => {
+        const group = r.closest('.rb-levels')
+        if (group === null) return false
+        const own = [...group.querySelectorAll('.rb-level')].filter(
+          (e) => e.getClientRects().length > 0,
+        )
+        return r.closest('.rb-level') === own[own.length - 1]
+      })
+      return {
+        rules: rules.length,
+        lit: lit.length,
+        stops: stops.length,
+        groups: document.querySelectorAll('.rb-levels').length,
+        onLastStop,
+      }
+    })
+    check(
+      'the level strip shows a ground under the asset stop, lit while standing on it',
+      ground.rules >= 1 && ground.lit === ground.rules && ground.onLastStop,
+      `${ground.lit}/${ground.rules} lit — one per level strip (${ground.groups} on screen, ` +
+        `${ground.stops} stops total), each on its own strip's last stop: ${ground.onLastStop}`,
+    )
+
     /* THE ONE A SCREENSHOT CAUGHT AND NO ASSERTION WOULD HAVE.
        Arriving on a floor must FRAME THE DOCUMENT. It did not, for a reason that
        only existed after the passage stopped being a rung: `frameRung` guarded on

@@ -380,34 +380,61 @@
 
 /* TOUCH: a 320px column pinned to the right edge is unreachable in two hands.
    The rail becomes a bottom sheet over the terrain — the stage keeps its full
-   rect, so the viewport floor is unaffected. */
-:root[data-density='touch'] .shell__body {
-  position: relative;
-}
+   rect, so the viewport floor is unaffected.
 
-:root[data-density='touch'] .shell__rail {
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  width: auto;
-  flex: none;
-  /* SIZED TO ITS CONTENT, capped. A sheet pinned to a fixed height shows a
-     half-screen of empty glass whenever the rail is holding one panel, which
-     reads as a broken layout rather than as a restrained one. */
-  height: auto;
-  max-height: var(--shell-sheet-h);
-  border-left: 0;
-  border-top: var(--panel-border);
-  border-radius: var(--r-14) var(--r-14) 0 0;
-  z-index: var(--z-overlay);
-}
+   AND IT IS GATED ON WIDTH, WHICH IT WAS NOT UNTIL 2026-08-04.
+   -----------------------------------------------------------------------------
+   These rules used to fire on `data-density='touch'` ALONE, at every viewport
+   width. `detectDensity()` returns `touch` whenever `(pointer: coarse)` matches,
+   and it is re-evaluated on every boot — so a touchscreen laptop got the bottom
+   sheet on a 1590px window, forever, and nothing in the product surfaces a
+   density control to undo it. A reported symptom, not a hypothetical: "I got
+   stuck in the mobile view and I can't find how to get back."
 
-/* The dock clears the sheet's WORST CASE rather than its current height: the
-   sheet grows and shrinks with its content, and an instrument that moved every
-   time a panel opened would be worse than one that sits a little high. */
-:root[data-density='touch'] .shell__dock {
-  bottom: calc(var(--shell-sheet-h) + var(--shell-float-inset));
+   The separation the two switches should always have had:
+
+     DENSITY decides how big a target is.   A finger needs 1.4x hit scale on a
+                                            2560px monitor exactly as much as on
+                                            a phone. That still applies at every
+                                            width and is untouched below.
+     WIDTH decides where the rail lives.    A column is only unreachable when
+                                            there is no room for it beside the
+                                            terrain, and that is a question about
+                                            the window, not about the pointer.
+
+   1200px is the same threshold the rail already narrows at, so a touch device
+   crosses one boundary rather than two. Below it the sheet is right for both
+   reasons at once; above it a coarse pointer keeps its big targets AND its
+   column. */
+@media (max-width: 1200px) {
+  :root[data-density='touch'] .shell__body {
+    position: relative;
+  }
+
+  :root[data-density='touch'] .shell__rail {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: auto;
+    flex: none;
+    /* SIZED TO ITS CONTENT, capped. A sheet pinned to a fixed height shows a
+       half-screen of empty glass whenever the rail is holding one panel, which
+       reads as a broken layout rather than as a restrained one. */
+    height: auto;
+    max-height: var(--shell-sheet-h);
+    border-left: 0;
+    border-top: var(--panel-border);
+    border-radius: var(--r-14) var(--r-14) 0 0;
+    z-index: var(--z-overlay);
+  }
+
+  /* The dock clears the sheet's WORST CASE rather than its current height: the
+     sheet grows and shrinks with its content, and an instrument that moved every
+     time a panel opened would be worse than one that sits a little high. */
+  :root[data-density='touch'] .shell__dock {
+    bottom: calc(var(--shell-sheet-h) + var(--shell-float-inset));
+  }
 }
 
 /* =============================================================================
@@ -480,8 +507,21 @@
    A pinned band sized for a 700px column takes three quarters of a 292px sheet.
    The question is still first and still never truncates — it is the band that
    scrolls, not the question that clips — and the body is guaranteed room to be
-   a body. Both sheet triggers get this, which is why it is stated once. */
-:root[data-density='touch'] .rail__pinned,
+   a body.
+
+   The touch half is width-gated for the same reason the sheet itself now is: a
+   coarse pointer on a wide window has a COLUMN, and capping a column's pinned
+   band at 60% would shrink the question band on a 2560px monitor to solve a
+   problem that only exists in a 292px sheet. The dragged-sheet selector
+   (`.shell__rail[style]`, an inline height from the drag handle) is genuinely a
+   sheet whatever the width, so it keeps the rule unconditionally. */
+@media (max-width: 1200px) {
+  :root[data-density='touch'] .rail__pinned {
+    max-height: 60%;
+    overflow-y: auto;
+  }
+}
+
 .shell__rail[style] .rail__pinned {
   max-height: 60%;
   overflow-y: auto;

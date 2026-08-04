@@ -336,7 +336,38 @@
   min-height: var(--atlas-altimeter-h);
 }
 
+/* THE GROUND UNDER THE LAST STOP.
+   ---------------------------------------------------------------------------
+   A rule, not a fourth glyph. The three stops could not distinguish "looking at
+   the assets in this island" from "standing on one of them" — both light the
+   asset mark, because both ARE the asset rung, which is the honest reading and
+   was also the missing fact.
+
+   It is a rule specifically so it cannot be mistaken for a stop: the floor is
+   not a position below the asset, the floor IS the asset. A fourth mark here
+   would re-assert the ladder the three-rung spine removed, and would cost the
+   way back up, because these stops are the navigation and not a readout.
+
+   Positioned absolutely so it adds no width to a strip that is already tight at
+   the compact widths, and `pointer-events: none` so the stop keeps its own hit
+   target and its own tooltip. */
+.rb-level-ground {
+  position: absolute;
+  left: var(--pad-chip);
+  right: var(--pad-chip);
+  bottom: calc(var(--pad-chip) / 2);
+  height: var(--border-1);
+  background: var(--line);
+  pointer-events: none;
+  transition: background var(--t-fast) var(--ease-ui);
+}
+
+.rb-level-ground.is-on {
+  background: var(--render-a56);
+}
+
 .rb-level {
+  position: relative; /* the ground rule above anchors to this */
   display: flex;
   align-items: center;
   gap: var(--gap-row);

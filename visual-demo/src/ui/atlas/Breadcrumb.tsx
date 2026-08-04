@@ -189,13 +189,16 @@ export function LevelSelector({
      selector that reconciles while somebody types is the same class of waste as
      a panel that repaints on hover. `s.query.active?.constellation` is stable
      between renders. */
-  const { rung, stack, focus, view, constellation } = useAtlasStore((s) => ({
+  const { rung, stack, focus, view, constellation, assetId } = useAtlasStore((s) => ({
     rung: s.rung,
     stack: s.stack,
     focus: s.focus,
     view: s.view,
     constellation: s.query.active?.constellation ?? null,
+    assetId: s.assetId,
   }));
+  /** Standing ON an asset, as opposed to looking at the assets in an island. */
+  const onFloor = assetId !== null;
   const depth = RUNG_DEPTH[rung];
   const stops = useRef<(HTMLButtonElement | null)[]>([]);
   const context: ScopeContext = { stack, focus, view, constellation };
@@ -210,9 +213,28 @@ export function LevelSelector({
   const jump = useCallback(
     (target: Rung) => {
       onJump?.();
-      void goToRung(target, scopeForLevel(target, { stack, focus, view, constellation }));
+      const scope = scopeForLevel(target, { stack, focus, view, constellation });
+      /* PRESSING THE STOP YOU ARE ALREADY ON WIDENS TO THE WHOLE LEVEL.
+         -------------------------------------------------------------------
+         It used to be a no-op — re-issuing the same scoped view you were
+         already looking at — and that wasted the one press a reader makes when
+         a level is not showing them what they expected.
+
+         The unscoped level is a real view that was unreachable in practice.
+         Semantic zoom always descends INTO something, and the stop always keeps
+         what you are holding, so once you were inside an island there was no
+         path to "every document in the corpus" at all. Measured before wiring
+         it: the whole asset level is 521 assets and 1,118 entities, 1,639 nodes,
+         and it renders vsync-capped at 16.67ms/frame — so the reason it was
+         missing was never cost.
+
+         Scoped -> whole on a second press; whole stays whole. The stop's own
+         tooltip already distinguishes the two outcomes, so this makes the
+         sentence it was already showing reachable. */
+      const widen = target === rung && scope !== null;
+      void goToRung(target, widen ? null : scope);
     },
-    [onJump, stack, focus, view, constellation],
+    [onJump, rung, stack, focus, view, constellation],
   );
 
   /* ROVING TABINDEX AND ARROW KEYS, because that is what a radio group IS.
@@ -249,12 +271,20 @@ export function LevelSelector({
         // outcomes: the top of the spine has nothing to be inside of, a stop
         // with a resolvable scope keeps it, and a stop with none genuinely
         // shows the whole level and says so instead of implying otherwise.
+        /* WHAT THIS PRESS WILL ACTUALLY DO, including the widen case. A stop you
+           are already standing on with a scope reports that pressing it drops the
+           scope — otherwise the tooltip would promise to keep something the press
+           is about to discard, which is the exact defect this sentence exists to
+           prevent, arriving from the other side. */
+        const stopScope = scopeForLevel(r, context);
         const consequence =
           RUNG_DEPTH[r] === 0
             ? COPY.navigation.levels.root
-            : scopeForLevel(r, context) === null
+            : stopScope === null
               ? COPY.navigation.levels.whole
-              : COPY.navigation.levels.scoped;
+              : r === rung
+                ? COPY.navigation.levels.widen
+                : COPY.navigation.levels.scoped;
         return (
           <button
             key={r}
@@ -284,6 +314,23 @@ export function LevelSelector({
             aria-label={level.plural}
           >
             <Glyph kind={r} tone={here ? 'render' : 'dim'} className="rb-level-glyph" />
+            {/* THE GROUND, UNDER THE LAST STOP.
+                -----------------------------------------------------------------
+                The three stops could not tell "looking at the assets in this
+                island" from "standing on one of them" — both lit the asset
+                glyph, because both ARE the asset rung. That is the honest
+                reading and it was also the missing fact.
+
+                A rule under the stop rather than a fourth stop, and a fourth
+                stop is exactly what this must not become: the floor is not
+                below the asset, the floor IS the asset. Giving it its own
+                position in the level strip would re-assert the ladder the
+                three-rung spine removed, and would cost the way back up —
+                these stops are the navigation, not a readout. Dim: there is a
+                floor under you. Lit: you are standing on it. */}
+            {r === 'asset' ? (
+              <span className={cx('rb-level-ground', onFloor && 'is-on')} aria-hidden="true" />
+            ) : null}
             {variant === 'rail' ? (
               <>
                 <span className="rb-level-name">{level.plural}</span>

@@ -36,6 +36,58 @@
   max-height: 86vh;
 }
 
+/* -----------------------------------------------------------------------------
+   WHAT THIS IS — the first block in Help, and the only one that is not folded.
+   -----------------------------------------------------------------------------
+   Set apart with a RULE and nothing else — no box, no tint, no accent border. It
+   is the frame for everything below it rather than a sibling of the five task
+   topics, and a callout treatment would make it compete with the content it
+   exists to introduce. The rule below it does the whole job: this ends, that
+   begins.
+   -------------------------------------------------------------------------- */
+.guide__about {
+  padding-bottom: var(--gap-section);
+  border-bottom: var(--border-1) solid var(--line);
+  margin-bottom: var(--gap-section);
+}
+
+.guide__about-ttl {
+  color: var(--ink);
+  font-weight: var(--fw-650);
+  margin-bottom: var(--gap-tight);
+}
+
+.guide__about-lede {
+  color: var(--ink);
+  max-width: var(--shell-measure);
+  line-height: var(--lh-body);
+  margin-bottom: var(--gap-section);
+}
+
+.guide__about-list {
+  display: grid;
+  gap: var(--gap-section);
+  margin: 0;
+}
+
+.guide__about-point {
+  display: grid;
+  gap: var(--gap-tight);
+}
+
+.guide__about-pt {
+  color: var(--ink);
+  font-weight: var(--fw-500);
+}
+
+/* `dd` carries a browser default indent that would step every body paragraph in
+   from its own heading. */
+.guide__about-pb {
+  margin: 0;
+  max-width: var(--shell-measure);
+  line-height: var(--lh-body);
+}
+
 .guide__lede {
   color: var(--ink);
   max-width: var(--shell-measure);

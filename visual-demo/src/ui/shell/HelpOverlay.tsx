@@ -206,6 +206,32 @@ function HelpDialog({ className }: HelpOverlayProps): JSX.Element {
           </>
         }
       >
+        {/* ---- WHAT THIS IS, before how to operate it ---------------------- *
+          * First, and not folded. Help used to open on "how to read the
+          * terrain", which is the second question — a reader arriving cold at a
+          * coloured map and a question box does not need the hue legend before
+          * they know what the thing in front of them is. The four points are the
+          * engine, the structure, the receipt, and an explicit statement of what
+          * in this demo is invented and what is not. */}
+        <section className="guide__about" aria-labelledby="help-about">
+          <h3 className="guide__about-ttl t-13" id="help-about">
+            {COPY.help.about.title}
+          </h3>
+          <p className="guide__about-lede t-13" data-prose>
+            {COPY.help.about.lede}
+          </p>
+          <dl className="guide__about-list">
+            {COPY.help.about.points.map((p) => (
+              <div key={p.id} className="guide__about-point">
+                <dt className="guide__about-pt t-13">{p.title}</dt>
+                <dd className="guide__about-pb t-12-5 ink-dim" data-prose>
+                  {p.body}
+                </dd>
+              </div>
+            ))}
+          </dl>
+        </section>
+
         <p className="guide__lede t-13" data-prose>
           {COPY.guidance.dialog.lede}
         </p>

@@ -160,6 +160,15 @@ export const navigation = {
      */
     scoped: 'Keeps what you are holding: this level, inside your current scope.',
     whole: 'Nothing scopes this level yet, so it shows all of it.',
+    /**
+     * THE SECOND PRESS, on the stop you are already standing on.
+     *
+     * It used to be a no-op. The unscoped level was a real view that semantic
+     * zoom could never reach — zoom always descends INTO something, and the stop
+     * always keeps what you are holding — so once you were inside an island
+     * there was no path to every document in the corpus at all.
+     */
+    widen: 'You are here. Press again to drop the scope and show the whole level.',
     /** The stop for a level with no scope available above it. */
     root: 'The top of the spine. There is nothing above it to be inside of.',
   },
