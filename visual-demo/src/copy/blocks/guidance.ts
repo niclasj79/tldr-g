@@ -290,7 +290,7 @@ export const guidance = {
         {
           id: 'widen',
           title: 'Then widen it, if you want to',
-          body: 'Timeline reads the same map by date and keeps this answer’s scope until you widen it on purpose. The four detail levels change what the map is made OF — continents, islands, documents, passages — rather than how large it is drawn.',
+          body: 'Timeline reads the same map by date and keeps this answer’s scope until you widen it on purpose. The three detail levels change what the map is made OF — continents, islands, documents — rather than how large it is drawn. Inside a document there is no further level: there are two ways of covering it.',
           task: 'Try a lens or a detail level. Or finish here.',
         },
       ],

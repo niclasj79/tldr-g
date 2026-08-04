@@ -37,7 +37,15 @@ import './terrain.css';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { createTerrain, type ConstellationInput, type Terrain, type TerrainOpts } from '@/graph/terrain';
-import type { DrawnReason, GraphViewResponse, LayoutBake, LodState, Rung, SigmaClass } from '@/engine';
+import type {
+  AssetTiling,
+  DrawnReason,
+  GraphViewResponse,
+  LayoutBake,
+  LodState,
+  Rung,
+  SigmaClass,
+} from '@/engine';
 
 /* -----------------------------------------------------------------------------
  * The instance registry. One terrain per document in practice, but keyed so a
@@ -78,6 +86,10 @@ export interface TerrainCanvasProps {
   bake?: LayoutBake | null;
   rung?: Rung;
   parentId?: string | null;
+  /** The asset being stood ON, or null. See `SceneInput.assetId`. */
+  assetId?: string | null;
+  /** Which covering of `assetId` to draw. Defaults to the declared one. */
+  tiling?: AssetTiling;
   lod?: Record<string, LodState>;
   hover?: string | null;
   selection?: string[];
@@ -152,12 +164,23 @@ export function TerrainCanvas(props: TerrainCanvasProps): JSX.Element {
 
   /* --- the declarative surface. Each effect is one imperative call. ------ */
 
-  const { view, bake, rung, parentId } = props;
+  const { view, bake, rung, parentId, assetId, tiling } = props;
   useEffect(() => {
     const t = terrainRef.current;
     if (t === null || view == null || bake == null) return;
-    t.setScene({ view, bake, rung: rung ?? view.rung, parentId: parentId ?? view.parent_id });
-  }, [view, bake, rung, parentId]);
+    /* A VIEW KEY IS NOT A RUNG. `view.rung` may be `passage` — that is the
+       reading tiling's fetch key — and the scene wants the rung you are
+       STANDING on, which for that payload is always the asset. */
+    const viewRung: Rung = view.rung === 'passage' ? 'asset' : view.rung;
+    t.setScene({
+      view,
+      bake,
+      rung: rung ?? viewRung,
+      parentId: parentId ?? view.parent_id,
+      assetId: assetId ?? (view.rung === 'passage' ? view.parent_id : null),
+      tiling: tiling ?? 'reading',
+    });
+  }, [view, bake, rung, parentId, assetId, tiling]);
 
   const lod = props.lod;
   useEffect(() => {

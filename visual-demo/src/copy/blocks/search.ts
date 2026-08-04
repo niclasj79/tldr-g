@@ -11,7 +11,7 @@
  * THE MEASUREMENT: ONE ROUTE, AND NOTHING ON SCREEN NAMED IT
  * -----------------------------------------------------------------------------
  * Command search indexes 3,885 nodes — the figure the palette's own footer
- * prints — plus the keyboard map and the four detail levels, and it is the only
+ * prints — plus the keyboard map and the three detail levels, and it is the only
  * tool in the product that can find a name you already know. Until this block
  * existed there was exactly ONE production affordance that opened it — the `/`
  * key — plus one accident: pressing Enter on an empty composer.
@@ -69,7 +69,7 @@ export const search = {
   open: {
     label: 'Search',
     title:
-      'Search everything in this corpus: the staged questions, every label and alias on the map, the keyboard map, and the four detail levels. The / key opens the same thing.',
+      'Search everything in this corpus: the staged questions, every label and alias on the map, the keyboard map, and the three detail levels. The / key opens the same thing.',
   } satisfies ActionCopy,
 
   /**
@@ -110,7 +110,7 @@ export const search = {
     everything: {
       label: 'Search everything',
       title:
-        'Open command search over the whole bake, carrying what you have typed. Names and aliases on the map, the keyboard map, and the four detail levels.',
+        'Open command search over the whole bake, carrying what you have typed. Names and aliases on the map, the keyboard map, and the three detail levels.',
     } satisfies ActionCopy,
 
     /** The second line on that row: what "everything" is, named rather than implied. */

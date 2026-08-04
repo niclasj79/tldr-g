@@ -243,9 +243,16 @@ let returnArmed = false;
  * an absolute answer ("a result exists", "the window is applied") still reads the
  * store directly, because for those the baseline would be noise.
  */
-let stepBaseline: { lens: string; rung: string; stackDepth: number; focus: string | null } = {
+let stepBaseline: {
+  lens: string;
+  rung: string;
+  assetId: string | null;
+  stackDepth: number;
+  focus: string | null;
+} = {
   lens: 'explore',
   rung: 'island',
+  assetId: null,
   stackDepth: 0,
   focus: null,
 };
@@ -256,6 +263,7 @@ function captureBaseline(): void {
   stepBaseline = {
     lens: s.lens,
     rung: s.rung,
+    assetId: s.assetId,
     stackDepth: s.stack.length,
     focus: s.focus,
   };
@@ -309,9 +317,10 @@ const RUNTIME: Record<string, StepRuntime | undefined> = {
        completion for a task the tour had performed on their behalf, over a
        control the card had already hidden because it thought the job was done. */
     done: (s) =>
-      s.rung === 'passage' &&
+      s.assetId !== null &&
+      s.assetTiling === 'reading' &&
       s.focus !== null &&
-      !(stepBaseline.rung === 'passage' && stepBaseline.focus === s.focus),
+      !(stepBaseline.assetId !== null && stepBaseline.focus === s.focus),
   },
 
   'main:return': {

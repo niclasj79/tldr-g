@@ -173,11 +173,13 @@ function installProbe(): void {
  * ========================================================================== */
 
 function useShellWiring(terrain: Terrain | null): void {
-  const { view, bake, rung, parentId, lod, selection, constellation, filters, dimmed } =
+  const { view, bake, rung, parentId, lod, selection, constellation, filters, dimmed, assetId, assetTiling } =
     useAtlasStore((s) => ({
       view: s.view,
       bake: s.bake,
       rung: s.rung,
+      assetId: s.assetId,
+      assetTiling: s.assetTiling,
       parentId: s.stack.length === 0 ? null : s.stack[s.stack.length - 1].id,
       lod: s.lod,
       selection: s.selection,
@@ -188,8 +190,12 @@ function useShellWiring(terrain: Terrain | null): void {
 
   useEffect(() => {
     if (terrain === null || view === null || bake === null) return;
-    terrain.setScene({ view, bake, rung, parentId });
-  }, [terrain, view, bake, rung, parentId]);
+    terrain.setScene({ view, bake, rung, parentId, assetId, tiling: assetTiling });
+    /* assetId AND assetTiling ARE DEPENDENCIES, and leaving them out is the exact
+     defect that made the tiling control a no-op: the store flipped, the lit
+     segment moved, and the scene the terrain was holding never changed — two
+     coverings that were pixel-identical because only one had ever been built. */
+}, [terrain, view, bake, rung, parentId, assetId, assetTiling]);
 
   useEffect(() => terrain?.setLod(lod), [terrain, lod]);
   useEffect(() => terrain?.setSelection(selection), [terrain, selection]);
@@ -206,7 +212,7 @@ function useShellWiring(terrain: Terrain | null): void {
   useEffect(() => {
     if (terrain === null) return;
     registerSettleGate((ids) => terrain.settleIngest([...ids]));
-    registerIdleProbe(() => terrain.camera.idle());
+    registerIdleProbe(() => terrain.camera.idle() && !terrain.morphing());
     return () => {
       registerSettleGate(null);
       registerIdleProbe(null);

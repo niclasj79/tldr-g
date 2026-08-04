@@ -15,15 +15,16 @@
  */
 
 import type { ReactNode } from 'react';
-import type { Rung } from '@/engine';
+import type { NodeKind } from '@/engine';
 import { Glyph } from './Glyph';
 import { cx, toneClass, type Tone } from './tone';
 
 export interface PanelProps {
   /** Section marker. Rendered 11px uppercase --ink-faint, never as a headline. */
   title?: ReactNode;
-  /** Rung glyph shown before the title, tinted by `tone`. ◆ ⬢ ▮ · */
-  glyph?: Rung;
+  /** Spine glyph shown before the title, tinted by `tone`. ◆ ⬢ ▮ ·
+      A KIND, not a rung: the passage keeps its dot and lost its rung. */
+  glyph?: NodeKind;
   /** Controls docked to the right of the title row. Keep them quiet. */
   actions?: ReactNode;
   /** Colours the glyph and any tone-consuming child that does not set its own. */
@@ -50,7 +51,7 @@ export function Panel({
     <section id={id} className={cx('panel', toneClass(tone), className)}>
       {head ? (
         <header className="panel-hd">
-          {glyph ? <Glyph rung={glyph} tone={tone} className="panel-glyph" /> : null}
+          {glyph ? <Glyph kind={glyph} tone={tone} className="panel-glyph" /> : null}
           {title !== undefined ? <h2 className="panel-title">{title}</h2> : null}
           {actions ? <div className="panel-actions">{actions}</div> : null}
         </header>

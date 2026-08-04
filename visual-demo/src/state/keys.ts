@@ -96,7 +96,10 @@ export const KEYMAP: readonly KeyBinding[] = Object.freeze([
   { id: 'rung-continent', keys: ['1'], codes: ['1'], label: 'detail level: continents', group: 'navigate', rung: RUNGS[0] },
   { id: 'rung-island', keys: ['2'], codes: ['2'], label: 'detail level: islands', group: 'navigate', rung: RUNGS[1] },
   { id: 'rung-asset', keys: ['3'], codes: ['3'], label: 'detail level: documents', group: 'navigate', rung: RUNGS[2] },
-  { id: 'rung-passage', keys: ['4'], codes: ['4'], label: 'detail level: passages', group: 'navigate', rung: RUNGS[3] },
+  /* THERE IS NO '4'. The passage stopped being a rung on 2026-08-02 (the floor
+     model), so there is no fourth detail level to jump to. Getting inside a
+     document is descending onto it; choosing a covering once there is the
+     tiling control, which is deliberately not a rung key. */
   { id: 'ascend', keys: ['Backspace'], codes: ['backspace'], label: 'up one level', group: 'navigate', rung: null },
   /* THE THREE REVERSE ACTIONS. Every move in this product now has one, and all
      three are on the keyboard because the whole point of a reverse action is

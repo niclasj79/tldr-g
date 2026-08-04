@@ -125,7 +125,7 @@ export function InspectorBody({
 
       {/* ---- identity ---------------------------------------------------- */}
       <header className="pv-insp-hd">
-        {glyph === null ? null : <Glyph rung={glyph} tone="render" />}
+        {glyph === null ? null : <Glyph kind={glyph} tone="render" />}
         <span className="pv-insp-label">{n.label}</span>
         {tier === undefined ? null : (
           <Tip content={COPY.inspector.rows.lod.tip}>

@@ -41,6 +41,7 @@ import {
   DEMO_GROUND_TRUTH,
   RUNGS,
   SIGMA_CLASSES,
+  VIEW_KEYS,
 } from '@/engine/types';
 import type {
   Asset,
@@ -2132,7 +2133,10 @@ export function validateWorld(world: World, opts: { deep?: boolean } = {}): void
   if (world.corpus_provenance !== CORPUS_PROVENANCE) {
     fail('corpus_provenance', `expected "${CORPUS_PROVENANCE}", got "${String(world.corpus_provenance)}"`);
   }
-  if (RUNGS.length !== 4) fail('rung count', `expected 4 rungs, contract exposes ${RUNGS.length}`);
+  if (RUNGS.length !== 3) fail('rung count', `expected 3 rungs, contract exposes ${RUNGS.length}`);
+  if (VIEW_KEYS.length !== RUNGS.length + 1) {
+    fail('view keys', `expected the three rungs plus "passage", contract exposes ${VIEW_KEYS.join(', ')}`);
+  }
 
   /* ---- the containment spine resolves ------------------------------- */
   for (const island of world.islands) {

@@ -64,7 +64,9 @@ import type {
   TamperKind,
   TimelineResponse,
   VerifyResult,
+  ViewKey,
 } from '@/engine';
+import type { AssetTiling } from '@/engine';
 
 import { assertTransition, recoveryTarget, STRICT_TRANSITIONS } from '@/state/machine';
 import { deriveLod, lodHoles } from '@/state/lod';
@@ -156,6 +158,14 @@ export const TIMELINE_SCOPES: readonly TimelineScope[] = Object.freeze([
 /** Every result tab, in rail order. */
 export const RESULT_TABS: readonly ResultTab[] = Object.freeze(['answer', 'evidence', 'inspect'] as const);
 
+/* THE TWO TILINGS live in `@/engine/types` beside `RUNGS`, not here: they are a
+   statement about the data model (one asset, covered twice) rather than about
+   the shell, and `SceneInput` in the graph layer needs them without importing
+   state. Re-exported so consumers can keep taking them from the store. */
+export type { AssetTiling } from '@/engine';
+export { ASSET_TILINGS } from '@/engine';
+
+
 /**
  * A SAVED EXPLORATION SCENE — everything a render or a drill-down displaces.
  *
@@ -176,6 +186,10 @@ export interface SceneSnapshot {
    */
   label: string;
   rung: Rung;
+  /** The asset being stood ON, if any. Restoring a scene must land on the same floor. */
+  assetId: string | null;
+  /** Which covering was showing. Meaningless when `assetId` is null; carried anyway so restore is total. */
+  assetTiling: AssetTiling;
   stack: RungStackEntry[];
   selection: string[];
   focus: string | null;
@@ -262,6 +276,22 @@ export interface AtlasData {
   app: AppState;
   degraded: DegradedReason | null;
   rung: Rung;
+  /**
+   * ADDITIVE. The asset the camera is standing ON, or null.
+   *
+   * This is the discriminator the three-rung spine needs and the four-rung spine
+   * did not: `rung: 'asset'` with `assetId === null` means "the assets inside
+   * this island, seen as bodies"; with `assetId` set it means "standing on that
+   * asset's floor, looking at one of its two tilings". `stack` ends with the
+   * asset in BOTH cases, which is why `parentIdOf` needs no change.
+   *
+   * Deliberately NOT expressed by pushing the asset onto `stack` — that would
+   * silently change `parentIdOf()` for four callers and make `stack.length === 3`
+   * at the asset rung.
+   */
+  assetId: string | null;
+  /** ADDITIVE. Which covering of `assetId` is drawn. Inert while `assetId` is null. */
+  assetTiling: AssetTiling;
   /** Ancestors of the current view, continent-first. Empty when the rung is unscoped. */
   stack: RungStackEntry[];
   view: GraphViewResponse | null;
@@ -382,6 +412,14 @@ export interface AtlasActions {
   tamperActive(kind: TamperKind): void;
   restoreTrace(): Promise<void>;
   openPassage(passageId: string): Promise<void>;
+  /**
+   * ADDITIVE. Flip which covering of the current asset is drawn.
+   *
+   * A no-op unless `assetId !== null`. Modelled on `setTab`, NOT on `setLens`:
+   * it takes no history entry, because a tiling flip does not move you — you are
+   * standing in the same place looking at the same surface a different way.
+   */
+  setAssetTiling(tiling: AssetTiling): void;
   explainPath(): Promise<PathStep[]>;
   loadTimeline(): Promise<void>;
   degrade(reason: DegradedReason): void;
@@ -500,7 +538,7 @@ function viewOptionsFor(active: QueryRenderResponse | null): GraphViewOptions {
  * was drawn. The HUD never has to be told twice.
  */
 async function fetchView(
-  rung: Rung,
+  rung: ViewKey,
   parentId: string | null,
   active: QueryRenderResponse | null,
 ): Promise<GraphViewResponse> {
@@ -617,9 +655,18 @@ function sameEdgeSet(a: readonly PathStep[], b: readonly PathStep[]): boolean {
   return b.every((s) => left.has(s.edge_id));
 }
 
-/** Node kinds that sit on the containment spine. Entities and sources do not. */
+/**
+ * Node kinds that sit on the containment spine — i.e. that can be a RUNG.
+ *
+ * Tested POSITIVELY on purpose. The old form was `kind !== 'entity' && kind !==
+ * 'source'`, which was equivalent only while `Rung` and the spine kinds were the
+ * same set. Since 2026-08-02 they are not: a passage is a spine node in the
+ * containment story but is NOT a rung, so the negative test would narrow a
+ * passage to `Extract<GraphNode, { kind: Rung }>` and lie to every caller.
+ * Membership in `RUNGS` is now the definition, so the two cannot drift again.
+ */
 function isSpineNode(node: GraphNode): node is Extract<GraphNode, { kind: Rung }> {
-  return node.kind !== 'entity' && node.kind !== 'source';
+  return (RUNGS as readonly string[]).includes(node.kind);
 }
 
 /**
@@ -740,10 +787,22 @@ export const useAtlas = create<AtlasState>()((set, get) => {
     return out;
   };
 
-  /** Fetch one rung under whatever edge policy the session is currently under. */
-  const loadRung = async (rung: Rung, parentId: string | null): Promise<GraphViewResponse> => {
-    return fetchView(rung, parentId, get().query.active);
+  /** Fetch one graph view under whatever edge policy the session is currently under. */
+  const loadRung = async (key: ViewKey, parentId: string | null): Promise<GraphViewResponse> => {
+    return fetchView(key, parentId, get().query.active);
   };
+
+  /**
+   * WHICH VIEW SERVES THIS PLACE.
+   *
+   * Standing on a floor, both tilings are served by the SAME payload — the
+   * tiling is a projection choice, not a fetch — and that payload is the one the
+   * `passage` view key returns, because it is the only request whose entity
+   * admission is asset-scoped rather than island-scoped (see `graphView`). Off a
+   * floor, the view key is just the rung.
+   */
+  const viewKeyOf = (s: { rung: Rung; assetId: string | null }): ViewKey =>
+    s.assetId !== null ? 'passage' : s.rung;
 
   /* ---- the navigation stack --------------------------------------------- *
    * Three tiny functions, and between them they are the whole of "every
@@ -755,6 +814,8 @@ export const useAtlas = create<AtlasState>()((set, get) => {
     return {
       label,
       rung: s.rung,
+      assetId: s.assetId,
+      assetTiling: s.assetTiling,
       stack: [...s.stack],
       selection: [...s.selection],
       focus: s.focus,
@@ -817,6 +878,10 @@ export const useAtlas = create<AtlasState>()((set, get) => {
     // The island rung, unscoped, is home: 33 islands and every strait between
     // them. It is the view the product's whole thesis is legible at.
     rung: 'island',
+    // Not standing on any floor. `assetTiling` is inert until you are, and
+    // starts on the declared covering because that is the one the author wrote.
+    assetId: null,
+    assetTiling: 'reading',
     stack: [],
     view: null,
     bake: null,
@@ -1026,35 +1091,55 @@ export const useAtlas = create<AtlasState>()((set, get) => {
      * NAVIGATION — the spine
      * ===================================================================== */
 
+    /**
+     * GO IN ONE STEP. Two different steps, and the difference is the whole model.
+     *
+     * Above the floor (continent → island → asset) this is CONTAINMENT: the rung
+     * changes and you are now looking at the bodies one level finer.
+     *
+     * At the asset it is ARRIVAL: the rung does NOT change, because the Asset is
+     * the last declared stratum and there is nothing below it. You stop being
+     * someone looking at assets and become someone standing on one — `assetId`
+     * is set, and from here the only move is `setAssetTiling`, which re-tiles the
+     * surface rather than descending through it.
+     *
+     * Standing on a floor, this is a silent no-op. It used to `console.error`
+     * about "the passage rung"; that error is gone rather than bypassed, because
+     * a reachable console.error is a red harness, and the UI gates the
+     * affordance (`canDescend`) so the path is unreachable by design.
+     */
     descend: async (id) => {
       await track(
         (async () => {
           const s = get();
-          const next = RUNGS[RUNG_DEPTH[s.rung] + 1];
-          if (next === undefined) {
-            // eslint-disable-next-line no-console
-            console.error(
-              '[state/store] descend() at the passage rung: there is nothing below a passage. ' +
-                'Its verbatim source segment is not a fifth rung — open it with openPassage().',
-            );
-            return;
-          }
+          if (s.assetId !== null) return; // already on the floor: there is no down, only within
           try {
             const node =
               s.view?.nodes.find((n) => n.id === id) ?? (await engine.getNode(id));
-            if (node.kind !== s.rung) {
-              // eslint-disable-next-line no-console
-              console.error(
-                `[state/store] descend("${id}") — that node is a ${node.kind} and the current rung is ` +
-                  `${s.rung}. Only the rung's own bodies are descendable; entities are cross-cutting ` +
-                  `and are opened, not entered.`,
-              );
+            if (node.kind !== s.rung) return; // entities are cross-cutting: opened, never entered
+            const entry: RungStackEntry = { rung: s.rung, id, label: node.label };
+
+            if (s.rung === 'asset') {
+              /* ARRIVAL ON THE FLOOR. Both tilings are served by this one
+                 payload; `reading` shows first because it is the declared
+                 covering — the asset as its author bounded it. */
+              const view = await loadRung('passage', id);
+              commit((st) => ({
+                assetId: id,
+                assetTiling: 'reading',
+                stack: [...st.stack, entry],
+                view,
+                hover: null,
+              }));
               return;
             }
+
+            const next = RUNGS[RUNG_DEPTH[s.rung] + 1];
+            if (next === undefined) return; // unreachable: only 'asset' has no rung below it
             const view = await loadRung(next, id);
             commit((st) => ({
               rung: next,
-              stack: [...st.stack, { rung: s.rung, id, label: node.label }],
+              stack: [...st.stack, entry],
               view,
               hover: null,
             }));
@@ -1063,6 +1148,12 @@ export const useAtlas = create<AtlasState>()((set, get) => {
           }
         })(),
       );
+    },
+
+    setAssetTiling: (tiling) => {
+      const s = get();
+      if (s.assetId === null || s.assetTiling === tiling) return;
+      set({ assetTiling: tiling, hover: null });
     },
 
     ascend: async () => {
@@ -1075,14 +1166,20 @@ export const useAtlas = create<AtlasState>()((set, get) => {
               if (depth === 0) return; // the world is a set of continents; there is nothing above
               const up = RUNGS[depth - 1];
               const view = await loadRung(up, null);
-              commit(() => ({ rung: up, view, hover: null }));
+              commit(() => ({ rung: up, assetId: null, view, hover: null }));
               return;
             }
+            /* LEAVING A FLOOR IS THE SAME MOVE AS LEAVING A SCOPE. When
+               `assetId` is set, the last stack entry IS that asset, so popping
+               it lands on the island's assets with `entry.rung === 'asset'` —
+               the generic path below already computes exactly that. The only
+               extra thing arrival added was `assetId`, so the only extra thing
+               departure removes is `assetId`. */
             const entry = s.stack[s.stack.length - 1];
             const stack = s.stack.slice(0, -1);
             const parentId = stack.length === 0 ? null : stack[stack.length - 1].id;
             const view = await loadRung(entry.rung, parentId);
-            commit(() => ({ rung: entry.rung, stack, view, hover: null }));
+            commit(() => ({ rung: entry.rung, assetId: null, stack, view, hover: null }));
           } catch (err) {
             fail(err);
           }
@@ -1103,7 +1200,9 @@ export const useAtlas = create<AtlasState>()((set, get) => {
           try {
             const stack = id === null ? [] : await ancestorStack(id);
             const view = await loadRung(rung, id);
-            commit(() => ({ rung, stack, view, hover: null }));
+            /* Jumping to a rung is always a departure from any floor: you asked
+               for a level, not for a surface. */
+            commit(() => ({ rung, assetId: null, stack, view, hover: null }));
           } catch (err) {
             fail(err);
           }
@@ -1136,7 +1235,13 @@ export const useAtlas = create<AtlasState>()((set, get) => {
             const stack = await ancestorStack(node.asset_id);
             const view = await loadRung('passage', node.asset_id);
             commit((s) => ({
-              rung: 'passage',
+              /* READING A PASSAGE IS STANDING ON ITS ASSET'S FLOOR, in the
+                 declared covering, with that passage selected. It is not a rung
+                 change any more — the rung stays `asset`, because the passage
+                 was never a place; it is a tile of the surface you are on. */
+              rung: 'asset' as const,
+              assetId: node.asset_id,
+              assetTiling: 'reading' as const,
               stack,
               view,
               selection: [passageId],

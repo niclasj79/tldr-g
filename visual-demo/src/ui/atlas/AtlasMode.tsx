@@ -246,7 +246,7 @@ export function AtlasMode({ className }: AtlasModeProps): JSX.Element | null {
   // selector's RESULT shallowly, so a fresh `[]` on every call is a new value on
   // every store write and the component re-renders itself into an infinite loop.
   // Select the payload; derive from it where it is needed.
-  const { open, app, rung, stack } = useAtlasStore((s) => ({
+  const { open, app, rung, stack, assetId, assetTiling } = useAtlasStore((s) => ({
     /* THE MOUNT DECIDES, NOT A FLAG NOTHING SETS.
        This read `s.ui.atlas`, which was a top-bar toggle until the five
        equal-rank switches became three lenses — and then nothing set it, ever.
@@ -262,6 +262,8 @@ export function AtlasMode({ className }: AtlasModeProps): JSX.Element | null {
     app: s.app,
     rung: s.rung,
     stack: s.stack,
+    assetId: s.assetId,
+    assetTiling: s.assetTiling,
   }));
 
   const parentId = stack.length === 0 ? null : stack[stack.length - 1].id;
@@ -370,6 +372,12 @@ export function AtlasMode({ className }: AtlasModeProps): JSX.Element | null {
   const here = rungCopy(rung);
   const below = rungBelow(rung);
   const above = rungAbove(rung);
+  /* THE GROUND. `rungBelow('asset')` is null and the gauge used to draw nothing
+     there — an empty slot where the spine ends, which reads as a missing glyph
+     rather than as a floor. There IS something below the asset; it is just not a
+     rung. The band says so in the one place the reader is already asking "how
+     much further down does this go". */
+  const onFloor = assetId !== null;
   const depth = RUNG_DEPTH[rung];
   const busy = frame !== null;
 
@@ -448,15 +456,33 @@ export function AtlasMode({ className }: AtlasModeProps): JSX.Element | null {
                 claiming a direction the spine does not have. */}
             <span className="am-band-ends">
               <span className="am-band-end">
-                {above === null ? null : <Glyph rung={above} tone="dim" />}
+                {above === null ? null : <Glyph kind={above} tone="dim" />}
                 <Num value={altitude.band.out} format="ratio" tone="dim" />
               </span>
               <span className="am-band-end is-right">
                 <Num value={altitude.band.in} format="ratio" tone="dim" />
-                {below === null ? null : <Glyph rung={below} tone="dim" />}
+                {below === null ? null : <Glyph kind={below} tone="dim" />}
               </span>
             </span>
           </div>
+
+          {/* ---- THE GROUND ------------------------------------------- *
+            * Drawn as a PLANE seen edge-on, not as a fourth stop on the ladder,
+            * because that is the claim: the ladder has three rungs and then it
+            * stands on something. It appears at the asset rung — where the
+            * descent runs out of rungs — and lights when you are standing on it.
+            * A reader who has just been told there is nothing below the document
+            * needs the same surface to say what "nothing below" means. */}
+          {rung === 'asset' ? (
+            <Tip content={COPY.navigation.tiling.tip}>
+              <div className={cx('am-ground', onFloor && 'is-on')} aria-hidden="true">
+                <span className="am-ground-line" />
+                <span className="am-ground-label caps">
+                  {onFloor ? COPY.navigation.ground.on : COPY.navigation.ground.below}
+                </span>
+              </div>
+            </Tip>
+          ) : null}
         </div>
 
         {/* ---- ONE CALM LINE ------------------------------------------- *
@@ -464,10 +490,18 @@ export function AtlasMode({ className }: AtlasModeProps): JSX.Element | null {
          * performing. While this panel is open it is the ONE place the sentence
          * appears — the shell stands the rung legend down rather than reciting
          * it a second time 800px away at the foot of the same frame. */}
+        {/* ON A FLOOR THE CAPTION IS ABOUT THE COVERING, not about the rung.
+            Standing inside a document while the one calm line says "Documents
+            with declared boundaries" describes the level you LEFT — the reader is
+            past that sentence and is now looking at one of two tilings, which is
+            the thing that needs naming. */}
         <div className="am-caption">
-          <SectionLabel>{here.label}</SectionLabel>
-          <p className="am-caption-line t-14" title={here.long}>
-            {COPY.atlas.captions[rung]}
+          <SectionLabel>{onFloor ? COPY.navigation.tiling[assetTiling].label : here.label}</SectionLabel>
+          <p
+            className="am-caption-line t-14"
+            title={onFloor ? COPY.navigation.tiling[assetTiling].long : here.long}
+          >
+            {onFloor ? COPY.navigation.tiling[assetTiling].long : COPY.atlas.captions[rung]}
           </p>
         </div>
 

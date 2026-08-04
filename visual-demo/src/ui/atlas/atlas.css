@@ -217,6 +217,70 @@
   border-left: var(--border-1) solid var(--line-a40);
 }
 
+/* ---------------------------------------------------------------------------
+   THE TILING CONTROL — two coverings of one document, and no third state.
+   ---------------------------------------------------------------------------
+   It sits INSIDE `.rb-here`, so it inherits that crumb's chrome and must not
+   draw its own: no second border, no second background, no padding that would
+   double the crumb's. What it adds is a HAIRLINE BETWEEN THE TWO SEGMENTS,
+   because the one thing this control has to say that the lens strip does not is
+   that these two are the same surface — a shared edge says that and two
+   separate pills would deny it.
+
+   The unselected segment is dim but never hidden. Both counts are readable at
+   all times on purpose: "12 spans / 40 entities" is the fact being taught, and a
+   control that hid one of them would teach a ladder again. */
+.rb-tiling {
+  display: inline-flex;
+  align-items: center;
+  /* NO gap — the segments share an edge. See above. */
+  margin: 0 calc(-1 * var(--pad-control));
+}
+
+.rb-tiling-seg {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--gap-tight);
+  /* The 24px SC 2.5.8 floor is cleared by the row token, which is 32. Stated
+     here rather than inherited so a future crumb restyle cannot drop it. */
+  min-height: var(--hit-row);
+  padding: 0 var(--pad-control);
+  border: 0;
+  background: transparent;
+  color: var(--ink-dim);
+  font: inherit;
+  cursor: pointer;
+  transition: color var(--t-fast) var(--ease-ui), background-color var(--t-fast) var(--ease-ui);
+}
+
+.rb-tiling-seg + .rb-tiling-seg {
+  border-left: var(--border-1) solid var(--line-a40);
+}
+
+.rb-tiling-seg:hover {
+  color: var(--ink);
+}
+
+.rb-tiling-seg[data-active='true'] {
+  color: var(--ink);
+  background: var(--render-a12);
+}
+
+.rb-tiling-seg[data-active='true'] .rb-tiling-name {
+  font-weight: var(--fw-500);
+}
+
+.rb-tiling-seg:focus-visible {
+  outline: var(--border-1) solid var(--render-a80);
+  outline-offset: calc(-1 * var(--border-1));
+}
+
+/* The tip body: one sentence about a covering, not a definition list. */
+.rb-tiling-tip {
+  display: block;
+  max-width: 34ch;
+}
+
 /* BEAT FOUR. Keyed on the rung in the component, so this fires exactly when the
    ontology changes and at no other time. Under prefers-reduced-motion --t-ui is
    already collapsed to 120ms by the token file: the flip gets shorter, the rung
@@ -874,6 +938,47 @@
   align-items: center;
   justify-content: space-between;
   gap: var(--gap-row);
+}
+
+/* ---------------------------------------------------------------------------
+   THE GROUND — a plane seen edge-on, under the last rung.
+   ---------------------------------------------------------------------------
+   Deliberately NOT shaped like a rung stop. The stops are glyphs in a radio
+   group; this is a horizontal RULE, because the claim it makes is that the
+   ladder has run out and is standing on something. A fourth glyph here would
+   re-teach the ladder the whole change exists to end.
+
+   It appears only at the asset rung and lights when you are standing on it. Dim
+   means "there is a floor below you"; lit means "you are on it". */
+.am-ground {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-tight);
+  margin-top: var(--gap-row);
+  padding-top: var(--gap-tight);
+  color: var(--ink-faint);
+}
+
+.am-ground-line {
+  flex: 1 1 auto;
+  height: var(--border-1);
+  background: var(--line);
+}
+
+/* Size and tracking come from `.caps` on the element. Only the flex behaviour
+   is this component's business. */
+.am-ground-label {
+  flex: none;
+}
+
+.am-ground.is-on {
+  color: var(--ink-dim);
+}
+
+.am-ground.is-on .am-ground-line {
+  /* The one lit rule in this gauge, and it is spent on the surface you are
+     actually standing on — the same discipline the rung glow follows. */
+  background: var(--render-a56);
 }
 
 .am-band-end {

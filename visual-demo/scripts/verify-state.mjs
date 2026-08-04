@@ -274,7 +274,23 @@ check('explaining the path selects the nodes on it', st().selection.length === s
 
 const citation = st().trace.citations[0]
 await st().openPassage(citation.passage_id)
-check('openPassage() descends to the passage rung with the molecule on the breadcrumb', st().rung === 'passage' && st().stack.length === 3, st().stack.map((e) => e.id).join(' / '))
+/* THE PASSAGE IS NOT A RUNG ANY MORE (2026-08-02, the floor model). Reading one
+   is STANDING ON its asset, in the boundary-respecting covering, with the passage
+   selected — so the assertion moved from `rung === 'passage'` to the three facts
+   that actually matter and that the old single check could not distinguish:
+   the rung stopped at the asset, the floor is the citation's own asset, and the
+   covering is the declared one. The breadcrumb length is unchanged at 3, which is
+   the point: arriving on a floor does not grow the spine. */
+check(
+  'openPassage() stands on the asset floor, reading covering, molecule on the breadcrumb',
+  st().rung === 'asset' && st().assetId !== null && st().assetTiling === 'reading' && st().stack.length === 3,
+  `${st().rung} · assetId=${st().assetId} · ${st().assetTiling} · ${st().stack.map((e) => e.id).join(' / ')}`,
+)
+check(
+  'and the floor it stands on is the asset the citation came from',
+  st().assetId === st().stack[st().stack.length - 1]?.id,
+  `${st().assetId} vs breadcrumb tail ${st().stack[st().stack.length - 1]?.id}`,
+)
 check('the opened passage is focused and drawn verbatim', st().focus === citation.passage_id && st().lod[citation.passage_id] === 'lod-0')
 
 /* ─────────────────────────────────────────────────────────────────────────── */
@@ -348,7 +364,16 @@ check('recover() returns to the state we came from', st().app === 'READY')
 section('9. KEYBOARD MAP, DENSITY, PERF SAMPLER')
 
 check('every binding has display glyphs and a label', S.KEYMAP.every((b) => b.keys.length > 0 && b.label.length > 0))
-check('the contract keys are all bound', ['/', 'a', 'i', 'p', 't', 'e', 'escape', 'q', 'g', '?', '1', '2', '3', '4', 'backspace', 'b', 'h', 'r'].every((k) => S.KEYMAP.some((b) => b.codes.includes(k))))
+/* NO '4'. The rung keys are 1–3 because the spine is three rungs; the passage
+   stopped being a level you can jump to on 2026-08-02. Asserted from RUNGS so
+   this list cannot drift from the spine again. */
+check('the contract keys are all bound', ['/', 'a', 'i', 'p', 't', 'e', 'escape', 'q', 'g', '?', '1', '2', '3', 'backspace', 'b', 'h', 'r'].every((k) => S.KEYMAP.some((b) => b.codes.includes(k))))
+const rungKeys = S.KEYMAP.filter((b) => b.rung !== null && b.rung !== undefined).map((b) => b.rung)
+check(
+  'the rung keys are exactly the three rungs, and nothing is bound to a fourth',
+  rungKeys.join(',') === 'continent,island,asset' && S.KEYMAP.every((b) => !b.codes.includes('4')),
+  rungKeys.join(' · '),
+)
 check('a modifier hands the key back to the browser', S.matchBinding({ key: 'p', metaKey: true }) === null)
 check('typing in a field is not a shortcut', S.matchBinding({ key: '/', target: { tagName: 'INPUT' } }) === null)
 check('…but Escape still escapes it', S.matchBinding({ key: 'Escape', target: { tagName: 'INPUT' } })?.id === 'clear-focus')

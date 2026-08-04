@@ -57,7 +57,8 @@ import { RegionLayer, buildRegionField, type RegionField } from '@/graph/regions
 import { TerrainCameraImpl, type TerrainCamera } from '@/graph/camera';
 import { bundleRoutes, type BundledRoute } from '@/graph/bundles';
 import { LOD_INDEX, readPalette, type Palette } from '@/graph/palette';
-import { RUNG_DEPTH, RUNG_GLYPH } from '@/engine';
+import { KIND_GLYPH, RUNG_DEPTH, RUNG_GLYPH } from '@/engine';
+import type { AssetTiling } from '@/engine';
 import type {
   DrawnReason,
   Edge,
@@ -104,6 +105,17 @@ export interface SceneInput {
   bake: LayoutBake;
   rung: Rung;
   parentId: string | null;
+  /**
+   * ADDITIVE. The asset being stood ON, or null.
+   *
+   * Was expressed as `rung === 'passage'` until 2026-08-02. The passage is no
+   * longer a rung (the floor model), so the two facts it used to conflate —
+   * "am I inside one document" and "which covering of it am I drawing" — are
+   * now carried separately, which is the only reason both can be true at once.
+   */
+  assetId: string | null;
+  /** ADDITIVE. Which covering of `assetId` to draw. Inert while `assetId` is null. */
+  tiling: AssetTiling;
 }
 
 export interface ConstellationInput {
@@ -114,6 +126,17 @@ export interface ConstellationInput {
 
 export interface Terrain {
   setScene(input: SceneInput): void;
+  /** Where every node ACTUALLY is this frame, read off the drawn buffer. Probes only. */
+  livePositions(): Map<string, { x: number; y: number; r: number }>;
+  /**
+   * True while the registration morph is moving nodes.
+   *
+   * Part of the IDLE CONTRACT, not a convenience. settled() asks the camera
+   * and the motion module whether anything is still happening; neither knows
+   * about this tween, so without this every screenshot harness could photograph
+   * a half-registered frame and report it as a resting state.
+   */
+  morphing(): boolean;
   setLod(lod: Record<string, LodState>): void;
   setHover(id: string | null): void;
   setSelection(ids: string[]): void;
@@ -193,6 +216,18 @@ class TerrainImpl implements Terrain {
   private view: GraphViewResponse | null = null;
   private rung: Rung = 'continent';
   private parentId: string | null = null;
+  /** The asset being stood ON, or null. See `SceneInput.assetId`. */
+  private assetId: string | null = null;
+  /** Which covering of `assetId` is drawn. Inert while `assetId` is null. */
+  private tiling: AssetTiling = 'reading';
+  /**
+   * A morph is in flight and the derived layers owe a rebuild when it lands.
+   *
+   * Set when `retargetPositions` accepts work; cleared by the frame loop on the
+   * first frame after the tween resolves, which is the only moment all four
+   * position snapshots agree again.
+   */
+  private morphSettle = false;
   private inView = new Set<string>();
 
   private lodOverride: Record<string, LodState> = {};
@@ -361,11 +396,15 @@ class TerrainImpl implements Terrain {
     const bakeChanged = this.bake === null || this.bake.bake_id !== input.bake.bake_id;
     const placeChanged = this.rung !== input.rung || this.parentId !== input.parentId;
     const first = this.bake === null;
+    /** The floor we were standing on BEFORE this scene. The morph's only gate. */
+    const prevAssetId = this.assetId;
 
     this.bake = input.bake;
     this.view = input.view;
     this.rung = input.rung;
     this.parentId = input.parentId;
+    this.assetId = input.assetId;
+    this.tiling = input.tiling;
 
     if (bakeChanged) {
       this.regionField = buildRegionField(input.bake.positions, input.bake.bounds, this.palette, {
@@ -384,12 +423,51 @@ class TerrainImpl implements Terrain {
      * baked coordinates are used verbatim. */
     const spineKey = spineKeyOf(input);
     if (bakeChanged || spineKey !== this.spineKey) {
+      const wasOnSameFloor = !first && !bakeChanged && prevAssetId !== null && prevAssetId === input.assetId;
       this.spineKey = spineKey;
       this.spineAxis = null;
       const positions = spineKey === '' ? input.bake.positions : this.readingSpine(input);
       this.positionById = new Map();
       for (const p of positions) this.positionById.set(p.id, p);
-      this.points.setPositions(positions);
+
+      /* THE REGISTRATION MORPH FIRES HERE AND NOWHERE ELSE.
+         ---------------------------------------------------------------------
+         `spineKey` changing while the FLOOR did not is exactly and only a tiling
+         flip: same document, same payload, same camera — one surface re-covered.
+         Every other route into this branch is a place change (a descent, a
+         re-bake, an arrival) and those already own a choreography of their own;
+         morphing on top of one would be two animations claiming the same frames.
+
+         WHY MOVING A NODE IS LEGITIMATE HERE, since `ingest.ts` states the
+         opposite as doctrine and a reader will hit that claim first: a node
+         drifting into position during an INGEST would depict an arrival the
+         engine never made, because there is no second position for it to have
+         come from. Here there is. Both endpoints are honest projections of the
+         same asset — the reading covering and the graph covering — and the
+         travel between them IS the registration: an entity mentioned in three
+         spans visibly gathers from those three places, and how far it moves is
+         how far apart in the document its mentions are. The motion is the fact,
+         not decoration over it. */
+      /* THE DURATION IS DERIVED, NOT CHOSEN. The spec asked for ~400ms and there
+         is no 400 anywhere in this product's vocabulary — `budget.ts` states that
+         nothing in the motion layer invents a number, and §18 of the token file
+         claims none of its values is a duration the budget does not already own.
+         `--t-ui` + `--t-fast` is 360ms: the travel of a UI transition plus one
+         stagger step, which is what this is. Under reduced motion the palette
+         collapses both, and `retargetPositions` treats that as zero rather than
+         as faster — a morph that self-timed off a literal would have passed the
+         harness's duration check numerically and still animated on screen. */
+      if (wasOnSameFloor && this.points.retargetPositions(positions, this.palette.ms.ui + this.palette.ms.fast) > 0) {
+        /* THE FOUR SNAPSHOTS GO STALE WHILE NODES ARE IN FLIGHT — `positionById`,
+           `aPos`, the label candidates and the pick index — and nothing keeps
+           them in step per frame. Labels and relation edges are therefore
+           suspended for the duration and rebuilt once, at rest. A label chasing
+           a moving mark is the one thing that would make this read as a glitch
+           rather than as a projection changing. */
+        this.morphSettle = true;
+      } else {
+        this.points.setPositions(positions);
+      }
       this.routeCache.clear();
     }
 
@@ -403,8 +481,18 @@ class TerrainImpl implements Terrain {
     }
     this.picker.rebuild(pickable);
 
-    this.rebuildLabels(input.view);
-    this.rebuildEdges();
+    /* NOT WHILE THE MARKS ARE IN FLIGHT. `positionById` already holds the
+       DESTINATION, so rebuilding here during a morph would park every label and
+       every edge at the end of the journey while the marks were still making it
+       — the two layers visibly disagreeing about where anything is. Suspended
+       for the duration, rebuilt once at rest by the frame loop. */
+    if (!this.morphSettle) {
+      this.rebuildLabels(input.view);
+      this.rebuildEdges();
+    } else {
+      this.labelLayer.setCandidates([]);
+      this.edges.setRoutes([]);
+    }
     this.applyLod(bakeChanged);
     this.applyFlags();
 
@@ -498,6 +586,8 @@ class TerrainImpl implements Terrain {
 
     // The spans of THIS document that the payload actually admitted.
     const spans: { start: number; end: number; seq: number; index: number }[] = [];
+    /** passage id -> its x on the reading axis. The registration anchors. */
+    const spanX = new Map<string, number>();
     const indexById = new Map<string, number>();
     for (let i = 0; i < out.length; i++) indexById.set(out[i].id, i);
     for (const node of input.view.nodes) {
@@ -533,15 +623,60 @@ class TerrainImpl implements Terrain {
     for (const s of spans) {
       const t = ((s.start + s.end) / 2 - lo) / extent;
       const p = out[s.index];
+      const x = parent.x + (t - 0.5) * 2 * half;
       out[s.index] = {
         ...p,
-        x: parent.x + (t - 0.5) * 2 * half,
+        x,
         y: parent.y,
         // The mark carries the SPAN LENGTH, which is the same fact the rail
         // prints as a token count. One fact, stated once, in two places.
         r: Math.max(parent.r * 0.06, (parent.r * 0.18 * (s.end - s.start)) / widest),
       };
+      spanX.set(out[s.index].id, x);
     }
+
+    /* -----------------------------------------------------------------------
+       THE REGISTRATION LINE — where an entity sits in the covering that has no
+       place for it.
+       -----------------------------------------------------------------------
+       An entity is not IN a span. It is REGISTERED AGAINST one or more of them,
+       and the registration is the `(entity, passage)` mention. So in the reading
+       covering an entity has no position of its own — it has the position of its
+       registrations, which is the mean of the spans that mention it. An entity
+       named once sits under that span; an entity named in three sits between
+       them, and the distance it will travel when the covering flips is exactly
+       how far apart in the document its mentions are.
+
+       THE GRAIN IS THE PASSAGE, NOT THE CHARACTER, and that is a property of the
+       data rather than a simplification. `Entity.mentions` is an array of PASSAGE
+       IDS; there is no character offset for a mention anywhere in the schema. The
+       finer anchor would be a corpus change, and — more to the point — the real
+       engine's evidence rows carry no positional anchor either, so drawing a
+       character-precise mention here would be the demo promising something the
+       engine cannot hold.
+
+       y CARRIES NO MEANING. The offset exists so the two layers do not draw on
+       top of each other; it is not a second axis and nothing should be read off
+       it. Entities registering nowhere in this document keep their baked
+       position — they are in the payload because they are adjacent to it, not
+       because this document mentions them, and moving them would say otherwise. */
+    const lane = parent.r * 0.34;
+    for (const node of input.view.nodes) {
+      if (node.kind !== 'entity') continue;
+      const index = indexById.get(node.id);
+      if (index === undefined) continue;
+      let sum = 0;
+      let n = 0;
+      for (const passageId of node.mentions) {
+        const x = spanX.get(passageId);
+        if (x === undefined) continue;
+        sum += x;
+        n += 1;
+      }
+      if (n === 0) continue;
+      out[index] = { ...out[index], x: sum / n, y: parent.y - lane };
+    }
+
     return out;
   }
 
@@ -812,6 +947,14 @@ class TerrainImpl implements Terrain {
     return () => this.frameSubs.delete(cb);
   }
 
+  livePositions(): Map<string, { x: number; y: number; r: number }> {
+    return this.points.livePositions();
+  }
+
+  morphing(): boolean {
+    return this.points.morphing || this.morphSettle;
+  }
+
   perf(): FrameStats {
     return this.stats;
   }
@@ -871,9 +1014,26 @@ class TerrainImpl implements Terrain {
     let live = false;
     live = this.cameraImpl.tick(now) || live;
     live = this.points.tickLod(now) || live;
+    live = this.points.tickPositions(now) || live;
     live = this.edges.tick(now) || live;
     live = this.tickDim(now) || live;
     live = this.tickSettle(now) || live;
+
+    /* THE MORPH LANDS AND THE DERIVED LAYERS COME BACK.
+       Labels, edges and the pick index were all suspended while nodes were in
+       flight because none of them can follow a per-frame position — `straight()`
+       bakes literal endpoints at build time and the label candidates are
+       computed on a view change, never per frame. This is the first frame on
+       which all four position snapshots agree again, so it is the only correct
+       moment to rebuild them. It is also, exactly, the spec's "edges draw after
+       the nodes settle" — not a choice, but the only behaviour the architecture
+       can produce. */
+    if (this.morphSettle && !this.points.morphing) {
+      this.morphSettle = false;
+      if (this.view !== null) this.rebuildLabels(this.view);
+      this.rebuildEdges();
+      this.invalidate();
+    }
 
     const cameraMoved = this.cameraImpl.version !== this.lastCameraVersion;
     const drew = live || this.dirty || cameraMoved;
@@ -1059,7 +1219,13 @@ class TerrainImpl implements Terrain {
      * subject of the frame rather than to sit inside it. Without it the rung is
      * five dots on a void; with it, it is five spans inside one document, which
      * is what the legend has always claimed. */
-    if (this.rung === 'passage' && this.parentId !== null) set(this.parentId, NODE_FLAG.ENCLOSURE);
+    /* THE BOUNDARY IS DRAWN IN BOTH COVERINGS, and that is not a leftover from
+       when this tested `rung === 'passage'`. In the reading covering it is the
+       page the spans lie inside. In the graph covering it is the thing the
+       entities CROSS — half of them are mentioned in other documents too, and a
+       boundary-crossing covering drawn without its boundary is just a scatter.
+       Same mark, opposite jobs, and the second one is the more load-bearing. */
+    if (this.assetId !== null) set(this.assetId, NODE_FLAG.ENCLOSURE);
     /* AND NOT AT THE ASSET RUNG ANY MORE. Twenty-four containment radii of
      * comparable size, all drawn at once, overlapped into a moiré of soap
      * bubbles that swallowed the documents they were supposed to enclose — the
@@ -1116,6 +1282,13 @@ class TerrainImpl implements Terrain {
     for (const node of view.nodes) {
       const p = this.positionById.get(node.id);
       if (p === undefined) continue;
+      /* A COVERING NAMES ITS OWN TILES AND NOT THE OTHER ONE'S.
+         In the graph covering the subject is the entities and the relations
+         between them; the spans are still drawn — they are real nodes and the
+         morph needs somewhere to put them — but naming them there would label
+         one surface twice and hand the reader two competing accounts of what
+         they are looking at. Off a floor this is inert. */
+      if (this.assetId !== null && this.tiling === 'graph' && node.kind === 'passage') continue;
       const rel = Math.min(1, Math.max(0, p.r * peerInv));
       const isPlace =
         node.kind === 'continent' || node.kind === 'island' || node.kind === 'asset';
@@ -1130,7 +1303,7 @@ class TerrainImpl implements Terrain {
       candidates.push({
         id: node.id,
         text: node.label,
-        glyph: glyphForKind(node.kind, RUNG_GLYPH),
+        glyph: glyphForKind(node.kind, KIND_GLYPH),
         x: p.x,
         y: p.y,
         r: p.r,
@@ -1145,7 +1318,10 @@ class TerrainImpl implements Terrain {
           node.kind === 'continent' ||
           node.kind === 'island' ||
           node.kind === 'asset' ||
-          node.kind === this.rung,
+          /* Spans are labelled only in the covering that has spans. In the
+             graph tiling the same bytes are drawn as entities, and labelling
+             both would name one surface twice. */
+          (node.kind === 'passage' && this.assetId !== null && this.tiling === 'reading'),
       });
     }
     this.labelLayer.setCandidates(candidates);
@@ -1314,9 +1490,43 @@ class TerrainImpl implements Terrain {
     const tk = this.geometryTokens;
     const budget = Math.max(0, Math.round(tk.budget[this.rung] ?? 60));
 
+    /* ON A FLOOR, AN EDGE MUST BE EVIDENCED **IN THIS DOCUMENT**.
+       -----------------------------------------------------------------------
+       This is the registration law applied to what gets drawn, and it is a trust
+       decision rather than a tidiness one.
+
+       The scoped entity set for an asset is "every entity this document
+       mentions". Draw every edge whose BOTH ENDPOINTS are in that set and you
+       draw relations that were asserted in OTHER documents and merely happen to
+       join two names this one also uses. The picture then says this document
+       claims something it never said. Measured across 60 assets: 2,272 edges
+       have both endpoints in scope, and only 863 are evidenced by a passage
+       inside the asset — so 62% of what the loose rule would draw is somebody
+       else's assertion wearing this document's frame.
+
+       The rule is therefore EVIDENCE, not endpoints: an edge is drawn here if at
+       least one of the passages that evidence it belongs to this asset. That is
+       exactly `[DEMO-COCKPIT-PROMISE-RECONCILIATION]`'s criterion — the demo may
+       show structure derivable from registrations that EXIST, and may not show
+       adjacency the engine would have to infer from co-residence.
+
+       Off a floor this is null and nothing changes: at the region rungs an edge
+       is a bundle between communities and "evidenced here" has no referent. */
+    const floorEvidence = ((): Set<string> | null => {
+      if (this.assetId === null) return null;
+      const out = new Set<string>();
+      for (const n of view.nodes) {
+        if (n.kind === 'passage' && n.asset_id === this.assetId) out.add(n.id);
+      }
+      return out;
+    })();
+
     const passes = (e: Edge): boolean => {
       if (sigmaFilter !== null && !sigmaFilter.has(e.sigma)) return false;
       if (e.quarantined && !this.filters.showQuarantined) return false;
+      if (floorEvidence !== null && !e.evidence_passage_ids.some((p) => floorEvidence.has(p))) {
+        return false;
+      }
       return true;
     };
 
@@ -1636,8 +1846,8 @@ function crossingT(
  * byte order. See `TerrainImpl.readingSpine`.
  */
 function spineKeyOf(input: SceneInput): string {
-  if (input.rung !== 'passage' || input.parentId === null) return '';
-  return `spine:${input.parentId}`;
+  if (input.tiling !== 'reading' || input.assetId === null) return '';
+  return `spine:${input.assetId}`;
 }
 
 /**

@@ -377,7 +377,7 @@ export function PassageDrilldown({
       {/* ---- what this is ------------------------------------------------ */}
       {standalone ? (
         <div className="pv-pass-hd">
-          <Glyph rung="passage" tone={resolutionTone(resolution)} />
+          <Glyph kind="passage" tone={resolutionTone(resolution)} />
           {alreadyNamed ? null : <NodeId id={passage.id} />}
           <ResolutionBadge resolution={resolution} count={substitutions} />
         </div>

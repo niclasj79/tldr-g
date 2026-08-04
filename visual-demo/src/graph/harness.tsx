@@ -34,6 +34,7 @@ import { createRoot } from 'react-dom/client';
 import { TerrainCanvas } from '@/graph/TerrainCanvas';
 import type { FrameStats, Terrain } from '@/graph/terrain';
 import { engine, fnv1a32 } from '@/engine';
+import type { AssetTiling, ViewKey } from '@/engine';
 import type {
   DrawnReason,
   GraphViewResponse,
@@ -140,7 +141,9 @@ function Harness(): JSX.Element {
   const [bake, setBake] = useState<LayoutBake | null>(null);
   const [realBake, setRealBake] = useState<LayoutBake | null>(null);
   const [view, setView] = useState<GraphViewResponse | null>(null);
-  const [rung, setRung] = useState<Rung>('island');
+  /* A VIEW KEY, not a rung: this harness loads `passage` directly to exercise
+     the reading tiling, which the product reaches by standing on a floor. */
+  const [rung, setRung] = useState<ViewKey>('island');
   const [parentId, setParentId] = useState<string | null>(null);
   const [policy, setPolicy] = useState<DrawnReason | null>(null);
   const [dimmed, setDimmed] = useState(false);
@@ -204,7 +207,7 @@ function Harness(): JSX.Element {
 
   /* ---- view loader ------------------------------------------------------- */
   const load = useCallback(
-    async (nextRung: Rung, nextParent: string | null, drawn?: DrawnReason, hoverId?: string) => {
+    async (nextRung: ViewKey, nextParent: string | null, drawn?: DrawnReason, hoverId?: string) => {
       setBusy(true);
       const v = await engine.getGraphView(nextRung, nextParent, {
         drawnReason: drawn,
@@ -223,7 +226,7 @@ function Harness(): JSX.Element {
 
   /* ---- first child of a rung, so descent works without a shell ----------- */
   const firstChild = useCallback(
-    async (parentRung: Rung, childRung: Rung, parent: string | null): Promise<string | null> => {
+    async (parentRung: ViewKey, childRung: ViewKey, parent: string | null): Promise<string | null> => {
       const v = await engine.getGraphView(parentRung, parent, { maxBundles: 8, maxEdges: 8 });
       const candidates = v.nodes.filter((n) => n.kind === parentRung);
       candidates.sort((a, b) => b.centrality - a.centrality);
@@ -406,6 +409,15 @@ function Harness(): JSX.Element {
 
   const scenesList = useMemo(() => SCENES, []);
 
+  /* A VIEW KEY IS NOT A RUNG. Asking this harness for `passage` means "show me
+     one document's reading tiling", which the product expresses as STANDING on
+     that asset — so that is what the canvas is told, in the product's own
+     vocabulary rather than the fetch's. */
+  const reading = rung === 'passage';
+  const sceneRung: Rung = reading ? 'asset' : rung;
+  const sceneAssetId = reading ? parentId : null;
+  const sceneTiling: AssetTiling = reading ? 'reading' : 'graph';
+
   return (
     <div className="hx">
       <div className="hx__terrain" onPointerMove={onPointerMove} onPointerDown={onPointerDown}>
@@ -413,7 +425,9 @@ function Harness(): JSX.Element {
           onReady={onReady}
           view={view}
           bake={bake}
-          rung={rung}
+          rung={sceneRung}
+          assetId={sceneAssetId}
+          tiling={sceneTiling}
           parentId={parentId}
           hover={hover}
           selection={selection}

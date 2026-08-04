@@ -69,8 +69,12 @@ declare global {
       /** The result of the last descent, once it has finished. */
       lastResult(): unknown;
       descending(): boolean;
+      /** True while the registration morph is moving nodes. */
+      morphing(): boolean;
       /** Camera altitude, read off the renderer. */
       zoom(): number;
+      /** Every node's position AS DRAWN this frame. The only way to sample a morph. */
+      positions(): Record<string, [number, number]>;
       /** Labels the renderer actually placed on the last frame it drew. */
       labels(): number;
       place(): { app: string; rung: string; stack: number; nodes: number; bodies: number };
@@ -112,7 +116,23 @@ function installProbe(): void {
     frame: () => activeDescent(),
     lastResult: () => lastResult,
     descending: () => isDescending(),
+    /** True while the registration morph is moving nodes. Lets a probe walk the flight. */
+    morphing: () => getTerrain()?.morphing() ?? false,
     zoom: () => getTerrain()?.camera.get().zoom ?? Number.NaN,
+    /**
+     * Every node's position AS DRAWN this frame, as a plain object so it crosses
+     * the Playwright boundary. The morph's whole claim is about the frames
+     * between two states, so a probe needs the attribute rather than the scene's
+     * intent — `positionById` holds the destination from the moment the flip
+     * commits and would prove nothing.
+     */
+    positions: () => {
+      const live = getTerrain()?.livePositions();
+      if (live === undefined) return {};
+      const out: Record<string, [number, number]> = {};
+      for (const [id, p] of live) out[id] = [p.x, p.y];
+      return out;
+    },
     labels: () => getTerrain()?.perf().labels ?? Number.NaN,
     place: () => {
       const s = useAtlas.getState();
@@ -132,10 +152,13 @@ function installProbe(): void {
  * ========================================================================== */
 
 function useShellWiring(terrain: Terrain | null): void {
-  const { view, bake, rung, parentId, lod, selection, dimmed, filters } = useAtlasStore((s) => ({
+  const { view, bake, rung, parentId, lod, selection, dimmed, filters, assetId, assetTiling } =
+    useAtlasStore((s) => ({
     view: s.view,
     bake: s.bake,
     rung: s.rung,
+    assetId: s.assetId,
+    assetTiling: s.assetTiling,
     parentId: s.stack.length === 0 ? null : s.stack[s.stack.length - 1].id,
     lod: s.lod,
     selection: s.selection,
@@ -145,8 +168,12 @@ function useShellWiring(terrain: Terrain | null): void {
 
   useEffect(() => {
     if (terrain === null || view === null || bake === null) return;
-    terrain.setScene({ view, bake, rung, parentId });
-  }, [terrain, view, bake, rung, parentId]);
+    terrain.setScene({ view, bake, rung, parentId, assetId, tiling: assetTiling });
+    /* assetId AND assetTiling ARE DEPENDENCIES, and leaving them out is the exact
+     defect that made the tiling control a no-op: the store flipped, the lit
+     segment moved, and the scene the terrain was holding never changed — two
+     coverings that were pixel-identical because only one had ever been built. */
+}, [terrain, view, bake, rung, parentId, assetId, assetTiling]);
 
   // THE GUARD. While the descent owns the ramp, the shell stands off.
   useEffect(() => {
@@ -164,7 +191,7 @@ function useShellWiring(terrain: Terrain | null): void {
   useEffect(() => {
     if (terrain === null) return;
     registerSettleGate((ids) => terrain.settleIngest([...ids]));
-    registerIdleProbe(() => terrain.camera.idle() && !isDescending());
+    registerIdleProbe(() => terrain.camera.idle() && !isDescending() && !terrain.morphing());
     return () => {
       registerSettleGate(null);
       registerIdleProbe(null);

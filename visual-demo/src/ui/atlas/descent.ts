@@ -406,14 +406,25 @@ export function frameRung(terrain: Terrain, ms?: number): string[] {
   const state = useAtlas.getState();
   const nodes = state.view?.nodes ?? [];
   if (nodes.length === 0) return [];
-  const bodies = nodes.filter((n) => n.kind === state.rung).map((n) => n.id);
-  if (bodies.length === 0) return [];
   const frame = atlasOcclusion();
 
   // THE PAGE, NOT THE MARKS ON IT. Only when the document is actually baked —
   // without a position there is no disc to frame and the spans are the honest
   // fallback rather than a camera aimed at nothing.
-  const document = state.rung === 'passage' ? scopeId(state.stack) : null;
+  /* THE ASSET YOU ARE STANDING ON, in either covering. `scopeId(stack)` gave
+     the same answer while the passage was a rung; `assetId` says it directly,
+     and says it in the graph tiling too, where there is no passage rung to
+     infer it from.
+
+     TESTED BEFORE THE BODIES GUARD, and that ordering is the whole fix. While
+     the passage was a rung the guard was harmless: `bodies` meant "the spans",
+     the floor payload is full of them, and the guard never fired. Standing on a
+     floor the rung is `asset` and the floor's own payload contains no asset
+     body at all — so the guard returned early and the camera never framed the
+     document. Symptom: arriving on a floor left the whole island on screen with
+     the page a speck in the middle of it. The floor knows what it wants framed
+     without consulting the rung's bodies, so it asks first. */
+  const document = state.assetId;
   if (document !== null && positionOf(document) !== null) {
     frame.discs = true;
     /* AND NO ROOM AROUND IT. While an answer is on screen the renderer sets a
@@ -430,6 +441,8 @@ export function frameRung(terrain: Terrain, ms?: number): string[] {
     return [document];
   }
 
+  const bodies = nodes.filter((n) => n.kind === state.rung).map((n) => n.id);
+  if (bodies.length === 0) return [];
   if (state.rung === 'continent') frame.scale = coastlineScale(bodies);
   void terrain.camera.fitTo(bodies, 72, ms, frame);
   return bodies;

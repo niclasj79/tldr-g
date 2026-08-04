@@ -410,7 +410,7 @@ function RowBody({ row }: { row: Row }): JSX.Element {
     const copy = rungCopy(row.rung);
     return (
       <>
-        <Glyph rung={row.rung} tone="dim" />
+        <Glyph kind={row.rung} tone="dim" />
         <span className="ix-palette__main">
           <span className="ix-palette__title">{copy.plural}</span>
           <span className="ix-palette__sub">{copy.short}</span>

@@ -84,7 +84,7 @@ const product = {
     'A sovereign knowledge engine renders the shortest sufficient view of a graph, keeps the topology intact, and hands you a signed evidence trace you can inspect.',
   /** The mechanism, in one line, for people who want the how before the why. */
   mechanism:
-    'Four rungs, one baked layout, five resolutions, and a receipt for every answer.',
+    'Three rungs and a floor, one baked layout, five resolutions, and a receipt for every answer.',
   /** What the tagline means, when there is room to say it. */
   taglineGloss:
     'Retrieval finds passages and hands you the pile. Rendering decides, per node, how much resolution the question is worth — and then shows you the decision.',
@@ -150,7 +150,7 @@ const topbar = {
     },
     stale: 'Stale bake — the positions on screen were computed from different bytes.',
   },
-  rung: { label: 'Rung', tip: 'Which of the four rungs of the containment spine you are reading.' },
+  rung: { label: 'Rung', tip: 'Which of the three rungs of the containment spine you are reading.' },
   breadcrumb: {
     label: 'Descent',
     root: 'World',
@@ -802,12 +802,12 @@ const sigma = {
 } as const;
 
 /* =============================================================================
- * 11. THE FOUR RUNGS
+ * 11. THE THREE RUNGS
  * ========================================================================== */
 
 const rungs = {
   title: 'The spine',
-  note: 'Exactly four rungs. There is no rung above continent, and verbatim evidence is not a rung — it lives inside a passage as its source segment.',
+  note: 'Exactly three rungs. There is no rung above continent, and there is none below the document either — the descent stops at the last boundary an author actually drew. Inside a document you choose a covering rather than a level, and verbatim evidence is not a rung at all: it lives inside a passage as its source segment.',
   entityNote: 'Entities are not a rung. They are the cross-cutting layer above the spine, and they are what make an answer able to cross a strait.',
   levels: {
     continent: {
@@ -831,7 +831,7 @@ const rungs = {
       plural: 'Assets',
       short: 'One authored artifact with a declared boundary.',
       long: 'The molecule: a contract, a paper, a thread, a merged change, a chapter, a dated session. Somebody, at some point, said “this is one thing”. It is the unit of resolution and the context extraction happens inside.',
-      descend: 'Descend into a passage',
+      descend: 'Step onto this document',
       contains: 'passages',
     },
     passage: {
@@ -842,7 +842,10 @@ const rungs = {
       descend: 'Read the source bytes',
       contains: 'mentions',
     },
-  } satisfies Record<Rung, {
+    /* KEYED BY SPINE KIND, NOT BY RUNG. The passage entry is the reading
+       tiling's copy: it still names a thing on the map, it is simply not a
+       level you can jump to any more. */
+  } satisfies Record<Rung | 'passage', {
     label: string; plural: string; short: string; long: string; descend: string; contains: string;
   }>,
   kinds: {
@@ -887,14 +890,14 @@ const rungs = {
 
 const atlas = {
   title: 'Atlas Mode',
-  subtitle: 'All four rungs at once.',
-  note: 'The same world at four resolutions, side by side. Descending is not loading a new page — it is spending more resolution on a smaller area of the same map.',
+  subtitle: 'Three rungs, and the floor.',
+  note: 'The same world at three resolutions, side by side, and then the floor. Descending is not loading a new page — it is spending more resolution on a smaller area of the same map. It stops at the document, because that is the last boundary somebody actually drew.',
   captions: {
     continent: 'The world as regions. No labels are needed to tell them apart: the hue is the region, and it survives a re-bake.',
     island: 'Clusters inside a region, and the corridors between them. What crosses between two islands is a strait.',
     asset: 'Documents with declared boundaries, and the entities extracted inside them. This is where the entity layer becomes visible in place.',
-    passage: 'Spans inside one document, in reading order, with the mentions that fall inside them. Below this there is only the source bytes.',
-  } satisfies Record<Rung, string>,
+    passage: 'Spans inside one document, in reading order, with the mentions that fall inside them. Not a rung: this is one of the two ways of covering a document, and the other is its entities.',
+  } satisfies Record<Rung | 'passage', string>,
   descend: { label: 'Descend', title: 'Spend more resolution on this node' } satisfies ActionCopy,
   ascend: { label: 'Ascend', title: 'Return to the containing rung' } satisfies ActionCopy,
   here: 'you are here',
@@ -1134,7 +1137,7 @@ const states = {
   'FIRST-RUN': {
     title: product.name,
     /** Line one: what this is. */
-    body: 'A knowledge terrain: one corpus, four rungs, and an engine that renders the shortest sufficient view of it rather than retrieving a pile of passages.',
+    body: 'A knowledge terrain: one corpus, three rungs and a floor, and an engine that renders the shortest sufficient view of it rather than retrieving a pile of passages.',
     /** Line two: what will happen. Named work, no numbers. */
     note: 'Opening the corpus ingests the archive, bakes one layout, and leaves you on the map with a question staged and unrun.',
     action: { label: 'Open the corpus', title: 'Ingest the bundled corpus and bake the layout' } satisfies ActionCopy,
@@ -1210,7 +1213,7 @@ const degraded = {
       meaning: 'Ids belong to the bake that minted them. A stale link or an old panel is holding an id this layout does not contain.',
     },
     BAD_RUNG: {
-      title: 'That is not one of the four rungs',
+      title: 'That is not one of the three rungs',
       meaning: 'The spine has exactly four: continent, island, asset, passage. There is no rung above continent and evidence is not a rung.',
     },
     BAD_DRAWN_REASON: {
@@ -1425,7 +1428,7 @@ const walkthrough = {
     {
       id: 'rungs',
       title: 'Zoom changes what things are',
-      body: 'Four rungs: continent, island, asset, passage. Descending is not magnification — at each level the map is made of different objects, and the bottom rung is the verbatim source text with its hash.',
+      body: 'Three rungs: continent, island, asset. Descending is not magnification — at each level the map is made of different objects — and it stops at the document, because that is the last boundary somebody declared. Inside one there is no further level: the same bytes are covered twice, once as spans in reading order and once as the entities they mention.',
     },
   ],
 } as const;
@@ -1455,7 +1458,7 @@ const lenses = {
     label: 'Explore',
     short: 'The map, and the level of detail you are reading it at.',
     long:
-      'Explore is the resting workspace: the terrain, the four detail levels, and whatever you have selected. Every other workspace is a way of looking at this same map, and returns you to it.',
+      'Explore is the resting workspace: the terrain, the three detail levels, and whatever you have selected. Every other workspace is a way of looking at this same map, and returns you to it.',
   } satisfies TermCopy,
   timeline: {
     label: 'Timeline',

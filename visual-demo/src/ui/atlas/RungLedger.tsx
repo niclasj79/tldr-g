@@ -86,7 +86,7 @@
 
 import { useEffect, useState } from 'react';
 
-import type { Asset, Continent, GraphNode, Island, Passage, Rung } from '@/engine';
+import type { Asset, Continent, GraphNode, Island, Passage, Rung, ViewKey } from '@/engine';
 import { COPY, resolutionCopy } from '@/copy';
 import { useAtlas, useAtlasStore } from '@/state';
 import { Btn, Hash, Num, SectionLabel, Tip, cx } from '@/ui/primitives';
@@ -124,8 +124,10 @@ function dayOf(iso: string): string {
 export function RungLedger({ className, cap = ROW_CAP }: RungLedgerProps): JSX.Element {
   // Select the payload, not a derived array: `useShallow` compares the selector
   // result shallowly, and a fresh `[]` every call is a fresh value every call.
-  const { rung, view, selection, focus, scope } = useAtlasStore((s) => ({
+  const { rung, assetId, assetTiling, view, selection, focus, scope } = useAtlasStore((s) => ({
     rung: s.rung,
+    assetId: s.assetId,
+    assetTiling: s.assetTiling,
     view: s.view,
     selection: s.selection,
     focus: s.focus,
@@ -144,10 +146,14 @@ export function RungLedger({ className, cap = ROW_CAP }: RungLedgerProps): JSX.E
   const scopeId = scope?.id ?? null;
   useEffect(() => {
     setFilter('');
-  }, [rung, scopeId]);
+  }, [rung, scopeId, assetTiling]);
 
   const nodes: readonly GraphNode[] = view?.nodes ?? [];
-  const bodies = inRungOrder(rung, nodes);
+  /* WHAT THE MAP IS DRAWING BODIES OF — which is no longer the same question
+     as "what rung am I on". Standing on a floor in the reading covering, the
+     bodies are the asset's spans; everywhere else they are the rung's own. */
+  const bodyKind: ViewKey = assetId !== null && assetTiling === 'reading' ? 'passage' : rung;
+  const bodies = inRungOrder(bodyKind, nodes);
 
   /* THE FILTER IS OVER EVERY BODY AT THIS LEVEL, NOT OVER THE TWENTY ON SHOW.
      Filtering the visible rows would be a search that can only find what you can
@@ -252,9 +258,9 @@ export function RungLedger({ className, cap = ROW_CAP }: RungLedgerProps): JSX.E
               {rung === 'continent' ? (
                 <ContinentRow node={node as Continent} held={held} />
               ) : null}
-              {rung === 'island' ? <IslandRow node={node as Island} held={held} /> : null}
-              {rung === 'asset' ? <AssetRow node={node as Asset} held={held} /> : null}
-              {rung === 'passage' ? (
+              {bodyKind === 'island' ? <IslandRow node={node as Island} held={held} /> : null}
+              {bodyKind === 'asset' ? <AssetRow node={node as Asset} held={held} /> : null}
+              {bodyKind === 'passage' ? (
                 <PassageRow node={node as Passage} held={held} widest={widestPassage(nodes)} />
               ) : null}
 
@@ -339,9 +345,9 @@ function RowName({
  * makes that claim true rather than incidental, and it is what keeps row three
  * of the ledger next to the third mark from the left on the map.
  */
-function inRungOrder(rung: Rung, nodes: readonly GraphNode[]): GraphNode[] {
-  const bodies = nodes.filter((n) => n.kind === rung);
-  if (rung !== 'passage') return bodies;
+function inRungOrder(bodyKind: ViewKey, nodes: readonly GraphNode[]): GraphNode[] {
+  const bodies = nodes.filter((n) => n.kind === bodyKind);
+  if (bodyKind !== 'passage') return bodies;
   return bodies
     .slice()
     .sort(

@@ -78,7 +78,10 @@ async function main() {
     await page.evaluate(
       () => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)))
     )
-    const place = await page.evaluate(() => window.__rung.place())
+    const place = await page.evaluate(() => ({
+      ...window.__rung.place(),
+      zoom: window.__rung.zoom(),
+    }))
     const path = join(OUT, `${size.tag}--${scene}.png`)
     await page.screenshot({ path })
     report.shots.push(path)
@@ -101,6 +104,243 @@ async function main() {
     report.shots.push(path)
     report.measurements['island-unscoped'] = place
     process.stdout.write(`  shot island-unscoped  ${JSON.stringify(place)}\n`)
+  }
+
+  /* ---- 1c. THE FLOOR, AND ITS TWO COVERINGS ----------------------------- *
+   * The passage stopped being a rung on 2026-08-02 (the floor model). What used
+   * to be "descend a fourth time" is now "arrive, and choose a covering", and
+   * these are the four claims that change makes which a screenshot cannot check:
+   *
+   *   1. arriving does not change the rung — the spine still ends at the asset
+   *   2. arriving does not grow the breadcrumb — a covering is not a place
+   *   3. the control is a RADIOGROUP, not a tablist — the shell's "exactly three
+   *      tabs" contract is a real contract, and a tiling is not a tab
+   *   4. flipping the covering does not take a history entry — Back must never
+   *      pop a tiling, because you never went anywhere
+   */
+  await page.evaluate(() => window.__atlas.scene('atlas-passage'))
+  await page.evaluate(() => window.__atlas.settled?.())
+  {
+    const floor = await page.evaluate(() => {
+      const s = window.__atlas.store.getState()
+      const zoom = window.__rung.zoom()
+      // Both breadcrumb forms are in the DOM at all times; one is display:none.
+      // Only the painted one is a control.
+      const segs = [...document.querySelectorAll('.rb-tiling-seg')].filter(
+        (el) => el.getClientRects().length > 0,
+      )
+      return {
+        rung: s.rung,
+        assetId: s.assetId,
+        tiling: s.assetTiling,
+        zoom,
+        stackDepth: s.stack.length,
+        historyDepth: s.history.length,
+        segs: segs.length,
+        checked: segs.filter((el) => el.getAttribute('aria-checked') === 'true').length,
+        roles: [...new Set(segs.map((el) => el.getAttribute('role')))],
+        groupRole: document.querySelector('.rb-tiling')?.getAttribute('role') ?? null,
+        /* NOT a count of tabs on screen — in Explore with no question there are
+           none, so any number would have passed for the wrong reason. The claim
+           is narrower and actually about this control: nothing inside it carries
+           tab semantics, and it is not sitting inside a tablist. */
+        tabsInside: document.querySelectorAll('.rb-tiling [role="tab"]').length,
+        insideTablist: document.querySelector('.rb-tiling')?.closest('[role="tablist"]') !== null,
+        labels: segs.map((el) => el.textContent.trim()),
+      }
+    })
+    report.measurements['floor-reading'] = floor
+
+    check(
+      'arriving on a floor keeps the rung at the asset — the spine still ends where the author did',
+      floor.rung === 'asset' && floor.assetId !== null,
+      `${floor.rung} · assetId=${floor.assetId}`,
+    )
+    check(
+      'the breadcrumb did not grow a segment for the covering',
+      floor.stackDepth === 3,
+      `stack depth ${floor.stackDepth}`,
+    )
+    check(
+      'the tiling control is a radiogroup with exactly two segments, one lit',
+      floor.groupRole === 'radiogroup' &&
+        floor.segs === 2 &&
+        floor.checked === 1 &&
+        floor.roles.length === 1 &&
+        floor.roles[0] === 'radio',
+      `${floor.segs} × ${floor.roles.join('/')} in ${floor.groupRole}, ${floor.checked} checked — ${floor.labels.join(' | ')}`,
+    )
+    check(
+      'and nothing in it is a tab — a covering is not a detail surface',
+      floor.tabsInside === 0 && floor.insideTablist === false,
+      `${floor.tabsInside} [role=tab] inside, in a tablist: ${floor.insideTablist}`,
+    )
+
+    /* THE ONE A SCREENSHOT CAUGHT AND NO ASSERTION WOULD HAVE.
+       Arriving on a floor must FRAME THE DOCUMENT. It did not, for a reason that
+       only existed after the passage stopped being a rung: `frameRung` guarded on
+       "this rung has bodies to frame" before asking about the floor, and a floor's
+       payload contains no body of its own rung. The camera stayed where it was and
+       the page sat as a speck inside the whole island. Zoom is the instrument
+       because the failure mode is precisely "the camera did not move". */
+    const assetZoom = report.measurements['atlas-asset']?.zoom ?? Number.NaN
+    check(
+      'arriving on a floor FRAMES THE DOCUMENT — the camera actually moved in',
+      Number.isFinite(assetZoom) && Number.isFinite(floor.zoom) && floor.zoom > assetZoom * 1.5,
+      `asset rung ${assetZoom.toFixed(2)} → floor ${floor.zoom.toFixed(2)} (×${(floor.zoom / assetZoom).toFixed(2)})`,
+    )
+
+    const path = join(OUT, `${size.tag}--floor-reading.png`)
+    await page.screenshot({ path })
+    report.shots.push(path)
+
+    /* ---- the flip ------------------------------------------------------- */
+    const flipped = await page.evaluate(async () => {
+      const st = () => window.__atlas.store.getState()
+      const before = { history: st().history.length, stack: st().stack.length }
+      st().setAssetTiling('graph')
+      await window.__atlas.settled?.()
+      await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)))
+      const segs = [...document.querySelectorAll('.rb-tiling-seg')].filter(
+        (el) => el.getClientRects().length > 0,
+      )
+      const lit = segs.find((el) => el.getAttribute('aria-checked') === 'true')
+      return {
+        tiling: st().assetTiling,
+        rung: st().rung,
+        assetId: st().assetId,
+        litLabel: lit ? lit.textContent.trim() : null,
+        historyBefore: before.history,
+        historyAfter: st().history.length,
+        stackBefore: before.stack,
+        stackAfter: st().stack.length,
+      }
+    })
+    report.measurements['floor-graph'] = flipped
+
+    check(
+      'flipping the covering re-tiles the same place — same rung, same asset',
+      flipped.tiling === 'graph' && flipped.rung === 'asset' && flipped.assetId === floor.assetId,
+      `${flipped.rung} · ${flipped.tiling} · assetId=${flipped.assetId}`,
+    )
+    check(
+      'the lit segment moved with it',
+      flipped.litLabel !== null && /graph/i.test(flipped.litLabel),
+      `lit: ${flipped.litLabel}`,
+    )
+    check(
+      'and the flip took NO history entry and NO breadcrumb segment — Back cannot pop a tiling',
+      flipped.historyAfter === flipped.historyBefore && flipped.stackAfter === flipped.stackBefore,
+      `history ${flipped.historyBefore}→${flipped.historyAfter}, stack ${flipped.stackBefore}→${flipped.stackAfter}`,
+    )
+
+    const gpath = join(OUT, `${size.tag}--floor-graph.png`)
+    await page.screenshot({ path: gpath })
+    report.shots.push(gpath)
+
+    /* ---- THE REGISTRATION MORPH, CAUGHT MID-FLIGHT --------------------- *
+     * The claim the morph makes is that an entity TRAVELS between the two
+     * coverings — that it is at the centroid of its registrations in one and at
+     * its baked position in the other, and that the distance is how far apart in
+     * the document its mentions are. A resting screenshot of either end cannot
+     * show that; only a frame from the middle can, and only a per-node position
+     * sample can prove it rather than assert it. */
+    const morph = await page.evaluate(async () => {
+      const st = () => window.__atlas.store.getState()
+      const sample = () => window.__rung.positions()
+      st().setAssetTiling('reading')
+      await window.__atlas.settled?.()
+      await new Promise((r) => setTimeout(r, 120))
+      const before = sample()
+      /* SAMPLED ACROSS THE WHOLE FLIGHT, not at one frame. An earlier version
+         took a single sample two rAFs in and went red on a loaded machine, where
+         two frames can span the entire 360ms tween — a check that measures the
+         host's spare capacity rather than the product. This walks the flight and
+         keeps every frame the morph was actually running for. */
+      st().setAssetTiling('graph')
+      const frames = []
+      const t0 = performance.now()
+      while (performance.now() - t0 < 900) {
+        await new Promise((r) => requestAnimationFrame(r))
+        const live = window.__rung.morphing?.() ?? false
+        frames.push(sample())
+        if (!live && performance.now() - t0 > 60) break
+      }
+      await window.__atlas.settled?.()
+      await new Promise((r) => setTimeout(r, 300))
+      const after = sample()
+      return { before, frames, after, ids: Object.keys(before).length }
+    })
+
+    if (morph.ids > 0) {
+      const moved = Object.keys(morph.before).filter((id) => {
+        const a = morph.before[id]
+        const b = morph.after[id]
+        return a && b && (Math.abs(a[0] - b[0]) > 1e-3 || Math.abs(a[1] - b[1]) > 1e-3)
+      })
+      // Strictly between the endpoints on at least one axis, in AT LEAST ONE
+      // sampled frame: it travelled rather than teleported.
+      const between = (p, q, r) => (p - q) * (p - r) < -1e-9
+      const inFlight = moved.filter((id) => {
+        const a = morph.before[id]
+        const b = morph.after[id]
+        if (!a || !b) return false
+        return morph.frames.some((f) => {
+          const m = f[id]
+          return m !== undefined && (between(m[0], a[0], b[0]) || between(m[1], a[1], b[1]))
+        })
+      })
+      check(
+        'flipping the covering MOVES nodes — the two coverings are not the same picture',
+        moved.length > 0,
+        `${moved.length} of ${morph.ids} nodes have different positions in the two coverings`,
+      )
+      check(
+        'and they TRAVEL rather than teleport — strictly between the ends, mid-flight',
+        inFlight.length > 0 && inFlight.length === moved.length,
+        `${inFlight.length} of ${moved.length} moving nodes were caught strictly between their ` +
+          `endpoints across ${morph.frames.length} sampled frames`,
+      )
+      report.measurements['morph'] = { ids: morph.ids, moved: moved.length, inFlight: inFlight.length }
+    } else {
+      check('the morph could be sampled', false, 'no per-node positions exposed')
+    }
+
+    /* ---- EVIDENCE SCOPING, MEASURED ------------------------------------ *
+     * The claim is that the graph covering draws only what THIS document
+     * evidences, not everything its entities happen to be joined to elsewhere.
+     * Counted from the payload rather than trusted, because the failure mode is
+     * silent: the loose rule produces a picture that looks richer and is a
+     * misattribution. */
+    const scoping = await page.evaluate(() => {
+      const s = window.__atlas.store.getState()
+      const view = s.view
+      if (view === null || s.assetId === null) return null
+      const here = new Set(
+        view.nodes.filter((n) => n.kind === 'passage' && n.asset_id === s.assetId).map((n) => n.id),
+      )
+      const inScope = new Set(view.nodes.filter((n) => n.kind === 'entity').map((n) => n.id))
+      let bothEndpoints = 0
+      let evidencedHere = 0
+      for (const e of view.edges) {
+        if (!inScope.has(e.from_id) || !inScope.has(e.to_id)) continue
+        bothEndpoints += 1
+        if (e.evidence_passage_ids.some((p) => here.has(p))) evidencedHere += 1
+      }
+      return { bothEndpoints, evidencedHere, passages: here.size }
+    })
+
+    if (scoping !== null && scoping.bothEndpoints > 0) {
+      check(
+        'the graph covering draws only what THIS document evidences',
+        scoping.evidencedHere <= scoping.bothEndpoints,
+        `${scoping.evidencedHere} evidenced here of ${scoping.bothEndpoints} with both endpoints in scope — ` +
+          `${scoping.bothEndpoints - scoping.evidencedHere} would have been another document's assertion`,
+      )
+      report.measurements['edge-scoping'] = scoping
+    }
+
+    process.stdout.write(`  shot floor-reading + floor-graph\n`)
   }
 
   /* ---- 2. THE DESCENT, CAUGHT MID-FLIGHT -------------------------------- */

@@ -34,8 +34,15 @@ export function useTerrain(): Terrain | null {
  * not a fifth rung. The store enforces the same rule and logs when it is broken;
  * this is the check that stops us breaking it in the first place.
  */
-export function canDescend(node: GraphNode | undefined, rung: Rung): boolean {
+export function canDescend(
+  node: GraphNode | undefined,
+  rung: Rung,
+  assetId: string | null = null,
+): boolean {
   if (node === undefined) return false;
-  if (rung === 'passage') return false;
-  return node.kind === rung && RUNG_DEPTH[rung] < RUNG_DEPTH.passage;
+  /* STANDING ON A FLOOR, THERE IS NO DOWN. Not because we ran out of rungs
+     but because the Asset is the last declared stratum — below it the move is
+     `setAssetTiling`, which re-covers the same surface. */
+  if (assetId !== null) return false;
+  return node.kind === rung;
 }

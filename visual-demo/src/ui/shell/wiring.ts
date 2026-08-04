@@ -89,10 +89,14 @@ export function useShellWiring(terrain: Terrain | null): void {
     filters,
     dimmed,
     camera,
+    assetId,
+    assetTiling,
   } = useAtlasStore((s) => ({
     view: s.view,
     bake: s.bake,
     rung: s.rung,
+    assetId: s.assetId,
+    assetTiling: s.assetTiling,
     parentId: s.stack.length === 0 ? null : s.stack[s.stack.length - 1].id,
     lod: s.lod,
     hover: s.hover,
@@ -112,8 +116,12 @@ export function useShellWiring(terrain: Terrain | null): void {
   /* ---- the scene ------------------------------------------------------- */
   useEffect(() => {
     if (terrain === null || view === null || bake === null) return;
-    terrain.setScene({ view, bake, rung, parentId });
-  }, [terrain, view, bake, rung, parentId]);
+    terrain.setScene({ view, bake, rung, parentId, assetId, tiling: assetTiling });
+    /* assetId AND assetTiling ARE DEPENDENCIES, and leaving them out is the exact
+     defect that made the tiling control a no-op: the store flipped, the lit
+     segment moved, and the scene the terrain was holding never changed — two
+     coverings that were pixel-identical because only one had ever been built. */
+}, [terrain, view, bake, rung, parentId, assetId, assetTiling]);
 
   /* ---- the resolution map ----------------------------------------------
    * THE GUARD. While a descent, a render reveal or an ingest settle owns the
@@ -177,7 +185,7 @@ export function useShellWiring(terrain: Terrain | null): void {
   useEffect(() => {
     if (terrain === null) return;
     registerSettleGate((ids) => settleIngest([...ids]));
-    registerIdleProbe(() => terrain.camera.idle() && !isDescending() && motionIdle());
+    registerIdleProbe(() => terrain.camera.idle() && !isDescending() && motionIdle() && !terrain.morphing());
     /* ---- the viewpoint, both directions -----------------------------------
      * THE STORE'S `camera` IS A TARGET AND THE USER'S HAND IS NOT. A pan or a
      * wheel-zoom moves the renderer's camera and writes nothing back, so a scene

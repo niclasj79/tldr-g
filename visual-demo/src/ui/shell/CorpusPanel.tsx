@@ -85,7 +85,7 @@ type Census = Readonly<Record<Rung, number>>;
  */
 function censusOf(bake: LayoutBake | null): Census | null {
   if (bake === null) return null;
-  const out: Record<Rung, number> = { continent: 0, island: 0, asset: 0, passage: 0 };
+  const out: Record<Rung | 'passage', number> = { continent: 0, island: 0, asset: 0, passage: 0 };
   for (const p of bake.positions) {
     if (p.kind === 'continent' || p.kind === 'island' || p.kind === 'asset' || p.kind === 'passage') {
       out[p.kind] += 1;

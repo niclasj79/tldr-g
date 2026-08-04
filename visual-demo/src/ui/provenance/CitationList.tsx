@@ -133,7 +133,7 @@ function CitationCard({ citation: c, edges, flying, ping, onOpen }: CitationCard
     <article className={cx('pv-cit', flying && 'is-pinging', openSource && 'is-open')}>
       {/* ---- what this quote is ------------------------------------------ */}
       <header className="pv-cit-hd">
-        <Glyph rung="passage" tone={resolutionTone(c.resolution)} />
+        <Glyph kind="passage" tone={resolutionTone(c.resolution)} />
         <NodeId id={c.passage_id} />
         <ResolutionBadge resolution={c.resolution} count={substitutions} />
         <Tip content={COPY.receipt.citations.rows.lod.tip}>

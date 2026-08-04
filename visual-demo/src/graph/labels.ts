@@ -41,7 +41,7 @@ import './labels.css';
 
 import type { TerrainCameraImpl } from '@/graph/camera';
 import type { Palette } from '@/graph/palette';
-import type { Rung } from '@/engine';
+import type { NodeKind, Rung } from '@/engine';
 
 /** One nameable thing. Supplied by the terrain from the current view payload. */
 export interface LabelCandidate {
@@ -723,20 +723,16 @@ export class LabelLayer {
   }
 }
 
-/** The rung glyph for a node kind. Entities and sources are not rungs. */
-export function glyphForKind(kind: string, rungGlyph: Readonly<Record<Rung, string>>): string {
-  switch (kind) {
-    case 'continent':
-      return rungGlyph.continent;
-    case 'island':
-      return rungGlyph.island;
-    case 'asset':
-      return rungGlyph.asset;
-    case 'passage':
-      return rungGlyph.passage;
-    default:
-      // Entities and sources are the cross-cutting layer, not rungs, and giving
-      // them a rung glyph would be a lie about the grain.
-      return '';
-  }
+/**
+ * The spine glyph for a node kind.
+ *
+ * Takes a KIND map, not a rung map: a passage is drawn and labelled here but is
+ * no longer a rung (2026-08-02, the floor model), so its dot has to come from a
+ * map that still admits it. Entities and sources are the cross-cutting layer and
+ * resolve to '' — giving them a spine mark would be a lie about the grain.
+ */
+export function glyphForKind(kind: string, kindGlyph: Readonly<Record<NodeKind, string>>): string {
+  return Object.prototype.hasOwnProperty.call(kindGlyph, kind)
+    ? kindGlyph[kind as NodeKind]
+    : '';
 }

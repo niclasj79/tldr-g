@@ -96,7 +96,8 @@ import {
 } from '@/engine/trust/trace';
 import type { ConstellationEdge, CounterfactualAsset } from '@/engine/trust/trace';
 
-import { CORPUS_PROVENANCE, RUNGS, byFamily } from '@/engine/types';
+import { CORPUS_PROVENANCE, RUNGS, VIEW_KEYS, byFamily } from '@/engine/types';
+import type { ViewKey } from '@/engine/types';
 import type {
   AdmissionRecord,
   Asset,
@@ -623,12 +624,15 @@ function route(fx: Fixtures, req: EngineRequest): unknown {
   };
 
   if (method === 'GET' && path.startsWith('/graph/view/')) {
-    const rung = path.slice('/graph/view/'.length) as Rung;
-    if (!(RUNGS as readonly string[]).includes(rung)) {
+    const rung = path.slice('/graph/view/'.length) as ViewKey;
+    if (!(VIEW_KEYS as readonly string[]).includes(rung)) {
       throw new EngineError({
         code: 'BAD_RUNG',
-        what_failed: `"${rung}" is not a rung. The spine has exactly four: ${RUNGS.join(', ')}.`,
-        exact_remedy: 'Request one of the four rungs. There is no universe rung and evidence is not a rung.',
+        what_failed: `"${rung}" is not a graph view. There are exactly ${VIEW_KEYS.length}: ${VIEW_KEYS.join(', ')}.`,
+        exact_remedy:
+          'Request one of those. The spine has three RUNGS (continent, island, asset); "passage" is a view of an ' +
+          'asset — the reading-order tiling — and not a place you can stand. There is no universe rung and ' +
+          'evidence is not a rung.',
         path,
       });
     }
@@ -780,7 +784,7 @@ function notFound(what: string, id: string, path: string): EngineError {
 
 /** Resolved, non-optional view parameters. The router fills in every default. */
 interface ViewParams {
-  rung: Rung;
+  rung: ViewKey;
   parentId: string | null;
   drawnReason: DrawnReason;
   maxEdges: number;
@@ -803,7 +807,7 @@ interface ViewParams {
  *   asset      yes — this is the extraction context. Entities belong here.
  *   passage    yes — the mentions ARE the point of a passage view.
  */
-function defaultIncludeEntities(rung: Rung): boolean {
+function defaultIncludeEntities(rung: ViewKey): boolean {
   return rung === 'asset' || rung === 'passage';
 }
 
@@ -1025,10 +1029,11 @@ function neighborhood(
   const edges = topEdgesAmong(fx, inView, maxEdges);
   const edges_drawn = edges.reduce((n, e) => n + (e.quarantined ? 0 : 1), 0);
 
+  /* A PASSAGE READS AT ITS ASSET. The passage stopped being a rung on
+     2026-08-02 (the floor model): it is a tile of the asset's surface, not a
+     level of the spine, so a passage seed reports the floor it lies on. */
   const readAt: Rung =
-    seed.kind === 'continent' || seed.kind === 'island' || seed.kind === 'asset' || seed.kind === 'passage'
-      ? seed.kind
-      : 'asset';
+    seed.kind === 'continent' || seed.kind === 'island' || seed.kind === 'asset' ? seed.kind : 'asset';
 
   return {
     rung: readAt,
@@ -2066,7 +2071,7 @@ export class EngineClient {
    * and `response.stats` says which rule chose what you got.
    */
   async getGraphView(
-    rung: Rung,
+    rung: ViewKey,
     parentId: string | null = null,
     opts: GraphViewOptions = {},
   ): Promise<GraphViewResponse> {

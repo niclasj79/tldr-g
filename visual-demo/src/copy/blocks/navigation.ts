@@ -35,7 +35,7 @@
  * -----------------------------------------------------------------------------
  * THE DUAL-LAYER RULE, APPLIED TO THE SPINE'S OWN VOCABULARY
  * -----------------------------------------------------------------------------
- * Four rungs called continent / island / asset / passage, a control called
+ * Three rungs called continent / island / asset, a control called
  * `Rung`, a panel called `The spine` and a term called `LOD` — four names for
  * one idea, none of which a first-time reader owns. Per the deck's dual-layer
  * rule the plain name LEADS and the technical term FOLLOWS, so every surface in
@@ -96,6 +96,48 @@ export const navigation = {
   },
 
   /* ===========================================================================
+   * 1b. THE TILING CONTROL — what replaces "one level further down"
+   * ========================================================================
+   * This control exists because the descent STOPS at the document. Below an
+   * asset there is no finer level, because the asset is the last boundary
+   * somebody actually drew; there are two ways of COVERING the same surface,
+   * and this is how you choose between them. The wording avoids "level",
+   * "deeper" and "zoom" for that reason — every one of them would re-teach the
+   * ladder this control exists to end.
+   */
+  /**
+   * THE GROUND, on the altimeter. Two states, and the difference between them is
+   * the difference between "the ladder ends here" and "you are standing on it".
+   * Neither says "level" or "deeper": the whole point of the mark is that the
+   * thing below the last rung is not another rung.
+   */
+  ground: {
+    below: 'the floor — no rung below this',
+    on: 'standing on the floor',
+  },
+
+  tiling: {
+    label: 'How this document is covered',
+    tip: 'Two ways of covering the same document. Not two levels — the same bytes, read two ways.',
+    reading: {
+      label: 'Reading order',
+      /* THIS SENTENCE USED TO END "Every byte belongs to exactly one span," and
+         that was FALSE in this corpus — checked at the generator, not assumed.
+         `world.ts` starts the first span at `header.length` and advances the
+         cursor by `end + 2` for the `\n\n` between spans, so the source header
+         and every separator belong to no span at all. No span may overlap
+         another, which is the property that actually matters here; total
+         coverage is not one the data has. The gaps are already visible on the
+         axis as the space between marks — the words were the only thing lying. */
+      long: 'The document as written: its spans, in the order they were written, at their true character offsets inside the declared boundary. No two spans overlap, and the space between the marks is the space between them in the source.',
+    },
+    graph: {
+      label: 'Graph',
+      long: 'The document as understood: the entities it mentions and the relations between them. This covering overlaps and it leaves gaps — not every span mentions something, and one entity is mentioned in many.',
+    },
+  },
+
+  /* ===========================================================================
    * 2. THE LEVEL SELECTOR — four mutually exclusive stops, not four switches
    * -----------------------------------------------------------------------------
    * It was four independent `<button>`s in one list. Four buttons is four
@@ -106,7 +148,7 @@ export const navigation = {
    * ======================================================================== */
   levels: {
     /** The group's accessible name. Rendered through `dual('lod')`, never restated. */
-    tip: 'The four levels of the containment spine. Changing level is not magnification: at each one the map is made of different objects.',
+    tip: 'The three levels of the containment spine. Changing level is not magnification: at each one the map is made of different objects. The spine stops at the document, because that is the last boundary somebody actually drew.',
     /**
      * THE SCOPE PROMISE, IN ONE SENTENCE.
      *

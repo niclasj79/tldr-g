@@ -427,7 +427,7 @@ function Controls(): JSX.Element {
       <div className="spec-wrap">
         {RUNGS.map((r) => (
           <span key={r} className="spec-wrap" style={{ gap: 'var(--gap-tight)' }}>
-            <Glyph rung={r} />
+            <Glyph kind={r} />
             <span className="spec-note">{r}</span>
           </span>
         ))}
@@ -640,7 +640,7 @@ function Sheet(): JSX.Element {
     <div className="sheet">
       <header className="sheet-hd">
         <span className="sheet-mark">
-          <Glyph rung="continent" tone="render" />
+          <Glyph kind="continent" tone="render" />
           <span className="sheet-name">TLDR-G VISUAL DEMO</span>
           <span className="sheet-sub">specimen sheet · ui primitives</span>
         </span>

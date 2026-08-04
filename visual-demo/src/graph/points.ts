@@ -99,6 +99,25 @@ export class PointLayer {
   private flagDirty: number[] = [];
   private flagDirtyAll = false;
 
+  /* THE REGISTRATION MORPH — the one channel in this class that moves a node.
+     -------------------------------------------------------------------------
+     Modelled on the ramp above, deliberately, down to `posChanged` being
+     persistent for the same reason `lodChanged` is: a second flip mid-flight
+     must bend the tween from wherever the nodes actually are, not restart it.
+
+     SEPARATE FROM `setPositions`, which is a SNAP and also resets the ramp. A
+     tiling flip that went through `setPositions` would kill any crossfade in
+     flight, which is how the two channels differ in one sentence: `setPositions`
+     rebuilds the cloud, this one moves it. */
+  private posFrom: Float32Array = new Float32Array(0);
+  private posTarget: Float32Array = new Float32Array(0);
+  private radFrom: Float32Array = new Float32Array(0);
+  private radTarget: Float32Array = new Float32Array(0);
+  private posChanged: number[] = [];
+  private posStart = 0;
+  private posDuration = 0;
+  private posAnimating = false;
+
   /** node id -> instance index. The only lookup the hot paths need. */
   readonly index = new Map<string, number>();
   /** Instance index -> node id, for picking and labels. */
@@ -397,6 +416,145 @@ export class PointLayer {
       this.lodPending.clear();
     }
     return true;
+  }
+
+  /* ------------------------------------------------------------------------
+   * The registration morph
+   * --------------------------------------------------------------------- */
+
+  /**
+   * Move the cloud to `next` over `ms`, per instance, without touching the ramp.
+   *
+   * Nodes absent from `next` stay where they are — which is the honest default,
+   * because an entity this document does not mention has no reading-side
+   * position to travel to and inventing one would depict a registration that
+   * does not exist.
+   *
+   * RADIUS TWEENS WITH POSITION. The reading covering derives a span's radius
+   * from its character length and the graph covering uses the baked radius; a
+   * morph that moved the marks and popped their sizes would read as two
+   * animations fighting.
+   *
+   * Returns the number of instances that will actually move, so a caller can
+   * decline to open a motion window for a morph that moves nothing.
+   */
+  retargetPositions(next: readonly NodePosition[], ms: number): number {
+    const n = this.count;
+    if (n === 0) return 0;
+    if (this.posFrom.length < n * 2) {
+      this.posFrom = new Float32Array(n * 2);
+      this.posTarget = new Float32Array(n * 2);
+      this.radFrom = new Float32Array(n);
+      this.radTarget = new Float32Array(n);
+    }
+    const pos = this.aPos.array as Float32Array;
+    const rad = this.aRadius.array as Float32Array;
+
+    // Start from where the nodes ARE, so a flip mid-flight bends rather than snaps.
+    for (let i = 0; i < n; i++) {
+      this.posFrom[i * 2] = pos[i * 2];
+      this.posFrom[i * 2 + 1] = pos[i * 2 + 1];
+      this.posTarget[i * 2] = pos[i * 2];
+      this.posTarget[i * 2 + 1] = pos[i * 2 + 1];
+      this.radFrom[i] = rad[i];
+      this.radTarget[i] = rad[i];
+    }
+
+    this.posChanged.length = 0;
+    const EPS = 1e-4;
+    for (const p of next) {
+      const i = this.index.get(p.id);
+      if (i === undefined) continue;
+      const dx = p.x - this.posFrom[i * 2];
+      const dy = p.y - this.posFrom[i * 2 + 1];
+      const dr = p.r - this.radFrom[i];
+      if (Math.abs(dx) < EPS && Math.abs(dy) < EPS && Math.abs(dr) < EPS) continue;
+      this.posTarget[i * 2] = p.x;
+      this.posTarget[i * 2 + 1] = p.y;
+      this.radTarget[i] = p.r;
+      this.posChanged.push(i);
+    }
+    if (this.posChanged.length === 0) {
+      this.posAnimating = false;
+      return 0;
+    }
+
+    /* REDUCED MOTION IS A ZERO DURATION, NOT A FASTER ONE, and the caller passes
+       the number rather than this class reading a media query — the same
+       contract `retargetLod` has, and the reason a morph cannot self-time. */
+    this.posDuration = this.palette.reducedMotion ? 0 : Math.max(0, ms);
+    if (this.posDuration <= 0) {
+      this.applyPositions(1);
+      this.posAnimating = false;
+      const moved = this.posChanged.length;
+      this.posChanged.length = 0;
+      return moved;
+    }
+    this.posStart = performance.now();
+    this.posAnimating = true;
+    return this.posChanged.length;
+  }
+
+  /** Advance the morph. Returns true while it is live. */
+  tickPositions(now: number): boolean {
+    if (!this.posAnimating) return false;
+    const p = this.posDuration <= 0 ? 1 : Math.min(1, (now - this.posStart) / this.posDuration);
+    // Smoothstep, matching the ramp: a symmetric crossfade between two states of
+    // one attribute, not a choreographed arrival.
+    this.applyPositions(p * p * (3 - 2 * p));
+    if (p >= 1) {
+      this.posAnimating = false;
+      this.posChanged.length = 0;
+    }
+    return true;
+  }
+
+  /** True while nodes are in flight. The label and pick layers read this. */
+  get morphing(): boolean {
+    return this.posAnimating;
+  }
+
+  /**
+   * WHERE EVERY NODE ACTUALLY IS THIS FRAME, read off the buffer the GPU draws.
+   *
+   * Exists because there was no way to check that a node MOVED. `positionById`
+   * on the terrain holds the scene's intended positions, which during a morph is
+   * the destination — so asserting against it would have proved nothing about
+   * the frames in between, which is the only place the morph's claim lives. This
+   * reads the attribute itself, so a probe two frames into a tween sees the tween.
+   */
+  livePositions(): Map<string, { x: number; y: number; r: number }> {
+    const pos = this.aPos.array as Float32Array;
+    const rad = this.aRadius.array as Float32Array;
+    const out = new Map<string, { x: number; y: number; r: number }>();
+    for (const [id, i] of this.index) {
+      out.set(id, { x: pos[i * 2], y: pos[i * 2 + 1], r: rad[i] });
+    }
+    return out;
+  }
+
+  private applyPositions(e: number): void {
+    const pos = this.aPos.array as Float32Array;
+    const rad = this.aRadius.array as Float32Array;
+    for (const i of this.posChanged) {
+      pos[i * 2] = this.posFrom[i * 2] + (this.posTarget[i * 2] - this.posFrom[i * 2]) * e;
+      pos[i * 2 + 1] =
+        this.posFrom[i * 2 + 1] + (this.posTarget[i * 2 + 1] - this.posFrom[i * 2 + 1]) * e;
+      rad[i] = this.radFrom[i] + (this.radTarget[i] - this.radFrom[i]) * e;
+    }
+    this.aPos.clearUpdateRanges();
+    this.aRadius.clearUpdateRanges();
+    if (this.posChanged.length > RANGE_LIST_LIMIT) {
+      this.aPos.addUpdateRange(0, this.count * 2);
+      this.aRadius.addUpdateRange(0, this.count);
+    } else {
+      for (const i of this.posChanged) {
+        this.aPos.addUpdateRange(i * 2, 2);
+        this.aRadius.addUpdateRange(i, 1);
+      }
+    }
+    this.aPos.needsUpdate = true;
+    this.aRadius.needsUpdate = true;
   }
 
   private uploadLod(): void {

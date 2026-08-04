@@ -66,6 +66,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { COPY } from '@/copy';
 import { RUNG_DEPTH, engine } from '@/engine';
 import type { GraphNode, Rung, Vec2 } from '@/engine';
+import type { AssetTiling } from '@/engine';
 import { useAtlas, useAtlasStore } from '@/state';
 import { Btn, Num } from '@/ui/primitives';
 import { Announcer } from '@/ui/shell/Announcer';
@@ -163,6 +164,7 @@ export function InteractionSurface({
   const {
     app,
     rung,
+    assetId,
     stackDepth,
     parentId,
     view,
@@ -174,6 +176,7 @@ export function InteractionSurface({
   } = useAtlasStore((s) => ({
     app: s.app,
     rung: s.rung,
+    assetId: s.assetId,
     stackDepth: s.stack.length,
     parentId: s.stack.length === 0 ? null : s.stack[s.stack.length - 1].id,
     view: s.view,
@@ -308,8 +311,8 @@ export function InteractionSurface({
 
   const semanticRef = useRef(semanticZoom);
   semanticRef.current = semanticZoom;
-  const placeRef = useRef({ rung, parentId, app, stackDepth });
-  placeRef.current = { rung, parentId, app, stackDepth };
+  const placeRef = useRef({ rung, parentId, app, stackDepth, assetId });
+  placeRef.current = { rung, parentId, app, stackDepth, assetId };
 
   // A new place: the reference altitude is whatever the camera settles at.
   useEffect(() => {
@@ -376,7 +379,10 @@ export function InteractionSurface({
     const ratio = t.camera.get().zoom / refZoom.current;
     const store = useAtlas.getState();
 
-    if (ratio >= tune.rungIn && place.rung !== 'passage') {
+    /* ZOOMING IN STOPS AT THE FLOOR. Not because we ran out of rungs but
+       because the Asset is the last declared stratum: past it, more zoom is
+       a different covering, and a covering is a choice, never a gesture. */
+    if (ratio >= tune.rungIn && place.assetId === null) {
       const target = centreTarget(t, rect(), store.view?.nodes ?? [], place.rung, navRef.current);
       if (target === null) return;
       lastRungChange.current = now;

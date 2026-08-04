@@ -50,16 +50,33 @@ export interface RungLegendProps {
 }
 
 export function RungLegend({ className }: RungLegendProps): JSX.Element {
-  const rung = useAtlasStore((s) => s.rung);
+  const { rung, assetId, assetTiling } = useAtlasStore((s) => ({
+    rung: s.rung,
+    assetId: s.assetId,
+    assetTiling: s.assetTiling,
+  }));
   const here = rungCopy(rung);
+
+  /* ON A FLOOR THIS NAMES THE COVERING, NOT THE RUNG.
+     -------------------------------------------------------------------------
+     Standing inside one document while the legend reads "Asset — Documents with
+     declared boundaries" describes the level the reader has just LEFT. They are
+     past that sentence; what is on screen now is one of two tilings of a single
+     document, and that is the thing that needs naming. The glyph follows for the
+     same reason: a span-dot for the reading covering and nothing for the graph
+     one, because the graph covering's subject is the cross-cutting layer, which
+     has never had a spine mark and should not acquire one here. */
+  const onFloor = assetId !== null;
+  const label = onFloor ? COPY.navigation.tiling[assetTiling].label : here.label;
+  const caption = onFloor ? COPY.navigation.tiling[assetTiling].long : COPY.atlas.captions[rung];
 
   return (
     <section className={cx('rl', className)} aria-label={COPY.topbar.rung.label}>
-      <Glyph rung={rung} tone="render" />
-      <span className="rl-name t-12-5 w-500">{here.label}</span>
+      <Glyph kind={onFloor ? (assetTiling === 'reading' ? 'passage' : 'entity') : rung} tone="render" />
+      <span className="rl-name t-12-5 w-500">{label}</span>
       {/* The ontology at this depth. One line, and it is the whole reason the
           zoom is worth performing. */}
-      <p className="rl-caption t-12-5 ink-dim">{COPY.atlas.captions[rung]}</p>
+      <p className="rl-caption t-12-5 ink-dim">{caption}</p>
     </section>
   );
 }

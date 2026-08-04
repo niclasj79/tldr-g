@@ -75,37 +75,108 @@ export type ContentHash = string;
  * ========================================================================== */
 
 /**
- * The containment spine. EXACTLY FOUR RUNGS, in descent order.
+ * The containment spine. EXACTLY THREE RUNGS, in descent order.
  *
  * There is NO "universe" rung — the top of the world is the set of continents.
  * Verbatim evidence is NOT a rung either: it lives inside a Passage as the
- * `seq === 0` segment of its Source. Adding a fifth rung breaks the zoom
- * semantics, the LOD budget and the breadcrumb, in that order.
+ * `seq === 0` segment of its Source.
+ *
+ * AND THE PASSAGE IS NOT A RUNG. It was one until 2026-08-02. The change is not
+ * a simplification — it is the floor model
+ * (`docs/design/arch-entity-rung-containment-vs-projection-2026-07-31.md` §8):
+ * the Asset is the last DECLARED stratum, so descent ends there. Below it there
+ * is no "down", only "within" — one plane covered twice, by passages
+ * (boundary-respecting) and by entities+edges (boundary-crossing). Which
+ * covering you are looking at is `assetTiling`, not a depth.
+ *
+ * A passage is therefore still a NODE — see `NodeKind`, which keeps it — with a
+ * kind, a glyph and a position. It is simply not a place you can stand. The
+ * deliberate consequence is that `Rung` is a STRICT SUBSET of `NodeKind`, and
+ * anything that used to switch on "the rung of this node" must now decide which
+ * of the two it meant. Use `KIND_GLYPH` when the answer is "any node", and
+ * `RUNG_GLYPH` only when it is "a level of the spine".
+ *
+ * Adding a fourth rung breaks the zoom semantics, the LOD budget and the
+ * breadcrumb, in that order.
  */
-export type Rung = 'continent' | 'island' | 'asset' | 'passage';
+export type Rung = 'continent' | 'island' | 'asset';
 
-/** The four rungs in descent order. Index === depth. */
-export const RUNGS = Object.freeze(['continent', 'island', 'asset', 'passage'] as const);
+/** The three rungs in descent order. Index === depth. */
+export const RUNGS = Object.freeze(['continent', 'island', 'asset'] as const);
 
 /**
  * The glyph for each rung. Used in breadcrumbs, legends and node badges so the
  * rung is readable at any zoom without a word. Diamond = landmass, hexagon =
- * island, bar = a bounded document, dot = a span inside it.
+ * island, bar = a bounded document.
  */
 export const RUNG_GLYPH: Readonly<Record<Rung, string>> = Object.freeze({
   continent: '◆', // ◆
   island: '⬢', // ⬢
   asset: '▮', // ▮
-  passage: '·', // ·
 });
 
-/** Depth of a rung on the spine: continent 0 .. passage 3. */
+/**
+ * The glyph for ANY node kind — the superset `RUNG_GLYPH` used to be before the
+ * passage stopped being a rung. A passage still gets its dot: it is drawn, it is
+ * labelled and it is picked, so its mark outlives its rung. Entities and sources
+ * are the cross-cutting layer and get no spine mark, because giving them one
+ * would be a lie about the grain.
+ */
+export const KIND_GLYPH: Readonly<Record<NodeKind, string>> = Object.freeze({
+  continent: '◆', // ◆
+  island: '⬢', // ⬢
+  asset: '▮', // ▮
+  passage: '·', // ·
+  entity: '',
+  source: '',
+});
+
+/** Depth of a rung on the spine: continent 0 .. asset 2. */
 export const RUNG_DEPTH: Readonly<Record<Rung, number>> = Object.freeze({
   continent: 0,
   island: 1,
   asset: 2,
-  passage: 3,
 });
+
+/**
+ * WHAT THE ENGINE WILL SERVE AS A GRAPH VIEW. The three rungs, plus `passage`.
+ *
+ * `passage` is a VIEW KEY and not a rung: `GET /graph/view/passage/{assetId}`
+ * is how the reading-order tiling of one asset is fetched, and it is the only
+ * request that returns an asset-scoped entity set (see `graphView`). Keeping it
+ * out of `RUNGS` while keeping it here is the whole point of the split — you can
+ * ask for the view without being able to stand in it.
+ */
+export const VIEW_KEYS = Object.freeze([...RUNGS, 'passage'] as const);
+
+/** A thing `GET /graph/view/{key}` will accept. Superset of `Rung`. */
+export type ViewKey = (typeof VIEW_KEYS)[number];
+
+/**
+ * THE TWO TILINGS OF AN ASSET — the floor model made operable.
+ *
+ * When you are standing on an asset (`assetId !== null`) there is no further
+ * "down": the Asset is the last declared stratum. There is only "within", and
+ * within is one surface covered TWICE —
+ *
+ *   'reading'  the boundary-RESPECTING covering: the asset's own passages, laid
+ *              out at their true character offsets inside the declared boundary.
+ *              A partition: every byte belongs to exactly one passage.
+ *   'graph'    the boundary-CROSSING covering: the entities and typed relations
+ *              the asset mentions. NOT a partition — entities overlap and they
+ *              leave gaps, because not every span mentions something.
+ *
+ * This is deliberately NOT a `Lens` and NOT a `ResultTab`. A lens is a workspace
+ * and pushes history; a tab is a detail surface. A tiling is neither: it is a
+ * projection of the place you are already standing in, so Back must never pop it
+ * and the breadcrumb must never grow a segment for it.
+ *
+ * Canon: docs/design/arch-entity-rung-containment-vs-projection-2026-07-31.md §8.
+ */
+export type AssetTiling = 'reading' | 'graph';
+
+/** Both tilings, in the order the control renders them. Reading first: it is the declared one. */
+export const ASSET_TILINGS: readonly AssetTiling[] = Object.freeze(['reading', 'graph'] as const);
 
 /* =============================================================================
  * 2. SIGMA CLASSES + THE RELATION VOCABULARY
@@ -840,8 +911,8 @@ export interface GraphViewStats {
 
 /** `GET /graph/view/{rung}?parent_id=...` — one rung of the spine, in place. */
 export interface GraphViewResponse {
-  /** Which rung this view is at. */
-  rung: Rung;
+  /** Which VIEW this is — the three rungs plus `passage`. See `ViewKey`. */
+  rung: ViewKey;
   /** The containing node. `null` at the continent rung — the world has no parent. */
   parent_id: string | null;
   nodes: GraphNode[];

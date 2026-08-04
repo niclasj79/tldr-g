@@ -68,10 +68,10 @@
 
 import { useCallback, useRef, type KeyboardEvent } from 'react';
 
-import { RUNGS, RUNG_DEPTH } from '@/engine';
-import type { GraphNode, QueryRenderResponse, Rung } from '@/engine';
+import { ASSET_TILINGS, RUNGS, RUNG_DEPTH } from '@/engine';
+import type { AssetTiling, GraphNode, QueryRenderResponse, Rung } from '@/engine';
 import { COPY, dual, plain, rungCopy } from '@/copy';
-import { useAtlasStore } from '@/state';
+import { useAtlas, useAtlasStore } from '@/state';
 import type { RungStackEntry } from '@/state';
 import { Btn, Glyph, KeyHint, Num, Tip, cx } from '@/ui/primitives';
 
@@ -283,7 +283,7 @@ export function LevelSelector({
             title={`${level.plural} — ${consequence}`}
             aria-label={level.plural}
           >
-            <Glyph rung={r} tone={here ? 'render' : 'dim'} className="rb-level-glyph" />
+            <Glyph kind={r} tone={here ? 'render' : 'dim'} className="rb-level-glyph" />
             {variant === 'rail' ? (
               <>
                 <span className="rb-level-name">{level.plural}</span>
@@ -314,15 +314,77 @@ export interface BreadcrumbProps {
   showAscend?: boolean;
 }
 
+/**
+ * THE TILING CONTROL — the thing that stands where "one level down" used to be.
+ *
+ * It renders INSIDE the breadcrumb's here-crumb, and that placement is the
+ * argument: on a floor, the covering you are looking at IS where you are. Two
+ * consequences fall out of putting it here rather than in the task header, and
+ * both were the reason for moving it —
+ *
+ *   1. It is reachable on the ordinary path. `TaskHeader` returns composer-only
+ *      whenever no question is active, and descending in Explore is exactly that
+ *      state, so a control in the task header would be invisible on the only
+ *      route most people take to a document.
+ *   2. It does not have to be restated. A separate chip saying which covering is
+ *      active is redundant when the control saying so is the same object.
+ *
+ * `radiogroup`, never `tablist`: these are mutually exclusive views of one
+ * subject, which is what a radio group IS — and it keeps the shell's "exactly
+ * three tabs" contract honest, because a tiling is not a tab.
+ */
+function TilingControl({ spans, atoms }: { spans: number; atoms: number }): JSX.Element {
+  const tiling = useAtlasStore((s) => s.assetTiling);
+  const counts: Record<AssetTiling, number> = { reading: spans, graph: atoms };
+  return (
+    <span
+      className="rb-tiling"
+      role="radiogroup"
+      aria-label={COPY.navigation.tiling.label}
+      title={COPY.navigation.tiling.tip}
+    >
+      {ASSET_TILINGS.map((t) => (
+        <Tip key={t} content={<span className="rb-tiling-tip">{COPY.navigation.tiling[t].long}</span>}>
+          <button
+            type="button"
+            className="rb-tiling-seg"
+            role="radio"
+            aria-checked={tiling === t}
+            data-active={tiling === t}
+            onClick={() => useAtlas.getState().setAssetTiling(t)}
+          >
+            <Glyph kind={t === 'reading' ? 'passage' : 'entity'} tone={tiling === t ? 'render' : 'dim'} />
+            <span className="rb-tiling-name">{COPY.navigation.tiling[t].label}</span>
+            <Num value={counts[t]} format="int" tone="dim" className="rb-count" />
+          </button>
+        </Tip>
+      ))}
+    </span>
+  );
+}
+
 export function Breadcrumb({ className, showAscend = true }: BreadcrumbProps): JSX.Element {
-  const { rung, stack, bodies } = useAtlasStore((s) => ({
+  const { rung, stack, bodies, assetId, spans, atoms } = useAtlasStore((s) => ({
     rung: s.rung,
     stack: s.stack,
     // The bodies OF THIS RUNG. `node_count` also carries the cross-cutting
     // entity layer, and calling that "assets" would be a small lie in a place
     // people read quickly.
     bodies: s.view === null ? 0 : s.view.nodes.filter((n) => n.kind === s.rung).length,
+    assetId: s.assetId,
+    /* THE TWO COVERINGS, EACH CARRYING ITS OWN COUNT. The pair of numbers is
+       most of what the control teaches: a document is ~12 spans AND ~40
+       entities, and neither of those is "how big the document is". A single
+       count next to a single glyph could never have said that. */
+    spans: s.view === null ? 0 : s.view.nodes.filter((n) => n.kind === 'passage').length,
+    atoms: s.view === null ? 0 : s.view.nodes.filter((n) => n.kind === 'entity').length,
   }));
+
+  /* ON A FLOOR, THE HERE-CRUMB IS THE TILING. Off a floor it is the rung and its
+     body count, exactly as before. The route behind it is identical in both
+     cases — arriving on a floor does not add a segment, because a covering is
+     not a place you travelled to. */
+  const onFloor = assetId !== null;
 
   const depth = RUNG_DEPTH[rung];
   const here = rungCopy(rung);
@@ -387,7 +449,7 @@ export function Breadcrumb({ className, showAscend = true }: BreadcrumbProps): J
                 title={entry.label}
                 aria-label={entry.label}
               >
-                <Glyph rung={entry.rung} tone="dim" />
+                <Glyph kind={entry.rung} tone="dim" />
                 {isScope || !deep ? <span className="rb-label">{entry.label}</span> : null}
               </button>
             </span>
@@ -400,10 +462,16 @@ export function Breadcrumb({ className, showAscend = true }: BreadcrumbProps): J
           </span>
           {/* Beat four. Keyed on the rung so the flip depicts the ontology change
               and nothing else. */}
-          <span className="rb-here" key={rung}>
-            <Glyph rung={rung} tone="render" className="rb-flip" />
-            <span className="rb-label rb-current">{here.plural}</span>
-            <Num value={bodies} format="int" tone="dim" className="rb-count" />
+          <span className="rb-here" key={onFloor ? 'floor' : rung}>
+            {onFloor ? (
+              <TilingControl spans={spans} atoms={atoms} />
+            ) : (
+              <>
+                <Glyph kind={rung} tone="render" className="rb-flip" />
+                <span className="rb-label rb-current">{here.plural}</span>
+                <Num value={bodies} format="int" tone="dim" className="rb-count" />
+              </>
+            )}
           </span>
         </span>
       </span>
@@ -425,10 +493,16 @@ export function Breadcrumb({ className, showAscend = true }: BreadcrumbProps): J
         aria-label={COPY.navigation.breadcrumb.compact.label}
         title={COPY.navigation.breadcrumb.compact.tip}
       >
-        <span className="rb-compact-level" key={rung}>
-          <Glyph rung={rung} tone="render" className="rb-flip" />
-          <span className="rb-current">{here.plural}</span>
-          <Num value={bodies} format="int" tone="dim" className="rb-count" />
+        <span className="rb-compact-level" key={onFloor ? 'floor' : rung}>
+          {onFloor ? (
+            <TilingControl spans={spans} atoms={atoms} />
+          ) : (
+            <>
+              <Glyph kind={rung} tone="render" className="rb-flip" />
+              <span className="rb-current">{here.plural}</span>
+              <Num value={bodies} format="int" tone="dim" className="rb-count" />
+            </>
+          )}
         </span>
         <span className="rb-compact-scope">
           <span className="rb-compact-in caps">{COPY.navigation.breadcrumb.inside.label}</span>
@@ -447,7 +521,7 @@ export function Breadcrumb({ className, showAscend = true }: BreadcrumbProps): J
               title={scope.label}
               aria-label={scope.label}
             >
-              <Glyph rung={scope.rung} tone="dim" />
+              <Glyph kind={scope.rung} tone="dim" />
               <span className="rb-label">{scope.label}</span>
             </button>
           )}

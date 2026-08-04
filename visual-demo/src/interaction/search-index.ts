@@ -28,7 +28,7 @@
  * ========================================================================== */
 
 import { RUNG_DEPTH, engine } from '@/engine';
-import type { Entity, GraphNode, NodeKind, Rung } from '@/engine';
+import type { Entity, GraphNode, NodeKind, Rung, ViewKey } from '@/engine';
 
 /** One searchable thing. Flat and small: the index is held for the session. */
 export interface IndexItem {
@@ -60,8 +60,10 @@ function addressRung(kind: NodeKind): Rung {
     case 'continent':
     case 'island':
     case 'asset':
-    case 'passage':
       return kind;
+    /* A PASSAGE, AN ENTITY AND A SOURCE ALL ANSWER 'asset'. None of them is a
+       rung; the asset is the finest place any of them can be found AT. */
+    case 'passage':
     case 'entity':
     case 'source':
       return 'asset';
@@ -115,7 +117,9 @@ export function buildSearchIndex(bakeId: string, signal?: AbortSignal): Promise<
   if (inflight !== null) return inflight;
 
   inflight = (async () => {
-    const rungs: Rung[] = ['continent', 'island', 'asset', 'passage'];
+    /* VIEW KEYS, not rungs — passages are still indexed and still findable;
+       they are simply not a level you can stand on. */
+    const rungs: ViewKey[] = ['continent', 'island', 'asset', 'passage'];
     const views = await Promise.all(
       rungs.map((rung) =>
         engine.getGraphView(rung, null, {

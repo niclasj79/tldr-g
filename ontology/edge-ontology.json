@@ -26,7 +26,7 @@
    "sigma_family": "authorial"
   },
   "ceo_of": {
-   "description": "a person is or was the chief executive or leader of an organization",
+   "description": "a person explicitly holds or held the title of chief executive officer or chief executive of an organization",
    "head_types": [
     "person"
    ],
@@ -106,7 +106,7 @@
    "sigma_family": "episodic"
   },
   "located_in": {
-   "description": "a person, organization, or place is located in a place",
+   "description": "a person resides in, an organization operates from, or a geographic location lies within another geographic location",
    "head_types": [
     "organization",
     "location",
@@ -119,7 +119,7 @@
    "sigma_family": "factual"
   },
   "at_location": {
-   "description": "an entity, event, or object is at or associated with a location",
+   "description": "an event occurs at, or a person, organization, physical object, or phenomenon is explicitly present at, a geographic location",
    "head_types": [
     "person",
     "organization",
@@ -134,7 +134,7 @@
    "sigma_family": "factual"
   },
   "headquartered_in": {
-   "description": "an organization is headquartered in a place",
+   "description": "an organization is explicitly stated to have its principal headquarters in a geographic location",
    "head_types": [
     "organization"
    ],
@@ -145,7 +145,7 @@
    "sigma_family": "factual"
   },
   "born_in": {
-   "description": "a person was born in a place",
+   "description": "a person's birth is explicitly stated to have occurred in a geographic location",
    "head_types": [
     "person"
    ],
@@ -156,7 +156,7 @@
    "sigma_family": "temporal"
   },
   "died_in": {
-   "description": "a person died in a place",
+   "description": "a person's death is explicitly stated to have occurred in a geographic location",
    "head_types": [
     "person"
    ],
@@ -167,7 +167,7 @@
    "sigma_family": "temporal"
   },
   "nationality": {
-   "description": "a person is a citizen or national of a place or country",
+   "description": "a person is explicitly identified as a citizen or national of a country or nation",
    "head_types": [
     "person"
    ],
@@ -216,7 +216,7 @@
    "sigma_family": "authorial"
   },
   "developed": {
-   "description": "a person or organization developed a product or technology",
+   "description": "a person or organization designed, engineered, or substantially advanced a product, technology, method, or technical system",
    "head_types": [
     "person",
     "organization"
@@ -229,7 +229,7 @@
    "sigma_family": "authorial"
   },
   "part_of": {
-   "description": "something is a part or component of a larger whole",
+   "description": "a structural component, section, geographic subdivision, or organizational unit belongs within a larger whole, not merely a class or association",
    "head_types": [
     "concept",
     "organization",
@@ -244,7 +244,7 @@
    "sigma_family": "factual"
   },
   "has_part": {
-   "description": "a whole contains a part or component",
+   "description": "a whole has a structurally identifiable component, section, geographic subdivision, or organizational unit; incidental contents do not qualify",
    "head_types": [
     "concept",
     "organization",
@@ -258,7 +258,7 @@
    "sigma_family": "factual"
   },
   "contains": {
-   "description": "a whole contains or includes a part, member, or component",
+   "description": "a container, document, collection, location, or event includes non-structural content, occupants, items, or participants",
    "head_types": [
     "concept",
     "organization",
@@ -273,7 +273,7 @@
    "sigma_family": "factual"
   },
   "has_attribute": {
-   "description": "an entity has an attribute or descriptive property",
+   "description": "a subject is assigned an explicit descriptive attribute, classification, status, role, or measured value",
    "head_types": [
     "concept",
     "organization",
@@ -287,7 +287,7 @@
    "sigma_family": "factual"
   },
   "has_property": {
-   "description": "an entity has a property, trait, or quality",
+   "description": "a subject intrinsically exhibits an explicit trait, capability, physical characteristic, or quality",
    "head_types": [
     "concept",
     "organization",
@@ -301,7 +301,7 @@
    "sigma_family": "factual"
   },
   "is_a": {
-   "description": "something is a kind, class, or subtype of a broader concept",
+   "description": "a class or named type is a subtype of a broader class, not one individual instance of it",
    "head_types": [
     "concept",
     "product",
@@ -315,7 +315,7 @@
    "sigma_family": "factual"
   },
   "instance_of": {
-   "description": "something is an instance or type of a more general category",
+   "description": "a specific named subject or occurrence is one concrete member of a general class, not a subtype of that class",
    "head_types": [
     "concept",
     "product",
@@ -329,7 +329,7 @@
    "sigma_family": "factual"
   },
   "made_of": {
-   "description": "a thing is made of a material, component, or substance",
+   "description": "a physical object or structure consists materially of a substance or component, not organizational or class members",
    "head_types": [
     "concept",
     "product"
@@ -342,7 +342,7 @@
    "sigma_family": "factual"
   },
   "form_of": {
-   "description": "a word, phrase, object, or concept is a form or variant of another",
+   "description": "a subject is an alternate version, inflection, or embodiment of the same identity or content, not the action 'to form'",
    "head_types": [
     "concept",
     "product"
@@ -377,7 +377,7 @@
    "sigma_family": "factual"
   },
   "succeeded_by": {
-   "description": "a person or thing was succeeded or followed by another in a role",
+   "description": "a person or organization is replaced by another holder of the same office, leadership position, governing role, or institutional function",
    "head_types": [
     "person",
     "organization"
@@ -390,7 +390,7 @@
    "sigma_family": "temporal"
   },
   "preceded_by": {
-   "description": "a person or thing was preceded by another in a role or sequence",
+   "description": "a person or organization had another as the previous holder of the same office, governing role, or institutional function",
    "head_types": [
     "person",
     "organization"
@@ -403,7 +403,7 @@
    "sigma_family": "temporal"
   },
   "caused": {
-   "description": "an event or thing caused or led to another event or outcome",
+   "description": "an event, action, condition, or mechanism directly produces or materially brings about a distinct event or outcome",
    "head_types": [
     "event",
     "concept"
@@ -444,7 +444,7 @@
    "sigma_family": "causal"
   },
   "depends_on": {
-   "description": "an entity, event, or concept depends on another entity, event, or concept",
+   "description": "the continued existence, operation, validity, or outcome of a subject materially relies on a specified resource, condition, system, or actor",
    "head_types": [
     "event",
     "concept",
@@ -474,10 +474,9 @@
    "sigma_family": "causal"
   },
   "motivated_by_goal": {
-   "description": "an action or entity is motivated by a goal or intended outcome",
+   "description": "an intentional action, person, or organization acts because it seeks a stated future goal or intended outcome",
    "head_types": [
     "event",
-    "concept",
     "person",
     "organization"
    ],
@@ -501,20 +500,21 @@
    "sigma_family": "episodic"
   },
   "signed": {
-   "description": "a person or organization signed or enacted a law, agreement, or document",
+   "description": "a person or organization formally signs, executes, or ratifies a named law, agreement, treaty, or document",
    "head_types": [
     "person",
     "organization"
    ],
    "tail_types": [
     "law",
-    "concept"
+    "product",
+    "event"
    ],
    "tier": "semantic",
    "sigma_family": "authorial"
   },
   "applies_to": {
-   "description": "a law, rule, or concept applies to or governs a subject",
+   "description": "a named law, rule, policy, requirement, standard, or formal classification governs a subject or jurisdiction",
    "head_types": [
     "law",
     "concept"
@@ -528,7 +528,7 @@
    "sigma_family": "causal"
   },
   "used_for": {
-   "description": "an entity, product, or concept is used for a purpose or activity",
+   "description": "a tool, artifact, method, facility, or resource is intentionally employed to perform a stated task or achieve a stated purpose",
    "head_types": [
     "concept",
     "product"
@@ -556,12 +556,13 @@
    "sigma_family": "factual"
   },
   "receives_action": {
-   "description": "an entity receives, undergoes, or is affected by an action",
+   "description": "a person, organization, product, law, or place receives or undergoes a named action, treatment, decision, designation, or award",
    "head_types": [
     "person",
     "organization",
     "product",
-    "concept"
+    "law",
+    "location"
    ],
    "tail_types": [
     "event",
@@ -571,7 +572,7 @@
    "sigma_family": "episodic"
   },
   "synonym": {
-   "description": "two concepts, names, or terms have the same or very similar meaning",
+   "description": "two terms have equivalent meaning, or two names or aliases denote the same referent; similarity and versioning do not qualify",
    "head_types": [
     "concept"
    ],
@@ -653,7 +654,7 @@
    "sigma_family": "factual"
   },
   "defined_as": {
-   "description": "a term, entity, or concept is defined as another concept or description",
+   "description": "a term or symbol receives an explicit meaning, criterion, scope, or value, not a classification, alias, or state change",
    "head_types": [
     "concept",
     "product",
@@ -667,7 +668,7 @@
    "sigma_family": "authorial"
   },
   "related_to": {
-   "description": "two concepts or entities are meaningfully related (catch-all)",
+   "description": "two subjects have an explicit relationship with no more specific canonical family; co-occurrence alone does not qualify",
    "head_types": [
     "concept"
    ],
@@ -732,12 +733,10 @@
    "sigma_family": "factual"
   },
   "has": {
-   "description": "an entity has, holds, possesses, or receives a thing",
+   "description": "a person or organization owns or formally holds an asset, right, credential, position, or resource, not merely receives it",
    "head_types": [
     "person",
-    "organization",
-    "product",
-    "concept"
+    "organization"
    ],
    "tail_types": [
     "product",
@@ -747,7 +746,7 @@
    "sigma_family": "factual"
   },
   "enables": {
-   "description": "a thing enables, supports, or allows another thing or capability",
+   "description": "a condition, capability, tool, law, or action makes a specified action or outcome possible",
    "head_types": [
     "concept",
     "product",
@@ -763,7 +762,7 @@
    "sigma_family": "causal"
   },
   "prevents_constrains": {
-   "description": "a thing prevents, blocks, limits, gates, or protects against another",
+   "description": "a law, condition, mechanism, or action materially blocks, limits, or binds a specified action or outcome",
    "head_types": [
     "concept",
     "product",
@@ -779,7 +778,7 @@
    "sigma_family": "causal"
   },
   "improves": {
-   "description": "a change improves, enhances, or optimizes a thing",
+   "description": "a specified intervention, feature, or change produces an explicit improvement in a target's performance, quality, capability, or outcome",
    "head_types": [
     "concept",
     "product",
@@ -793,7 +792,7 @@
    "sigma_family": "causal"
   },
   "transforms": {
-   "description": "a thing changes, extends, reduces, scales, or otherwise transforms another",
+   "description": "a process, input, or intervention explicitly changes the state, scale, quantity, or representation of a target",
    "head_types": [
     "concept",
     "product",
@@ -808,7 +807,7 @@
    "sigma_family": "causal"
   },
   "replaces_supersedes": {
-   "description": "a newer thing replaces, supersedes, or retires an older one",
+   "description": "a newer product, system, policy, standard, organization, or version displaces an older functional counterpart; role-holders use succeeded_by",
    "head_types": [
     "concept",
     "product",
@@ -823,7 +822,7 @@
    "sigma_family": "temporal"
   },
   "becomes": {
-   "description": "an entity becomes, remains, or emerges as a state or role",
+   "description": "a subject enters a new role, class, condition, identity, or state rather than remaining unchanged",
    "head_types": [
     "person",
     "organization",
@@ -852,7 +851,7 @@
    "sigma_family": "authorial"
   },
   "asserts": {
-   "description": "an agent claims, reports, proposes, recommends, or discusses something",
+   "description": "a person, organization, or authored work explicitly states a claim, report, proposal, prediction, or recommendation, not a mere mention",
    "head_types": [
     "person",
     "organization",
@@ -866,11 +865,11 @@
    "sigma_family": "authorial"
   },
   "references": {
-   "description": "a work references, cites, mentions, or links to another work or entity",
+   "description": "a person, organization, or authored work explicitly cites, quotes, names, or hyperlinks a source or referent",
    "head_types": [
     "product",
-    "concept",
-    "person"
+    "person",
+    "organization"
    ],
    "tail_types": [
     "product",
@@ -882,7 +881,7 @@
    "sigma_family": "authorial"
   },
   "measures_evaluates": {
-   "description": "an agent measures, tests, scores, ranks, or evaluates a thing",
+   "description": "a person, organization, or instrument explicitly measures, tests, scores, ranks, or evaluates a specified target against a criterion or metric",
    "head_types": [
     "person",
     "organization",
@@ -912,7 +911,7 @@
    "sigma_family": "factual"
   },
   "discovers": {
-   "description": "an agent finds, discovers, identifies, detects, or surfaces a thing",
+   "description": "a person, organization, or instrument newly identifies a previously unknown object, location, phenomenon, fact, or pattern through observation or investigation",
    "head_types": [
     "person",
     "organization",
@@ -954,7 +953,7 @@
    "sigma_family": "episodic"
   },
   "tracks_monitors": {
-   "description": "an agent tracks, monitors, observes, or traces a thing over time",
+   "description": "a person, organization, or instrument repeatedly observes or records a target's state, location, or changes over time",
    "head_types": [
     "person",
     "organization",
@@ -998,7 +997,7 @@
    "sigma_family": "factual"
   },
   "leads": {
-   "description": "a person leads, heads, directs, or chairs an organization, program, or effort",
+   "description": "a person commands, directs, or chairs an organization, team, program, project, or effort; explicit CEO titles use ceo_of",
    "head_types": [
     "person"
    ],
@@ -1012,7 +1011,7 @@
    "sigma_family": "factual"
   },
   "achieves_addresses": {
-   "description": "an agent achieves, reaches, delivers, solves, or addresses a goal or problem",
+   "description": "a person, organization, or product attains a stated goal or outcome, or concretely addresses a specified problem",
    "head_types": [
     "person",
     "organization",
@@ -1026,7 +1025,7 @@
    "sigma_family": "episodic"
   },
   "targets_aims": {
-   "description": "an agent targets, aims at, focuses on, or plans toward a goal",
+   "description": "a person, organization, or product intentionally pursues, prioritizes, or is designed toward a stated goal, audience, outcome, or operational target",
    "head_types": [
     "person",
     "organization",
@@ -1040,7 +1039,7 @@
    "sigma_family": "causal"
   },
   "competes_outperforms": {
-   "description": "a thing competes with, outperforms, beats, or exceeds another",
+   "description": "a person, organization, team, or product directly competes with or explicitly outperforms another in the same contest or market",
    "head_types": [
     "person",
     "organization",
@@ -1055,7 +1054,7 @@
    "sigma_family": "episodic"
   },
   "fails_on": {
-   "description": "a thing fails, breaks, crashes, or misses on a task or condition",
+   "description": "a person, organization, system, method, or action fails a task, requirement, operating condition, or intended outcome",
    "head_types": [
     "person",
     "organization",
@@ -1071,7 +1070,7 @@
    "sigma_family": "episodic"
   },
   "transfers_to": {
-   "description": "a thing moves, sends, feeds, routes, or distributes something to a destination",
+   "description": "a person, organization, or product is explicitly moved, assigned, delivered, sold, or conveyed to a named recipient or destination",
    "head_types": [
     "person",
     "organization",
@@ -1087,7 +1086,7 @@
    "sigma_family": "episodic"
   },
   "connects_to": {
-   "description": "things are connected, linked, bridged, or bound to each other",
+   "description": "two endpoints have an explicit physical, network, transport, interface, or structural link that permits passage, communication, attachment, or coupling",
    "head_types": [
     "concept",
     "product",
@@ -1104,7 +1103,7 @@
    "sigma_family": "factual"
   },
   "combines_with": {
-   "description": "things are combined, merged, or integrated together into a whole",
+   "description": "two inputs are merged, mixed, integrated, or joined into one composite system, substance, organization, or result",
    "head_types": [
     "concept",
     "product",

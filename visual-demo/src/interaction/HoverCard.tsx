@@ -198,7 +198,7 @@ export const HoverCard = forwardRef<HTMLDivElement, HoverCardProps>(function Hov
     <div className="ix-card" ref={ref} role="tooltip" aria-hidden="true">
       <div className="ix-card__hd">
         {isSpineRung(node.kind) ? (
-          <Glyph rung={node.kind} tone="dim" />
+          <Glyph kind={node.kind} tone="dim" />
         ) : (
           <span className="ix-card__kindmark caps ink-faint">{kindWord}</span>
         )}
