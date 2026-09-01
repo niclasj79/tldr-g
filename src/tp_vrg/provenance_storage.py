@@ -27,6 +27,18 @@ The `segment_id` column in `source_segments` uses the same ID as the
 corresponding `passage_id` in graph.db — they are deterministic content
 hashes, so the IDs match by construction and no mapping table is needed.
 
+That id addresses the text stored HERE, in `source_segments`, which for the
+seq=0 whole-document row is the VERBATIM source (`sources.content_hash`
+covers the same bytes). graph.db's `SourcePassage.raw_text` under the same id
+is the coref/defined-term-RESOLVED rendering the engine embedded and
+extracted from — a derived view of those bytes, not the identity-bearing
+content, and disclosed as such per-citation by the attestation layer.
+`upsert_segment` enforces the promise: a content-addressed id whose text does
+not reproduce it is refused (INV-2 fail-loud). Before that guard existed the
+seq=0 id was minted from the resolved rendering while the row stored the
+verbatim source, so the two silently addressed different strings
+(C-5 finding F-06).
+
 `answer_citations.segment_id` deliberately has NO foreign key constraint
 (see plan decision D9). Pre-F16 citations or re-ingestion edge cases may
 leave orphaned references; explain queries LEFT JOIN and surface them as
@@ -39,14 +51,38 @@ NULL.
 
 from __future__ import annotations
 
+import hashlib
 import json
+import re
 import sqlite3
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-__all__ = ["ProvenanceBackend"]
+__all__ = ["ProvenanceBackend", "content_address_id"]
+
+#: How many hex characters of the sha256 digest a content-addressed id carries.
+CONTENT_ADDRESS_HEX_LEN = 16
+
+#: An id that CLAIMS to be a content address: a known prefix plus exactly the
+#: digest slice. Synthetic handles ("seg-0", "p_a1") do not match and are left
+#: alone — only ids making the claim are held to it.
+_CONTENT_ADDRESS_RE = re.compile(
+    rf"^(p_|ps_)([0-9a-f]{{{CONTENT_ADDRESS_HEX_LEN}}})$"
+)
+
+
+def content_address_id(text: str, prefix: str) -> str:
+    """Mint the content-addressed id for `text`.
+
+    The single place ids are minted, so an id and the text it addresses cannot
+    be specified independently and then drift apart (C-5 finding F-06, where
+    the id was hashed from the resolved rendering and the row stored the
+    verbatim source).
+    """
+    digest = hashlib.sha256(text.encode()).hexdigest()[:CONTENT_ADDRESS_HEX_LEN]
+    return f"{prefix}{digest}"
 
 
 _SCHEMA_VERSION = "1"
@@ -120,48 +156,6 @@ class ProvenanceBackend:
                 created_at     TEXT NOT NULL
             );
 
-            -- THE MENTION LEDGER, first increment ([ASSET-MENTION-LEDGER],
-            -- 2026-07-28). Coreference already computes full mention clusters
-            -- with character spans on every ingest -- `get_clusters(as_strings=
-            -- False)` in coref_lingmess -- uses them to build string edits, and
-            -- then DISCARDS them, returning only resolved text. This table stops
-            -- discarding them. It is a persistence change, not a model change:
-            -- the expensive part was already paid for.
-            --
-            -- WHY provenance.db AND NOT graph.db: `compute_logical_roots` hashes
-            -- every table in graph.db, so a new table there would move
-            -- `logical_root_all` and change the identity of every snapshot. But
-            -- mentions are not graph topology -- they are provenance about a
-            -- source, and they can only be interpreted against the resolution
-            -- overlay stored directly above. Co-locating them keeps graph
-            -- identity untouched and puts the two artifacts that must be read
-            -- together in one place.
-            --
-            -- `coord_space` is load-bearing and must never be dropped. Coref runs
-            -- AFTER `preprocess_defined_terms` has already rewritten the text, so
-            -- these offsets index the coref INPUT, not the verbatim original.
-            -- Mapping them back to the immutable source requires
-            -- `resolution_overlay.OffsetIndex` over the row above. Recording
-            -- which coordinate space an offset lives in is the difference
-            -- between a usable ledger and a silently-misaligned one -- the exact
-            -- class of error this project has repeatedly paid for.
-            CREATE TABLE IF NOT EXISTS source_mention_clusters (
-                source_id      TEXT NOT NULL REFERENCES sources(source_id),
-                cluster_id     INTEGER NOT NULL,
-                mention_idx    INTEGER NOT NULL,
-                span_start     INTEGER NOT NULL,
-                span_end       INTEGER NOT NULL,
-                surface_form   TEXT NOT NULL,
-                representative TEXT NOT NULL,
-                coord_space    TEXT NOT NULL,
-                created_at     TEXT NOT NULL,
-                PRIMARY KEY (source_id, cluster_id, mention_idx)
-            );
-            CREATE INDEX IF NOT EXISTS idx_mention_clusters_source
-                ON source_mention_clusters(source_id);
-            CREATE INDEX IF NOT EXISTS idx_mention_clusters_surface
-                ON source_mention_clusters(surface_form);
-
             -- `response_text` closes the last-mile gap (A9 of
             -- docs/design/arch-last-mile-provenance-2026-07-05.md): before it,
             -- the row stored the QUERY and the model's output evaporated after
@@ -186,7 +180,8 @@ class ProvenanceBackend:
                 user_id              TEXT DEFAULT NULL,
                 response_text        TEXT DEFAULT NULL,
                 response_recorded_at TEXT DEFAULT NULL,
-                render_strategy      TEXT DEFAULT NULL
+                render_strategy      TEXT DEFAULT NULL,
+                render_pointers      TEXT NOT NULL DEFAULT '[]'
             );
             CREATE INDEX IF NOT EXISTS idx_answers_user ON answers(user_id);
 
@@ -274,6 +269,19 @@ class ProvenanceBackend:
     def _migrate_schema(self) -> None:
         """Install additive ownership for content-derived shared segments."""
         assert self._conn is not None
+        # mention_ledger is engine-internal (it depends on tp_vrg.models, which
+        # pulls in pydantic and the engine's canonical-defaults stack) and is
+        # deliberately NOT part of the public/offline-verification boundary
+        # (public/allowlist.txt). The public build only ever reads/writes the
+        # core provenance tables below, so the mention_ledger table is skipped
+        # there rather than shipping the engine to satisfy an unused table.
+        try:
+            from tp_vrg.mention_ledger import ensure_schema as ensure_mention_ledger_schema
+        except ImportError:
+            ensure_mention_ledger_schema = None
+
+        if ensure_mention_ledger_schema is not None:
+            ensure_mention_ledger_schema(self._conn)
         self._conn.execute("""
             CREATE TABLE IF NOT EXISTS segment_sources (
                 segment_id TEXT NOT NULL,
@@ -301,6 +309,11 @@ class ProvenanceBackend:
                 self._conn.execute(
                     f"ALTER TABLE answers ADD COLUMN {column} TEXT DEFAULT NULL"
                 )
+        if "render_pointers" not in existing:
+            self._conn.execute(
+                "ALTER TABLE answers ADD COLUMN render_pointers "
+                "TEXT NOT NULL DEFAULT '[]'"
+            )
         self._conn.commit()
 
     # ------------------------------------------------------------ ingestion
@@ -344,8 +357,23 @@ class ProvenanceBackend:
         char_start: int | None = None,
         char_end: int | None = None,
     ) -> None:
-        """Insert or update a source segment. Idempotent on `segment_id`."""
+        """Insert or update a source segment. Idempotent on `segment_id`.
+
+        Raises `ValueError` if `segment_id` claims to be a content address but
+        does not reproduce from `text` — the module docstring's "match by
+        construction" promise, enforced instead of asserted.
+        """
         assert self._conn is not None
+        match = _CONTENT_ADDRESS_RE.match(segment_id)
+        if match is not None:
+            expected = content_address_id(text, match.group(1))
+            if expected != segment_id:
+                raise ValueError(
+                    f"segment_id {segment_id!r} does not content-address the text "
+                    f"stored under it (text hashes to {expected!r}). A "
+                    "content-addressed id must be minted from the SAME string the "
+                    "row stores — see content_address_id()."
+                )
         now = datetime.now(timezone.utc).isoformat()
         self._conn.execute(
             """
@@ -369,76 +397,51 @@ class ProvenanceBackend:
         if not self._in_batch:
             self._conn.commit()
 
-    def replace_mention_clusters(
-        self,
-        source_id: str,
-        clusters: list[dict],
-        coord_space: str = "coref_input",
-    ) -> int:
-        """Persist the coreference mention clusters for one source. Idempotent.
+    def write_mentions(self, source_id: str, mentions: list[Any]) -> int:
+        """Write one raw-anchored mention batch through the canonical invariant."""
 
-        [ASSET-MENTION-LEDGER] first increment. Replaces the whole set for the
-        source so a re-ingest cannot leave a half-updated ledger interleaving two
-        editions' offsets — the offsets are only meaningful against one text.
-
-        ``clusters`` is a list of ``{cluster_id, mention_idx, span_start,
-        span_end, surface_form, representative}``. ``coord_space`` names the text
-        the offsets index and is stored verbatim; see the table comment for why
-        dropping it would make the ledger unusable rather than merely untidy.
-
-        Returns the number of mentions written.
-        """
         assert self._conn is not None
-        if not source_id:
-            raise ValueError("mention clusters require a source_id")
-        now = datetime.now(timezone.utc).isoformat()
-        # Whole-set replace: a partial update would silently mix coordinate
-        # spaces across editions, which is the failure the coord_space column
-        # exists to prevent.
-        self._conn.execute(
-            "DELETE FROM source_mention_clusters WHERE source_id = ?", (source_id,)
-        )
-        rows = [
-            (
-                source_id,
-                int(m["cluster_id"]),
-                int(m["mention_idx"]),
-                int(m["span_start"]),
-                int(m["span_end"]),
-                str(m["surface_form"]),
-                str(m["representative"]),
-                coord_space,
-                now,
-            )
-            for m in clusters
-        ]
-        if rows:
-            self._conn.executemany(
-                "INSERT INTO source_mention_clusters (source_id, cluster_id, "
-                "mention_idx, span_start, span_end, surface_form, representative, "
-                "coord_space, created_at) VALUES (?,?,?,?,?,?,?,?,?)",
-                rows,
-            )
-        self._conn.commit()
-        return len(rows)
+        try:
+            from tp_vrg.mention_ledger import write_mentions
+        except ImportError as exc:
+            raise RuntimeError(
+                "mention ledger unavailable in this build (tp_vrg.mention_ledger "
+                "is engine-internal and is not part of the public/offline-"
+                "verification boundary) -- write_mentions cannot proceed"
+            ) from exc
 
-    def get_mention_clusters(self, source_id: str) -> list[dict]:
-        """Read back one source's mention ledger, cluster-ordered."""
-        assert self._conn is not None
-        cur = self._conn.execute(
-            "SELECT cluster_id, mention_idx, span_start, span_end, surface_form, "
-            "representative, coord_space FROM source_mention_clusters "
-            "WHERE source_id = ? ORDER BY cluster_id, mention_idx",
-            (source_id,),
-        )
-        return [
-            {
-                "cluster_id": r[0], "mention_idx": r[1], "span_start": r[2],
-                "span_end": r[3], "surface_form": r[4], "representative": r[5],
-                "coord_space": r[6],
-            }
-            for r in cur.fetchall()
-        ]
+        written = write_mentions(self._conn, source_id, mentions)
+        if not self._in_batch:
+            self._conn.commit()
+        return written
+
+    def mentions_for_source(self, source_id: str) -> list[dict[str, object]]:
+        """Return raw mention occurrences for one source."""
+
+        try:
+            from tp_vrg.mention_ledger import mentions_for_source
+        except ImportError as exc:
+            raise RuntimeError(
+                "mention ledger unavailable in this build (tp_vrg.mention_ledger "
+                "is engine-internal and is not part of the public/offline-"
+                "verification boundary) -- mentions_for_source cannot proceed"
+            ) from exc
+
+        return mentions_for_source(self, source_id)
+
+    def surfaces_for_entity(self, normalized_id: str) -> list[str]:
+        """Return distinct raw surfaces recorded for one normalized node ID."""
+
+        try:
+            from tp_vrg.mention_ledger import surfaces_for_entity
+        except ImportError as exc:
+            raise RuntimeError(
+                "mention ledger unavailable in this build (tp_vrg.mention_ledger "
+                "is engine-internal and is not part of the public/offline-"
+                "verification boundary) -- surfaces_for_entity cannot proceed"
+            ) from exc
+
+        return surfaces_for_entity(self, normalized_id)
 
     def upsert_resolution_overlay(self, source_id: str, resolution_map: str) -> None:
         """Store the reversible resolution overlay for a source. Idempotent on
@@ -479,6 +482,7 @@ class ProvenanceBackend:
         user_id: str | None = None,
         response_text: str | None = None,
         render_strategy: str | None = None,
+        render_pointers: Sequence[Mapping[str, Any]] | None = None,
     ) -> None:
         """Record a single answer event. Call once per query rendered.
 
@@ -489,15 +493,26 @@ class ProvenanceBackend:
 
         ``render_strategy`` is the strategy the selector actually took for
         this render; it is what makes grounding telemetry stratifiable.
+
+        ``render_pointers`` is bounded, response-only receipt metadata for
+        ranked passages that were not spent as prompt text.
         """
         assert self._conn is not None
         now = datetime.now(timezone.utc).isoformat()
+        pointers_json = json.dumps(
+            [dict(pointer) for pointer in (render_pointers or ())],
+            ensure_ascii=False,
+            sort_keys=True,
+            separators=(",", ":"),
+            allow_nan=False,
+        )
         self._conn.execute(
             """
             INSERT INTO answers
                 (answer_id, query_text, answered_at, model_label, user_id,
-                 response_text, response_recorded_at, render_strategy)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                 response_text, response_recorded_at, render_strategy,
+                 render_pointers)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
                 answer_id,
@@ -508,6 +523,7 @@ class ProvenanceBackend:
                 response_text,
                 now if response_text is not None else None,
                 render_strategy,
+                pointers_json,
             ),
         )
         if not self._in_batch:
@@ -877,13 +893,28 @@ class ProvenanceBackend:
         assert self._conn is not None
         row = self._conn.execute(
             "SELECT answer_id, query_text, answered_at, model_label, user_id, "
-            "response_text, response_recorded_at, render_strategy "
+            "response_text, response_recorded_at, render_strategy, "
+            "render_pointers "
             "FROM answers WHERE answer_id = ?",
             (answer_id,),
         ).fetchone()
         if row is None:
             return None
-        return dict(row)
+        answer = dict(row)
+        try:
+            pointers = json.loads(answer["render_pointers"] or "[]")
+        except (TypeError, json.JSONDecodeError) as exc:
+            raise ValueError(
+                f"answer {answer_id!r} has invalid render_pointers JSON"
+            ) from exc
+        if not isinstance(pointers, list) or any(
+            not isinstance(pointer, dict) for pointer in pointers
+        ):
+            raise ValueError(
+                f"answer {answer_id!r} has structurally invalid render_pointers"
+            )
+        answer["render_pointers"] = pointers
+        return answer
 
     def get_citations_for_answer(self, answer_id: str) -> list[dict[str, Any]]:
         """Return the citation rows joined with segment + source data.
@@ -1379,6 +1410,7 @@ class ProvenanceBackend:
             DELETE FROM answer_verification_runs;
             DELETE FROM answer_citations;
             DELETE FROM answers;
+            DELETE FROM mention_ledger;
             DELETE FROM source_segments;
             DELETE FROM sources;
             """

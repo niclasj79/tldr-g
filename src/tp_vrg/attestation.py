@@ -2,8 +2,8 @@
 
 Sigstore-class detached signatures over the engine's two exportable
 boundary objects: the PortableArtifact (rung-level subgraph export, GDPR
-Art 20) and the render trace (the Provenance Layer's answer + citations
-record, the "memory you can audit" surface). Same family as Certificate
+Art 20) and the render trace (the Provenance Layer's answer + citations +
+reference pointers, the "memory you can audit" surface). Same family as Certificate
 Transparency / Sigstore / eIDAS 2.0 qualified seals — explicitly NOT a
 blockchain, no token, no distributed ledger.
 
@@ -310,10 +310,10 @@ def verify_envelope(envelope: dict) -> dict[str, Any]:
 def build_render_trace(answer_id: str, provenance) -> dict[str, Any]:
     """Compose the exportable render-trace object from the Provenance Layer.
 
-    Emission-time composition over the existing two-file provenance schema
-    (per arch-provenance-rights-objects-2026-05-11.md line 226 — no schema
-    migration). The trace is the auditable record of one rendered answer:
-    the query, the model, and the citation chain back to source segments.
+    Emission-time composition over the provenance store. The trace is the
+    auditable record of one rendered answer: the query, the model, the
+    citation chain back to source segments, and reference-only pointers for
+    ranked candidates that were not spent as prompt text.
 
     Raises:
         KeyError: unknown ``answer_id``.
@@ -388,6 +388,7 @@ def build_render_trace(answer_id: str, provenance) -> dict[str, Any]:
         "model_label": answer["model_label"],
         "provenance_coverage": coverage,
         "citations": citations_out,
+        "pointers": list(answer.get("render_pointers") or []),
     }
     if any_resolved:
         trace["resolution_disclosure"] = (

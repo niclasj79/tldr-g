@@ -39,15 +39,15 @@ _tier = structural. These are the graph's skeleton; the truth gate is exempt for
 
 | Family | Gloss (head → tail) | σ | Inverse / note |
 |---|---|---|---|
-| `part_of` | something is a part or component of a larger whole | factual | ↔ `has_part` |
-| `has_part` | a whole contains a part or component | factual | ↔ `part_of` |
-| `contains` | a whole contains or includes a part, member, or component | factual | broader than `has_part` (allows person members) |
-| `is_a` | something is a kind, class, or subtype of a broader concept | factual | taxonomy |
-| `instance_of` | something is an instance or type of a more general category | factual | taxonomy |
-| `made_of` | a thing is made of a material, component, or substance | factual | |
-| `form_of` | a word, object, or concept is a form or variant of another | factual | |
-| `has_attribute` | an entity has an attribute or descriptive property | factual | |
-| `has_property` | an entity has a property, trait, or quality | factual | near-synonym of `has_attribute` |
+| `part_of` | a structural component, section, geographic subdivision, or organizational unit belongs within a larger whole, not merely a class or association | factual | ↔ `has_part` |
+| `has_part` | a whole has a structurally identifiable component, section, geographic subdivision, or organizational unit; incidental contents do not qualify | factual | ↔ `part_of` |
+| `contains` | a container, document, collection, location, or event includes non-structural content, occupants, items, or participants | factual | broader than `has_part` (allows person members) |
+| `is_a` | a class or named type is a subtype of a broader class, not one individual instance of it | factual | taxonomy |
+| `instance_of` | a specific named subject or occurrence is one concrete member of a general class, not a subtype of that class | factual | taxonomy |
+| `made_of` | a physical object or structure consists materially of a substance or component, not organizational or class members | factual | |
+| `form_of` | a subject is an alternate version, inflection, or embodiment of the same identity or content, not the action 'to form' | factual | |
+| `has_attribute` | a subject is assigned an explicit descriptive attribute, classification, status, role, or measured value | factual | |
+| `has_property` | a subject intrinsically exhibits an explicit trait, capability, physical characteristic, or quality | factual | near-synonym of `has_attribute` |
 
 **Also structural (engine flow tokens, not part of the semantic vocabulary):** the `_`-prefixed document/session-flow tokens — `_follows`, `_precedes`, `_co_doc`, `_mentioned_before`, `_session_follows`, `_session_precedes`, `_covers_period`. These are the Reading-Order Fiber / authorial-axis skeleton; enforced by `frozenset` membership, orthogonal to the semantic families here.
 
@@ -55,111 +55,111 @@ _tier = structural. These are the graph's skeleton; the truth gate is exempt for
 
 | Family | Gloss (head → tail) | σ | Inverse / note |
 |---|---|---|---|
-| `created` | a person or org created a work, product, or concept | authorial | ↔ `created_by` |
-| `created_by` | a work, product, or concept was created by a person or org | authorial | ↔ `created` |
-| `founded` | a person or org founded an organization or institution | authorial | ↔ `founded_by` |
+| `created` | a person or organization created a work, product, or concept | authorial | ↔ `created_by` |
+| `created_by` | a work, product, or concept was created by a person or organization | authorial | ↔ `created` |
+| `founded` | a person or organization founded an organization or institution | authorial | ↔ `founded_by` |
 | `founded_by` | an organization was founded by a person | authorial | ↔ `founded` |
 | `authored` | a person authored or wrote a document, book, or work | authorial | |
-| `developed` | a person or org developed a product or technology | authorial | |
+| `developed` | a person or organization designed, engineered, or substantially advanced a product, technology, method, or technical system | authorial | |
 | `publishes` | an agent publishes, releases, ships, or launches a work or version | authorial | |
-| `signed` | a person or org signed or enacted a law, agreement, or document | authorial | |
+| `signed` | a person or organization formally signs, executes, or ratifies a named law, agreement, treaty, or document | authorial | |
 | `derived_from` | a concept, product, or work is derived from another source | authorial | |
 
 ### B · Communication, description & reference (σ = authorial)
 
 | Family | Gloss (head → tail) | σ | Note |
 |---|---|---|---|
-| `describes` | a work or person describes, represents, shows, or illustrates a thing | authorial | |
-| `asserts` | an agent claims, reports, proposes, recommends, or discusses something | authorial | the stance/claim family |
-| `references` | a work references, cites, mentions, or links to another work or entity | authorial | the provenance/citation family |
-| `defined_as` | a term, entity, or concept is defined as another concept or description | authorial | |
+| `describes` | an authored work, depiction, or person is the describer and explicitly describes, represents, depicts, or illustrates a named subject, object, event, or state of affairs; a date or place mentioned alongside a description is not what is described | authorial | |
+| `asserts` | a person, organization, or authored work explicitly states a claim, report, proposal, prediction, or recommendation, not a mere mention | authorial | the stance/claim family |
+| `references` | a person, organization, or authored work explicitly cites, quotes, names, or hyperlinks a source or referent | authorial | the provenance/citation family |
+| `defined_as` | a term or symbol receives an explicit meaning, criterion, scope, or value, not a classification, alias, or state change | authorial | |
 
 ### C · Possession, membership & commerce (σ = factual; `acquired`/`transacts` = episodic)
 
 | Family | Gloss (head → tail) | σ | Note |
 |---|---|---|---|
-| `has` | an entity has, holds, possesses, or receives a thing | factual | broad possession |
-| `owns` | a person or org owns an asset, product, or organization | factual | ownership proper |
+| `has` | a person or organization owns or formally holds an asset, right, credential, position, or resource, not merely receives it | factual | broad possession |
+| `owns` | a person or organization owns an asset, product, or organization | factual | ownership proper |
 | `acquired` | an organization acquired or bought another organization | episodic | |
-| `transacts` | an agent buys, sells, pays for, or funds a thing | episodic | |
-| `member_of` | a person or org is a member of a group or organization | factual | |
-| `subsidiary_of` | an organization is a subsidiary or division of another | factual | |
-| `partnered_with` | an organization partnered or collaborated with another | episodic→factual | symmetric |
-| `combines_with` | things are combined, merged, or integrated into a whole | factual | symmetric |
+| `transacts` | a person or organization buys, sells, pays for, or funds a named good, service, asset, security, contract, or funded undertaking; the date, place, or amount of a transaction is not the thing transacted | episodic | |
+| `member_of` | a person or organization is a member of a group or organization | factual | |
+| `subsidiary_of` | an organization is a subsidiary or division of another organization | factual | |
+| `partnered_with` | an organization partnered or collaborated with another organization | episodic→factual | symmetric |
+| `combines_with` | two inputs are merged, mixed, integrated, or joined into one composite system, substance, organization, or result | factual | symmetric |
 
 ### D · Usage, dependency & enablement (σ = factual / causal)
 
 | Family | Gloss (head → tail) | σ | Note |
 |---|---|---|---|
 | `uses` | an agent or system uses, applies, or consumes a tool, method, or resource | factual | |
-| `used_for` | an entity, product, or concept is used for a purpose or activity | factual | |
+| `used_for` | a tool, artifact, method, facility, or resource is intentionally employed to perform a stated task or achieve a stated purpose | factual | |
 | `requires` | an action, event, or concept requires another condition or resource | causal | |
 | `has_prerequisite` | an event, concept, or action requires another condition before it | causal | temporal-flavored `requires` |
-| `depends_on` | an entity, event, or concept depends on another | causal | |
-| `enables` | a thing enables, supports, or allows another thing or capability | causal | |
-| `capable_of` | a person, org, product, or concept is capable of an action | factual | |
-| `applies_to` | a law, rule, or concept applies to or governs a subject | causal | |
+| `depends_on` | the continued existence, operation, validity, or outcome of a subject materially relies on a specified resource, condition, system, or actor | causal | |
+| `enables` | a condition, capability, tool, law, or action makes a specified action or outcome possible | causal | |
+| `capable_of` | a person, organization, product, or concept is capable of an action | factual | |
+| `applies_to` | a named law, rule, policy, requirement, standard, or formal classification governs a subject or jurisdiction | causal | |
 
 ### E · Causation & change (σ = causal)
 
 | Family | Gloss (head → tail) | σ | Note |
 |---|---|---|---|
-| `caused` | an event or thing caused or led to another event or outcome | causal | |
-| `prevents_constrains` | a thing prevents, blocks, limits, gates, or protects against another | causal | |
-| `improves` | a change improves, enhances, or optimizes a thing | causal | |
-| `transforms` | a thing changes, extends, reduces, scales, or otherwise transforms another | causal | |
+| `caused` | an event, action, condition, or mechanism directly produces or materially brings about a distinct event or outcome | causal | |
+| `prevents_constrains` | a law, condition, mechanism, or action materially blocks, limits, or binds a specified action or outcome | causal | |
+| `improves` | a specified intervention, feature, or change produces an explicit improvement in a target's performance, quality, capability, or outcome | causal | |
+| `transforms` | a process, input, or intervention explicitly changes the state, scale, quantity, or representation of a target | causal | |
 | `entails` | a statement, event, or concept logically entails another | causal | |
-| `motivated_by_goal` | an action or entity is motivated by a goal or intended outcome | causal | |
-| `targets_aims` | an agent targets, aims at, focuses on, or plans toward a goal | causal | |
-| `replaces_supersedes` | a newer thing replaces, supersedes, or retires an older one | temporal | the current-not-stale family (tier = temporal) |
+| `motivated_by_goal` | an intentional action, person, or organization acts because it seeks a stated future goal or intended outcome | causal | |
+| `targets_aims` | a person, organization, or product intentionally pursues, prioritizes, or is designed toward a stated goal, audience, outcome, or operational target | causal | |
+| `replaces_supersedes` | a newer product, system, policy, standard, organization, or version displaces an older functional counterpart; role-holders use succeeded_by | temporal | the current-not-stale family (tier = temporal) |
 
 ### F · Identity & similarity (σ = factual)
 
 | Family | Gloss (head → tail) | σ | Inverse / note |
 |---|---|---|---|
-| `becomes` | an entity becomes, remains, or emerges as a state or role | factual | state transition |
-| `similar_to` | two entities or concepts are similar in meaning, role, or behavior | factual | ↔ `distinct_from` |
-| `distinct_from` | two entities or concepts are distinct and should not be conflated | factual | ↔ `similar_to` |
-| `synonym` | two terms have the same or very similar meaning | factual | ↔ `antonym` |
-| `antonym` | two terms have opposite meanings | factual | ↔ `synonym` |
+| `becomes` | a subject enters a new role, class, condition, identity, or state rather than remaining unchanged | factual | state transition |
+| `similar_to` | two named subjects are explicitly stated to resemble one another in kind, meaning, role, or behavior; rivalry, ranking, re-enactment, and mere relatedness are comparisons but not resemblance | factual | ↔ `distinct_from` |
+| `distinct_from` | two named subjects are explicitly contrasted or stated not to be the same; replacement, independence, and separation from another are not identity distinctions | factual | ↔ `similar_to` |
+| `synonym` | two terms have equivalent meaning, or two names or aliases denote the same referent; similarity and versioning do not qualify | factual | ↔ `antonym` |
+| `antonym` | two concepts, names, or terms have opposite meanings | factual | ↔ `synonym` |
 | `manner_of` | an action or concept is a manner, method, or style of another | factual | |
-| `related_to` | two concepts or entities are meaningfully related (**catch-all**) | factual | weakest-typed; never dropped |
+| `related_to` | two subjects have an explicit relationship with no more specific canonical family; co-occurrence alone does not qualify | factual | weakest-typed; never dropped |
 
 ### G · Cognition, evaluation & evidence (σ = episodic; `verifies` = factual)
 
 | Family | Gloss (head → tail) | σ | Note |
 |---|---|---|---|
-| `measures_evaluates` | an agent measures, tests, scores, ranks, or evaluates a thing | episodic | |
+| `measures_evaluates` | a person, organization, or instrument explicitly measures, tests, scores, ranks, or evaluates a specified target against a criterion or metric | episodic | |
 | `verifies` | an agent verifies, validates, confirms, audits, or proves a claim | factual | the attestation/evidence family |
-| `discovers` | an agent finds, discovers, identifies, detects, or surfaces a thing | episodic | |
+| `discovers` | a person, organization, or instrument newly identifies a previously unknown object, location, phenomenon, fact, or pattern through observation or investigation | episodic | |
 | `selects_decides` | an agent selects, chooses, picks, or decides on an option | episodic | |
 | `knows_learns` | an agent learns, understands, teaches, or trains on knowledge | episodic | |
-| `tracks_monitors` | an agent tracks, monitors, observes, or traces a thing over time | episodic | |
+| `tracks_monitors` | a person, organization, or instrument repeatedly observes or records a target's state, location, or changes over time | episodic | |
 | `expects_predicts` | an agent expects, predicts, assumes, or projects an outcome | episodic | |
-| `receives_action` | an entity receives, undergoes, or is affected by an action | episodic | passive/patient role |
+| `receives_action` | a person, organization, product, law, or place receives or undergoes a named action, treatment, decision, designation, or award | episodic | passive/patient role |
 
 ### H · Operation, roles & achievement (σ = factual; achievement = episodic)
 
 | Family | Gloss (head → tail) | σ | Note |
 |---|---|---|---|
-| `operates_maintains` | a person or org operates, runs, manages, maintains, or administers a facility, system, or process | factual | |
-| `leads` | a person leads, heads, directs, or chairs an org, program, or effort | factual | generalizes `ceo_of` |
-| `ceo_of` | a person is or was the chief executive or leader of an organization | factual | starter specialization |
+| `operates_maintains` | a person or organization operates, runs, manages, maintains, or administers a facility, system, or process | factual | |
+| `leads` | a person commands, directs, or chairs an organization, team, program, project, or effort; explicit CEO titles use ceo_of | factual | generalizes `ceo_of` |
+| `ceo_of` | a person explicitly holds or held the title of chief executive officer or chief executive of an organization | factual | starter specialization |
 | `works_at` | a person is employed by or works at an organization | factual | |
-| `achieves_addresses` | an agent achieves, reaches, delivers, solves, or addresses a goal or problem | episodic | |
-| `competes_outperforms` | a thing competes with, outperforms, beats, or exceeds another | episodic | benchmark/competitive prose |
-| `fails_on` | a thing fails, breaks, crashes, or misses on a task or condition | episodic | diagnostic prose |
-| `participated_in` | a person or org participated in an event | episodic | |
+| `achieves_addresses` | a person, organization, or product attains a stated goal or outcome, or concretely addresses a specified problem | episodic | |
+| `competes_outperforms` | a person, organization, team, or product directly competes with or explicitly outperforms another in the same contest or market | episodic | benchmark/competitive prose |
+| `fails_on` | a person, organization, system, method, or action fails a task, requirement, operating condition, or intended outcome | episodic | diagnostic prose |
+| `participated_in` | a person or organization participated in an event | episodic | |
 
 ### I · Movement, connection & location (σ = factual; `transfers_to` = episodic)
 
 | Family | Gloss (head → tail) | σ | Note |
 |---|---|---|---|
-| `transfers_to` | a thing moves, sends, feeds, routes, or distributes something to a destination | episodic | |
-| `connects_to` | things are connected, linked, bridged, or bound to each other | factual | the bridge-entity family |
-| `located_in` | a person, org, or place is located in a place | factual | |
-| `at_location` | an entity, event, or object is at or associated with a location | factual | broader `located_in` |
-| `headquartered_in` | an organization is headquartered in a place | factual | |
+| `transfers_to` | a person, organization, or product is explicitly moved, assigned, delivered, sold, or conveyed to a named recipient or destination | episodic | |
+| `connects_to` | two endpoints have an explicit physical, network, transport, interface, or structural link that permits passage, communication, attachment, or coupling | factual | the bridge-entity family |
+| `located_in` | a person resides in, an organization operates from, or a geographic location lies within another geographic location | factual | |
+| `at_location` | an event occurs at, or a person, organization, physical object, or phenomenon is explicitly present at, a geographic location | factual | broader `located_in` |
+| `headquartered_in` | an organization is explicitly stated to have its principal headquarters in a geographic location | factual | |
 
 ### J · People, kinship & origin (σ = factual / temporal)
 
@@ -167,16 +167,16 @@ _tier = structural. These are the graph's skeleton; the truth gate is exempt for
 |---|---|---|---|
 | `married_to` | a person is or was married to another person | episodic | symmetric |
 | `parent_of` | a person is the parent of another person | factual | |
-| `born_in` | a person was born in a place | temporal | tier = temporal |
-| `died_in` | a person died in a place | temporal | tier = temporal |
-| `nationality` | a person is a citizen or national of a place or country | factual | |
+| `born_in` | a person's birth is explicitly stated to have occurred in a geographic location | temporal | tier = temporal |
+| `died_in` | a person's death is explicitly stated to have occurred in a geographic location | temporal | tier = temporal |
+| `nationality` | a person is explicitly identified as a citizen or national of a country or nation | factual | |
 
 ### K · Temporal & sequence (σ = temporal)
 
 | Family | Gloss (head → tail) | σ | Inverse / note |
 |---|---|---|---|
-| `succeeded_by` | a person or thing was succeeded or followed by another in a role | temporal | ↔ `preceded_by` |
-| `preceded_by` | a person or thing was preceded by another in a role or sequence | temporal | ↔ `succeeded_by` |
+| `succeeded_by` | a person or organization is replaced by another holder of the same office, leadership position, governing role, or institutional function | temporal | ↔ `preceded_by` |
+| `preceded_by` | a person or organization had another as the previous holder of the same office, governing role, or institutional function | temporal | ↔ `succeeded_by` |
 | `occurred_on` | an event occurred on or during a date or time period | temporal | head=event, tail=date |
 
 ### L · Data pipeline — TP-VRG extension families (σ = episodic / factual)

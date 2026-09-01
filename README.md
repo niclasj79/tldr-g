@@ -15,7 +15,9 @@ The engine runs **entirely on your machine** — no cloud, no API key:
 - the **Cockpit desktop app** — ingest your own sources, query them, and watch the engine show its reasoning (the context it rendered, the intent it inferred, the tokens it saved); and
 - **`tp-vrg-mcp`** — an MCP server any agent client (Claude Desktop, Cursor, …) can call as a tool.
 
-**Requirements (v0.1):** Windows 10/11 (64-bit). An **NVIDIA GPU with ≥4 GB VRAM is strongly recommended** (GTX 1060 6 GB or better) — it runs on CPU-only, but ingest and query are roughly **20–50× slower**. **16 GB RAM recommended.** The installer is small; **~3 GB of models download once on first launch** (internet needed that first time). *macOS and Linux are fast-follow.*
+**Requirements (v0.2):** Windows 10/11 (64-bit). An **NVIDIA GPU with ≥4 GB VRAM is strongly recommended** (GTX 1060 6 GB or better) — it runs on CPU-only, but ingest and query are substantially slower there. **16 GB RAM recommended.** Budget **~12 GB of free disk**: the installer is **1.9 GB**, it unpacks to about **5 GB**, and **~4.6 GB (4.24 GiB) of models download once on first launch** (internet needed that first time). *macOS and Linux are fast-follow.*
+
+**No internet on the target machine?** Download the **offline model pack** from Releases instead — a separate, checksummed artifact carrying exactly the model weights the engine pins, so an air-gapped or regulated machine can install without ever reaching a third party. Two sizes: **1.25 GiB** if the machine only queries an existing graph, **4.24 GiB** if it also ingests documents. It ships its own standalone verifier.
 
 **Download:** the **Releases** page of this repo, or **[tldr-g.ai](https://tldr-g.ai)**.
 **It's free.** Today the full local engine is **free to download and run** — that's the real, current offering, not a teaser. *(There's no metered cloud and no paywall on the local app; if a tiered model arrives later, a free local tier stays, and early installs keep working.)*

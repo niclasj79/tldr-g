@@ -13,7 +13,7 @@ Download the installer from the [Releases](../../releases) page or [tldr-g.ai](h
 - `TLDR-G-Cockpit.exe` — the desktop app
 - `tp-vrg-mcp.exe` — the MCP server your agent talks to
 
-**Requirements:** Windows 10/11 (64-bit). An NVIDIA GPU with ≥4 GB VRAM is strongly recommended; CPU-only works but ingest and query are roughly 20–50× slower. ~3 GB of models download once on first launch. *macOS and Linux are fast-follow.*
+**Requirements:** Windows 10/11 (64-bit). An NVIDIA GPU with ≥4 GB VRAM is strongly recommended; CPU-only works but ingest and query are roughly 20–50× slower. Budget ~11 GB of free disk (1.9 GB installer, ~5 GB unpacked, ~4.2 GB of models downloaded once on first launch). On a machine with no internet, use the offline model pack from Releases instead. *macOS and Linux are fast-follow.*
 
 > Run the Cockpit once before wiring up MCP. First launch downloads the models, and it's easier to watch that finish in a window than to wonder why your agent's first tool call is slow.
 

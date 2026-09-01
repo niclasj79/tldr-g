@@ -9,8 +9,9 @@
 ## §1 — What this contract is
 
 The **RenderTrace** is the auditable record of ONE rendered answer: the
-question, the answering model, when it was answered, and the citation chain back
-to source segments. It is the "memory you can audit" surface in exportable form.
+question, the answering model, when it was answered, the citation chain back
+to source segments, and bounded reference pointers for ranked candidates that
+were not spent as prompt text. It is the "memory you can audit" surface in exportable form.
 A third party holding a signed trace can verify offline that it is exactly what
 the operator's key signed.
 
@@ -33,6 +34,14 @@ the operator's key signed.
       "text": "<the cited segment text or null>",
       "evidence_snippet": "<extracted evidence or null>"
     }
+  ],
+  "pointers": [
+    {
+      "id": "<ranked passage id>",
+      "lod": "reference",
+      "reason": "rank 9: beyond the fixed renderer's text-budget cut",
+      "score": 0.42
+    }
   ]
 }
 ```
@@ -40,6 +49,10 @@ the operator's key signed.
 - `provenance_coverage` classifies how much of the citation chain resolves to
   known source segments (`none` covers both zero citations and fully orphaned
   content — honest degradation, never fabricated coverage).
+- `pointers` is response and receipt metadata only. It contains at most ten
+  budget-cut candidates in render-rank order and contributes zero bytes to the
+  LLM-facing context. New producers always emit the array; consumers must
+  accept its absence on older version-1 traces.
 - Consumers MUST ignore unknown fields; producers MUST NOT change field meanings
   within `trace_version` 1 (same compatibility commitment as
   [portable-artifact-v1.md](portable-artifact-v1.md) §6).
