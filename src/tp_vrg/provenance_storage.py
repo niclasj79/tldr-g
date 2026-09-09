@@ -60,7 +60,13 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-__all__ = ["ProvenanceBackend", "content_address_id"]
+__all__ = [
+    "ProvenanceBackend",
+    "actor_write_summary",
+    "content_address_id",
+    "ensure_write_actor_schema",
+    "record_write_actor",
+]
 
 #: How many hex characters of the sha256 digest a content-addressed id carries.
 CONTENT_ADDRESS_HEX_LEN = 16
@@ -86,6 +92,221 @@ def content_address_id(text: str, prefix: str) -> str:
 
 
 _SCHEMA_VERSION = "1"
+
+#: How many actor rows the bounded report renders. The audit trail is
+#: append-only and unbounded; the REPORT is a render over it, not a dump
+#: (render-don't-store). Totals are always exact; only the per-actor list is cut.
+WRITE_ACTOR_REPORT_LIMIT = 20
+
+#: Process-local count of actor rows we FAILED to write. Surfaced in the report
+#: so "no rows" and "rows we could not record" never read the same (INV-2b):
+#: an audit surface that silently loses events is worse than one that says so.
+_WRITE_ACTOR_RECORD_FAILURES = 0
+
+
+def ensure_write_actor_schema(conn: sqlite3.Connection) -> None:
+    """Create the append-only actor-event table. Additive and idempotent.
+
+    THE ACTOR-SCOPED WRITE FLOOR, first shipped increment. Every mutating HTTP
+    request on an auth-enabled install lands one row here naming the principal
+    that made it — the token id, or the configured ``did:web`` identity.
+
+    WHY A REQUEST-GRAIN EVENT TABLE AND NOT A COLUMN ON ``nodes``/``edges``:
+    ``storage_sqlite`` deliberately withheld the recipe column from those two
+    tables because a single per-row identity on a MERGE TARGET embeds a
+    single-owner assumption, which the 2026-09-01 multi-owner ruling forbids. An
+    actor column there would draw the identical objection for the identical
+    reason. This also keeps the two identity axes separate: ``recipe_sha256``
+    answers "which code configuration produced this content", this table answers
+    "which principal requested this change". Conflating them would break
+    ``recipe_contributors``' honesty proof, which depends on staying purely
+    recipe-keyed.
+    """
+    conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS write_actor_events (
+            event_id    INTEGER PRIMARY KEY AUTOINCREMENT,
+            at_utc      TEXT NOT NULL,
+            actor       TEXT NOT NULL,
+            actor_kind  TEXT NOT NULL,
+            capability  TEXT,
+            method      TEXT NOT NULL,
+            route       TEXT NOT NULL,
+            surface     TEXT NOT NULL,
+            status      INTEGER NOT NULL,
+            outcome     TEXT NOT NULL
+        )
+        """
+    )
+    conn.execute(
+        "CREATE INDEX IF NOT EXISTS idx_write_actor_events_actor "
+        "ON write_actor_events(actor)"
+    )
+
+
+def record_write_actor(
+    db_path: str | Path,
+    *,
+    actor: str,
+    actor_kind: str,
+    capability: str | None,
+    method: str,
+    route: str,
+    surface: str,
+    status: int,
+    allowed: bool = True,
+) -> bool:
+    """Append one actor event. Returns False (and counts) if it could not be written.
+
+    Opens its own short-lived connection rather than constructing a
+    ``ProvenanceBackend``: that constructor runs the full additive migration
+    sequence including an ``INSERT ... SELECT`` over ``source_segments``, which is
+    not something a per-request audit write may pay for on a multi-gigabyte store.
+
+    THREE OUTCOMES, not two, because collapsing them would make the trail lie in
+    one direction or the other:
+
+    * ``refused``  — the security boundary itself turned the request away
+      (``allowed=False``). A read token 403'd on ``/ingest`` must never read back
+      later as "the read token wrote".
+    * ``recorded`` — the boundary allowed it and the handler succeeded. This is
+      the only outcome that counts as a write.
+    * ``failed``   — the boundary allowed it and the handler did not succeed
+      (a 404, a validation error, a 500). Recorded rather than dropped, because
+      an attempt that reached the handler may have changed something before it
+      failed; counting it as a write would overstate, dropping it would hide.
+    """
+    global _WRITE_ACTOR_RECORD_FAILURES
+    if not allowed:
+        outcome = "refused"
+    elif 200 <= int(status) < 400:
+        outcome = "recorded"
+    else:
+        outcome = "failed"
+    try:
+        conn = sqlite3.connect(str(db_path))
+        try:
+            ensure_write_actor_schema(conn)
+            conn.execute(
+                """
+                INSERT INTO write_actor_events
+                    (at_utc, actor, actor_kind, capability, method, route,
+                     surface, status, outcome)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    datetime.now(timezone.utc).isoformat(timespec="seconds"),
+                    actor,
+                    actor_kind,
+                    capability,
+                    method,
+                    route,
+                    surface,
+                    int(status),
+                    outcome,
+                ),
+            )
+            conn.commit()
+        finally:
+            conn.close()
+        return True
+    except sqlite3.Error:
+        _WRITE_ACTOR_RECORD_FAILURES += 1
+        return False
+
+
+def actor_write_summary(
+    db_path: str | Path, *, limit: int = WRITE_ACTOR_REPORT_LIMIT
+) -> dict[str, Any]:
+    """A BOUNDED render of the actor log for the provenance report.
+
+    Reports honest negatives rather than a comforting zero:
+
+    ``attribution_active`` is False when auth is off, because the boundary's
+    first branch returns before any of this runs — so "0 writes recorded" on a
+    developer install means "attribution was never in force", not "nobody wrote".
+    Presenting those two as the same number is the failure this key exists to
+    prevent.
+
+    ``unattributed`` counts writes that reached the store with no resolvable
+    principal. ``record_failures`` counts events we could not persist at all.
+    """
+    from tp_vrg import auth as _auth
+
+    active = _auth.auth_enabled()
+    summary: dict[str, Any] = {
+        "attribution_active": active,
+        "recorded": 0,
+        "refused": 0,
+        "failed": 0,
+        "unattributed": 0,
+        "record_failures": _WRITE_ACTOR_RECORD_FAILURES,
+        "actors": [],
+        "limit": int(limit),
+    }
+    if not active:
+        summary["note"] = (
+            "auth is off on this install, so the boundary records no actor for any "
+            "write; these zeroes mean attribution was never in force, not that "
+            "nothing was written."
+        )
+    path = Path(db_path)
+    if not path.is_file():
+        return summary
+    try:
+        conn = sqlite3.connect(str(path))
+    except sqlite3.Error as exc:  # unreadable != empty (INV-2b)
+        summary["error"] = f"actor log unreadable: {exc}"
+        return summary
+    try:
+        ensure_write_actor_schema(conn)
+        conn.row_factory = sqlite3.Row
+        for row in conn.execute(
+            "SELECT outcome, COUNT(*) AS n FROM write_actor_events GROUP BY outcome"
+        ):
+            if row["outcome"] in summary:
+                summary[row["outcome"]] = int(row["n"])
+        summary["unattributed"] = int(
+            conn.execute(
+                "SELECT COUNT(*) FROM write_actor_events "
+                "WHERE actor_kind = 'none' AND outcome = 'recorded'"
+            ).fetchone()[0]
+        )
+        summary["actors"] = [
+            {
+                "actor": r["actor"],
+                "actor_kind": r["actor_kind"],
+                "writes": int(r["writes"]),
+                "refusals": int(r["refusals"]),
+                "failures": int(r["failures"]),
+                "first_utc": r["first_utc"],
+                "last_utc": r["last_utc"],
+            }
+            for r in conn.execute(
+                """
+                SELECT actor,
+                       actor_kind,
+                       SUM(CASE WHEN outcome = 'recorded' THEN 1 ELSE 0 END) AS writes,
+                       SUM(CASE WHEN outcome = 'refused'  THEN 1 ELSE 0 END) AS refusals,
+                       SUM(CASE WHEN outcome = 'failed'   THEN 1 ELSE 0 END) AS failures,
+                       MIN(at_utc) AS first_utc,
+                       MAX(at_utc) AS last_utc
+                FROM write_actor_events
+                GROUP BY actor, actor_kind
+                ORDER BY writes DESC, last_utc DESC
+                LIMIT ?
+                """,
+                (int(limit),),
+            )
+        ]
+        summary["distinct_actors"] = int(
+            conn.execute("SELECT COUNT(DISTINCT actor) FROM write_actor_events").fetchone()[0]
+        )
+    except sqlite3.Error as exc:
+        summary["error"] = f"actor log unreadable: {exc}"
+    finally:
+        conn.close()
+    return summary
 
 
 class ProvenanceBackend:
@@ -314,6 +535,10 @@ class ProvenanceBackend:
                 "ALTER TABLE answers ADD COLUMN render_pointers "
                 "TEXT NOT NULL DEFAULT '[]'"
             )
+        # The actor-scoped write floor. Additive + idempotent, so an existing
+        # v0.2.0 store gains the table on its next open with no data loss and no
+        # version branch -- the same shape every other migration here uses.
+        ensure_write_actor_schema(self._conn)
         self._conn.commit()
 
     # ------------------------------------------------------------ ingestion
