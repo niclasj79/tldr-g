@@ -7,6 +7,7 @@ exists to prevent. Run from the repo root with ``pytest primitives/``.
 from __future__ import annotations
 
 import hashlib
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -214,14 +215,62 @@ def test_bare_package_import_resolves_via_prefix(tmp_path: Path):
     assert boundary_scan.scan_boundary_imports(t) == []
 
 
+def test_from_package_import_of_an_unpublished_submodule_is_caught(tmp_path: Path):
+    """`from pkg import name` resolves at the name: publishing `pkg` is not enough.
+
+    The incident: a published module did `from mypkg import auth` inside a
+    function; `mypkg` shipped, `mypkg/auth.py` did not, and a package-level check
+    passed an import that fails on first call in a clean clone.
+    """
+    t = _tree(tmp_path, {
+        "mypkg/__init__.py": "from mypkg import a\n",
+        "mypkg/a.py": "def f():\n    from mypkg import auth\n    return auth\n",
+    })
+    findings = boundary_scan.scan_boundary_imports(t)
+    assert [f.module for f in findings] == ["mypkg.auth"]
+    assert findings[0].lineno == 2
+
+
+def test_from_import_of_a_bound_name_is_allowed(tmp_path: Path):
+    t = _tree(tmp_path, {
+        "mypkg/__init__.py": "__version__ = '1.0'\nfrom mypkg import a\n",
+        "mypkg/a.py": "from mypkg import __version__, a\nfrom mypkg.b import thing\n",
+        "mypkg/b.py": "if True:\n    thing = 1\n",
+    })
+    assert boundary_scan.scan_boundary_imports(t) == []
+
+
+def test_from_import_of_an_unbound_attribute_is_caught(tmp_path: Path):
+    t = _tree(tmp_path, {
+        "mypkg/__init__.py": "",
+        "mypkg/a.py": "from mypkg.b import missing\n",
+        "mypkg/b.py": "present = 1\n",
+    })
+    assert [f.module for f in boundary_scan.scan_boundary_imports(t)] == ["mypkg.b.missing"]
+
+
+def test_a_dynamic_namespace_is_not_guessed(tmp_path: Path):
+    """A module `__getattr__` makes the bound set unknowable; the scan stands down."""
+    t = _tree(tmp_path, {
+        "mypkg/__init__.py": "def __getattr__(name):\n    raise AttributeError(name)\n",
+        "mypkg/a.py": "from mypkg import anything\n",
+    })
+    assert boundary_scan.scan_boundary_imports(t) == []
+
+
 def test_cli_exit_codes(tmp_path: Path):
     clean = _tree(tmp_path / "clean", {"p/__init__.py": "", "p/a.py": "x = 1\n"})
     dirty = _tree(tmp_path / "dirty", {"p/__init__.py": "", "p/a.py": "from p.gone import x\n"})
     script = PRIMITIVES / "open-core-boundary" / "boundary_scan.py"
 
+    # The CLI's messages are UTF-8 (an em dash). Pin the child's stream encoding so
+    # the test reads what the child wrote, whatever the parent's mode (-X utf8 or a
+    # locale code page) — otherwise the decode fails on Windows, not the scanner.
+    env = {**os.environ, "PYTHONIOENCODING": "utf-8"}
     assert subprocess.run([sys.executable, str(script), str(clean)],
-                          capture_output=True).returncode == 0
-    bad = subprocess.run([sys.executable, str(script), str(dirty)], capture_output=True, text=True)
+                          capture_output=True, env=env).returncode == 0
+    bad = subprocess.run([sys.executable, str(script), str(dirty)], capture_output=True,
+                         text=True, encoding="utf-8", env=env)
     assert bad.returncode == 1
     assert "p.gone" in bad.stderr
     assert subprocess.run([sys.executable, str(script), str(tmp_path / "nope")],

@@ -1,0 +1,63 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://tldr-g.ai/contracts/schemas/attestation-envelope-v1.schema.json",
+  "title": "Attestation Envelope v1",
+  "description": "The detached-signature envelope that wraps a portable_artifact or render_trace. Sigstore / Certificate-Transparency family — explicitly NOT a blockchain. Machine-readable form of docs/oss/contracts/portable-artifact-v1.md §4; canonical source src/tp_vrg/attestation.py.",
+  "type": "object",
+  "required": [
+    "attestation_version",
+    "payload_type",
+    "payload",
+    "payload_hash",
+    "signed_at",
+    "signed_by",
+    "key_id",
+    "public_key",
+    "signature"
+  ],
+  "properties": {
+    "attestation_version": {
+      "description": "Envelope format version. Reject anything but 1 within this contract.",
+      "const": 1
+    },
+    "payload_type": {
+      "description": "Which payload contract the `payload` conforms to.",
+      "enum": ["portable_artifact", "render_trace"]
+    },
+    "payload": {
+      "description": "The artifact, verbatim. Validate separately against the payload schema named by payload_type.",
+      "type": "object"
+    },
+    "payload_hash": {
+      "description": "sha256 over the canonical-JSON serialization of `payload`.",
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    },
+    "signed_at": {
+      "description": "RFC 3339 / ISO-8601 UTC instant the envelope was signed.",
+      "type": "string",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}([.][0-9]+)?(Z|[+-][0-9]{2}:[0-9]{2})$"
+    },
+    "signed_by": {
+      "description": "did:web identifier or operator label. Identity trust requires resolving this against a did:web document — the envelope alone does not prove who signed.",
+      "type": "string",
+      "minLength": 1
+    },
+    "key_id": {
+      "description": "ed25519:<first-16-hex of sha256 over the raw public key>.",
+      "type": "string",
+      "pattern": "^ed25519:[0-9a-f]{16}$"
+    },
+    "public_key": {
+      "description": "base64 raw Ed25519 public key (32 bytes), embedded for offline integrity checks.",
+      "type": "string",
+      "minLength": 1
+    },
+    "signature": {
+      "description": "base64 Ed25519 signature over the canonical-JSON protected header (every field except payload + signature).",
+      "type": "string",
+      "minLength": 1
+    }
+  },
+  "additionalProperties": true
+}

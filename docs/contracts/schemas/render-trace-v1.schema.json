@@ -1,0 +1,60 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://tldr-g.ai/contracts/schemas/render-trace-v1.schema.json",
+  "title": "Render Trace v1",
+  "description": "The auditable record of one rendered answer — query, model, the citation chain back to source segments, and bounded reference pointers for ranked candidates not spent as text. The `render_trace` payload of an Attestation Envelope. Canonical source: src/tp_vrg/attestation.py build_render_trace().",
+  "type": "object",
+  "required": [
+    "trace_version",
+    "answer_id",
+    "query_text",
+    "answered_at",
+    "model_label",
+    "provenance_coverage",
+    "citations"
+  ],
+  "properties": {
+    "trace_version": { "const": 1 },
+    "answer_id": { "type": "string", "minLength": 1 },
+    "query_text": { "type": "string" },
+    "answered_at": { "type": ["string", "null"] },
+    "model_label": { "type": ["string", "null"] },
+    "provenance_coverage": {
+      "description": "Citation coverage over the answer: none = no resolvable sources, full = every citation has a source, partial = some.",
+      "enum": ["none", "partial", "full"]
+    },
+    "citations": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["cite_order", "segment_id"],
+        "properties": {
+          "cite_order": { "type": ["integer", "null"] },
+          "segment_id": { "type": ["string", "integer", "null"] },
+          "source_label": { "type": ["string", "null"] },
+          "source_uri": { "type": ["string", "null"] },
+          "text": { "type": ["string", "null"] },
+          "evidence_snippet": { "type": ["string", "null"] }
+        },
+        "additionalProperties": true
+      }
+    },
+    "pointers": {
+      "description": "At most ten ranked candidates beyond the renderer's text-budget cut. Receipt metadata only; never LLM-facing context.",
+      "type": "array",
+      "maxItems": 10,
+      "items": {
+        "type": "object",
+        "required": ["id", "lod", "reason", "score"],
+        "properties": {
+          "id": { "type": "string", "minLength": 1 },
+          "lod": { "const": "reference" },
+          "reason": { "type": "string", "minLength": 1 },
+          "score": { "type": "number" }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": true
+}

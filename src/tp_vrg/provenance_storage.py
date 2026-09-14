@@ -231,9 +231,16 @@ def actor_write_summary(
     ``unattributed`` counts writes that reached the store with no resolvable
     principal. ``record_failures`` counts events we could not persist at all.
     """
-    from tp_vrg import auth as _auth
+    auth_import_error: ImportError | None = None
+    try:
+        from tp_vrg import auth as _auth
+    except ImportError as exc:
+        # INV-8a: this module also ships in the open contracts package, which
+        # carries no auth layer. That is its own state -- attribution does not
+        # exist on this install -- and is reported as such, never as "auth off".
+        auth_import_error = exc
 
-    active = _auth.auth_enabled()
+    active = auth_import_error is None and _auth.auth_enabled()
     summary: dict[str, Any] = {
         "attribution_active": active,
         "recorded": 0,
@@ -244,7 +251,14 @@ def actor_write_summary(
         "actors": [],
         "limit": int(limit),
     }
-    if not active:
+    if auth_import_error is not None:
+        summary["note"] = (
+            "this install carries no authentication module (the open contracts "
+            "package ships without one), so no write could have been attributed; "
+            "these zeroes mean attribution does not exist here, not that nothing "
+            f"was written. ({auth_import_error})"
+        )
+    elif not active:
         summary["note"] = (
             "auth is off on this install, so the boundary records no actor for any "
             "write; these zeroes mean attribution was never in force, not that "

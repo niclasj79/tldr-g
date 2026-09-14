@@ -1,0 +1,59 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://tldr-g.ai/contracts/schemas/portable-artifact-v1.schema.json",
+  "title": "PortableArtifact v1",
+  "description": "The engine's rung-level subgraph export: everything derived ONLY from one membership unit as full content, with shared knowledge reduced to label-only stubs. GDPR Art-20 portability format + migration shard + signed-federation payload. Machine-readable form of docs/oss/contracts/portable-artifact-v1.md §2; canonical source src/tp_vrg/storage_sqlite.py.",
+  "type": "object",
+  "required": [
+    "artifact_version",
+    "rung",
+    "derived_only_nodes",
+    "passages",
+    "internal_edges",
+    "boundary_stubs",
+    "boundary_edges"
+  ],
+  "properties": {
+    "artifact_version": { "const": 1 },
+    "rung": {
+      "description": "Membership unit. island/continent rungs are future versions (unions of member-asset closures).",
+      "enum": ["source", "asset"]
+    },
+    "derived_only_nodes": {
+      "description": "Full-content nodes derived only from this unit's passages.",
+      "type": "array"
+    },
+    "passages": {
+      "description": "The unit's passages verbatim.",
+      "type": "array"
+    },
+    "internal_edges": {
+      "description": "Edges with both endpoints in derived_only_nodes.",
+      "type": "array"
+    },
+    "boundary_stubs": {
+      "description": "Label-only typed references to shared knowledge — the privacy property: lod_0/lod_1 of shared knowledge NEVER travels.",
+      "type": "array"
+    },
+    "boundary_edges": {
+      "description": "Edges with exactly one endpoint inside the extract.",
+      "type": "array"
+    },
+    "source_id": { "type": ["string", "integer"] },
+    "asset_id": { "type": ["string", "integer"] },
+    "asset": { "type": "object" },
+    "asset_entities": { "type": "array" },
+    "edge_provenance": { "type": "array" }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "rung": { "const": "source" } } },
+      "then": { "required": ["source_id"] }
+    },
+    {
+      "if": { "properties": { "rung": { "const": "asset" } } },
+      "then": { "required": ["asset_id", "asset", "asset_entities", "edge_provenance"] }
+    }
+  ],
+  "additionalProperties": true
+}

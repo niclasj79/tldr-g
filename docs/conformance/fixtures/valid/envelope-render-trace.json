@@ -1,0 +1,28 @@
+{
+  "attestation_version": 1,
+  "payload_type": "render_trace",
+  "payload": {
+    "trace_version": 1,
+    "answer_id": "ans_demo_1",
+    "query_text": "What controls did the vendor attest?",
+    "answered_at": "2026-06-13T00:00:00+00:00",
+    "model_label": "local:deterministic",
+    "provenance_coverage": "full",
+    "citations": [
+      {
+        "cite_order": 0,
+        "segment_id": "src_soc2::seg0",
+        "source_label": "Nordbridge SOC 2 report",
+        "source_uri": null,
+        "text": "Nordbridge AI completed its SOC 2 Type II audit in March 2026.",
+        "evidence_snippet": "Nordbridge AI completed its SOC 2 Type II"
+      }
+    ]
+  },
+  "payload_hash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "signed_at": "2026-06-13T00:00:00+00:00",
+  "signed_by": "did:web:conformance.example",
+  "key_id": "ed25519:0123456789abcdef",
+  "public_key": "bm90LWEtcmVhbC1wdWJsaWMta2V5",
+  "signature": "bm90LWEtcmVhbC1zaWduYXR1cmU="
+}

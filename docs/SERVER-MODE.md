@@ -88,11 +88,20 @@ an HTTPS address only devices signed into that tailnet can reach.
    from outside without the app itself needing to bind anywhere wider.
 3. On the desktop:
    ```
-   tailscale serve 8321
+   tailscale serve --bg 8321
    ```
    (8321 is the engine's default port — `DEFAULT_API_PORT` — adjust if you
    changed `TPVRG_API_PORT`.) Tailscale prints the HTTPS address it now
    answers on — something like `https://<your-machine-name>.<your-tailnet>.ts.net`.
+
+   > **`--bg` is not optional for anything you rely on.** Without it, `serve`
+   > runs in the FOREGROUND and its configuration lives only as long as the
+   > command: close the terminal, log out, or lose the machine, and the address
+   > stops answering with no error anywhere. Measured 2026-09-09 — after an
+   > unclean reboot, `tailscale serve status` read *No serve config* and the
+   > phone simply could not connect. With `--bg` the mapping is stored in
+   > tailscaled and survives a restart; `tailscale serve status` shows it and
+   > `tailscale serve --bg=false 8321` takes it down.
 4. Open that address from your phone or laptop, signed into the same
    tailnet. No port-forwarding on your router, and the address resolves to
    nothing outside the tailnet.
@@ -130,9 +139,33 @@ isn't.
 tailscale funnel --help
 ```
 
-Tailscale's exact flag for running Funnel detached/in the background has
-moved between versions — read what your installed version actually offers
-rather than trusting a remembered flag from an older release.
+Funnel takes the same `--bg` flag as Serve, and needs it for the same reason
+(measured on 1.102.3), but the exact spelling has moved between versions —
+read what your installed version offers rather than trusting a remembered
+flag from an older release.
+
+### Which model answers, during a demo
+
+**Point the answer at an API provider, not a local model.** Open the Cockpit's
+provider picker and choose OpenAI or OpenRouter with a key entered in the app,
+or *Context-only* if you want no generated prose at all. A local Ollama model
+runs on the machine you are demoing from, on top of everything else it is
+already doing, and a model near the size of your GPU's memory can take the
+whole machine down mid-demo — measured on a 14B model and an 11 GB card,
+2026-09-09.
+
+Two details worth knowing before you rely on this:
+
+- **The answer model is not the only thing using the GPU.** Ingestion embeds
+  and extracts on CUDA when it is available. A demo that only *asks* questions
+  puts a small load on it; a demo that ingests puts a large one. To take the
+  GPU out of the picture completely, set `CUDA_VISIBLE_DEVICES=-1` before
+  launching (`setx CUDA_VISIBLE_DEVICES -1`), and expect slower ingest.
+- **An API answer leaves your machine.** The question, the rendered evidence
+  and nothing else go to the provider you picked; the graph, the documents and
+  the receipts stay local. If the demo is for someone who cares about that
+  boundary, say which of the two you are running — it is the difference
+  between a sovereign demo and a fast one, and both are legitimate.
 
 ## 5. The two-instance pattern — don't Funnel your own graph
 
@@ -219,7 +252,9 @@ Before you rely on any of this, or before showing it to someone else, work
 through this list end to end:
 
 1. From your own phone, on cellular data (not your home Wi-Fi), open the
-   Serve URL and confirm the token screen appears.
+   Serve URL and confirm the token screen appears. If it does not, check
+   `tailscale serve status` first: a foreground `serve` that has since exited
+   leaves no configuration and no error.
 2. Sign in with a device token minted from Inspect → Server (not the admin
    token).
 3. Ingest a small document, ask a question, confirm the streamed answer and
@@ -242,7 +277,8 @@ If every step above holds, the remote setup is doing what this page claims.
 
 ## Related
 
-- `OFFLINE-INSTALL.md` — the `/OFFLINEMODELS` installer parameter, for a server instance with no internet access to Hugging Face
+- `OFFLINE-INSTALL.md` — the `/OFFLINEMODELS` installer parameter, for a
+  server instance with no internet access to Hugging Face
 - The Releases page of this repository — the installer and the offline model pack
 
 _This copy ships with the public repository; it is the operator guide for reaching TLDR-G Desktop remotely._

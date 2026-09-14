@@ -1,0 +1,29 @@
+{
+  "attestation_version": 1,
+  "payload_type": "portable_artifact",
+  "payload": {
+    "artifact_version": 1,
+    "rung": "asset",
+    "asset_id": "asset_dpa_1",
+    "asset": {
+      "asset_id": "asset_dpa_1",
+      "lineage_id": "lin_dpa",
+      "edition_seq": 1,
+      "source_label": "Data processing agreement",
+      "source_hash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "asset_entities": [],
+    "edge_provenance": [],
+    "derived_only_nodes": [],
+    "passages": [],
+    "internal_edges": [],
+    "boundary_stubs": [],
+    "boundary_edges": []
+  },
+  "payload_hash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "signed_at": "2026-06-13T00:00:00+00:00",
+  "signed_by": "operator:tldr-g-launch",
+  "key_id": "ed25519:fedcba9876543210",
+  "public_key": "bm90LWEtcmVhbC1wdWJsaWMta2V5",
+  "signature": "bm90LWEtcmVhbC1zaWduYXR1cmU="
+}

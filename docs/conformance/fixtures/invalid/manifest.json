@@ -1,0 +1,10 @@
+{
+  "_comment": "Each invalid fixture breaks exactly ONE contract rule. The conformance runner only requires that each be REJECTED; this manifest documents why, for human readers.",
+  "bad-attestation-version.json": "attestation_version is 2 (const 1 violated)",
+  "bad-payload-type.json": "payload_type 'blob' not in {portable_artifact, render_trace}",
+  "missing-signature.json": "required envelope field 'signature' absent",
+  "bad-key-id.json": "key_id 'ed25519:zzzz...' violates the ^ed25519:[0-9a-f]{16}$ pattern",
+  "bad-payload-hash.json": "payload_hash 'md5:deadbeef' violates the ^sha256:[0-9a-f]{64}$ pattern",
+  "render-trace-bad-coverage.json": "payload.provenance_coverage 'lots' not in {none, partial, full}",
+  "portable-asset-missing-fields.json": "payload rung=asset but the asset-required fields (asset_id, asset, asset_entities, edge_provenance) are absent"
+}

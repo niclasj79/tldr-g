@@ -32,6 +32,12 @@ it is not — so the tool must not punish it.
     except ImportError:
         enrich = None
 
+A ``from pkg import name`` is checked at the *name*, not only the package: ``name``
+must be a published submodule of ``pkg`` or something ``pkg`` binds. Publishing
+``pkg`` proves nothing about ``pkg.secret``. An earlier version of this scanner
+checked only the package, and a module that did ``from mypkg import auth`` inside a
+function, where ``mypkg/auth.py`` was deliberately unpublished, shipped past it.
+
 Usage
 -----
 
@@ -139,34 +145,40 @@ def _in_scope(mod: str, packages: set[str]) -> bool:
 
 def _import_refs(
     tree: ast.AST, file_module: str, is_init: bool, packages: set[str]
-) -> list[tuple[str, int, bool]]:
-    """(module, lineno, guarded) for every in-scope import.
+) -> list[tuple[str, int, bool, tuple[str, ...]]]:
+    """(module, lineno, guarded, names) for every in-scope import.
 
     ``guarded`` is True when the import sits inside a ``try:`` body, i.e. an
     ImportError fallback is possible. Each node is visited exactly once.
+    ``names`` are what a ``from module import a, b`` pulls out of ``module``
+    (empty for a plain ``import`` and for ``from . import a``, which is already
+    expanded to ``package.a``); each must resolve, not just ``module``.
     """
-    refs: list[tuple[str, int, bool]] = []
+    refs: list[tuple[str, int, bool, tuple[str, ...]]] = []
+
+    def names_of(node: ast.ImportFrom) -> tuple[str, ...]:
+        return tuple(alias.name for alias in node.names)
 
     def record(node: ast.AST, guarded: bool) -> None:
         if isinstance(node, ast.Import):
             for alias in node.names:
                 if _in_scope(alias.name, packages):
-                    refs.append((alias.name, node.lineno, guarded))
+                    refs.append((alias.name, node.lineno, guarded, ()))
         elif isinstance(node, ast.ImportFrom):
             if node.level:
                 mod = _resolve_relative(file_module, is_init, node.level, node.module)
                 if not _in_scope(mod, packages):
                     return
                 if node.module:
-                    refs.append((mod, node.lineno, guarded))
+                    refs.append((mod, node.lineno, guarded, names_of(node)))
                 else:
                     # `from . import a, b` -> package.a, package.b
                     for alias in node.names:
                         refs.append(
-                            (f"{mod}.{alias.name}" if mod else alias.name, node.lineno, guarded)
+                            (f"{mod}.{alias.name}" if mod else alias.name, node.lineno, guarded, ())
                         )
             elif node.module and _in_scope(node.module, packages):
-                refs.append((node.module, node.lineno, guarded))
+                refs.append((node.module, node.lineno, guarded, names_of(node)))
 
     def visit(node: ast.AST, in_try: bool) -> None:
         record(node, in_try)
@@ -192,6 +204,71 @@ def _module_shipped(mod: str, shipped: set[str]) -> bool:
     return mod in shipped or any(s == mod or s.startswith(mod + ".") for s in shipped)
 
 
+def _module_source(root: Path, mod: str) -> Path | None:
+    """The published file defining ``mod`` (package ``__init__`` or module), if any."""
+    for base_dir in (root, root / "src"):
+        base = base_dir / Path(*mod.split("."))
+        if (base / "__init__.py").is_file():
+            return base / "__init__.py"
+        module_file = base.with_name(base.name + ".py")
+        if module_file.is_file():
+            return module_file
+    return None
+
+
+def _target_names(node: ast.AST) -> set[str]:
+    if isinstance(node, ast.Name):
+        return {node.id}
+    if isinstance(node, (ast.Tuple, ast.List)):
+        out: set[str] = set()
+        for elt in node.elts:
+            out |= _target_names(elt)
+        return out
+    if isinstance(node, ast.Starred):
+        return _target_names(node.value)
+    return set()
+
+
+def _module_bindings(path: Path) -> set[str] | None:
+    """Names a module binds at import time, read statically.
+
+    ``None`` means the set is unknowable without running the module (a star
+    import or a module-level ``__getattr__``): the name check stands down rather
+    than guess. Conditional bindings count; the check is for absence.
+    """
+    tree = ast.parse(path.read_text(encoding="utf-8"))
+    names: set[str] = set()
+    dynamic = False
+
+    def walk(stmts: list[ast.stmt]) -> None:
+        nonlocal dynamic
+        for stmt in stmts:
+            if isinstance(stmt, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+                names.add(stmt.name)
+            elif isinstance(stmt, (ast.Import, ast.ImportFrom)):
+                for alias in stmt.names:
+                    if alias.name == "*":
+                        dynamic = True
+                    else:
+                        names.add(alias.asname or alias.name.split(".")[0])
+            elif isinstance(stmt, ast.Assign):
+                for tgt in stmt.targets:
+                    names.update(_target_names(tgt))
+            elif isinstance(stmt, (ast.AnnAssign, ast.AugAssign)):
+                names.update(_target_names(stmt.target))
+            elif isinstance(stmt, (ast.If, ast.For, ast.While, ast.With, ast.Try)):
+                walk(getattr(stmt, "body", []))
+                walk(getattr(stmt, "orelse", []))
+                walk(getattr(stmt, "finalbody", []))
+                for handler in getattr(stmt, "handlers", []):
+                    walk(handler.body)
+
+    walk(tree.body)
+    if dynamic or "__getattr__" in names:
+        return None
+    return names
+
+
 def scan_boundary_imports(
     root: Path, packages: set[str] | None = None
 ) -> list[Finding]:
@@ -199,6 +276,7 @@ def scan_boundary_imports(
     root = Path(root)
     pkgs = packages or infer_packages(root)
     shipped = shipped_modules(root)
+    bindings: dict[str, set[str] | None] = {}
     findings: list[Finding] = []
     for path in _iter_py(root):
         rel = path.relative_to(root).as_posix()
@@ -208,11 +286,23 @@ def scan_boundary_imports(
             findings.append(Finding(rel, getattr(exc, "lineno", 0) or 0, f"<syntax error: {exc.msg}>"))
             continue
         file_module, is_init = _file_module(root, path)
-        for mod, lineno, guarded in _import_refs(tree, file_module, is_init, pkgs):
+        for mod, lineno, guarded, names in _import_refs(tree, file_module, is_init, pkgs):
             if guarded:
                 continue
             if not _module_shipped(mod, shipped):
                 findings.append(Finding(rel, lineno, mod))
+                continue
+            for name in names:
+                if name == "*" or f"{mod}.{name}" in shipped:
+                    continue
+                if mod not in bindings:
+                    source = _module_source(root, mod)
+                    # No defining file (a namespace package): only submodules resolve.
+                    bindings[mod] = _module_bindings(source) if source is not None else set()
+                bound = bindings[mod]
+                if bound is None or name in bound:
+                    continue
+                findings.append(Finding(rel, lineno, f"{mod}.{name}"))
     return findings
 
 

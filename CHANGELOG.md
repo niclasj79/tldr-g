@@ -38,6 +38,48 @@ between engine releases; none of that changes whether an artifact verifies.
 
 ---
 
+## [0.5.0] — 2026-09-14
+
+The theme: **you should be able to check an integration against the contracts, not only a receipt against its signature.**
+
+### Added
+
+- **The contract conformance kit** — [`docs/conformance/`](docs/conformance/), and the
+  JSON Schemas it checks against in [`docs/contracts/schemas/`](docs/contracts/schemas/)
+  (Draft 2020-12): the Attestation Envelope, the render trace and the
+  `PortableArtifact`. The runner validates an envelope and dispatches its payload to
+  the matching schema. Valid fixtures must conform, and each invalid fixture breaks
+  exactly one rule. It runs on the standard library alone and uses `jsonschema` when
+  installed; a test proves the two backends agree on every fixture. This is the
+  *shape* check — the signature check stays with `tp-vrg-verify` and `verify.html`.
+
+  Each schema's `$id` is its URL on tldr-g.ai, served from this repository. The
+  fixture signer is `did:web:conformance.example`, under a reserved domain that
+  cannot be registered, because the fixtures carry placeholder keys.
+
+### Fixed
+
+- **`tp_vrg.__version__` reported `0.1.0`** while the distribution said `0.4.0`. It
+  now reports the distribution's version, and a test checks the two against each
+  other in an installed environment.
+- **The provenance module imported the engine's authentication module**, which this
+  package does not ship, so `actor_write_summary()` raised `ImportError` on its first
+  call in a clean clone. It now reports that write attribution does not exist on
+  this install — a different state from "auth is off", and said as such.
+- **`primitives/open-core-boundary/boundary_scan.py` checked `from pkg import name`
+  only at `pkg`.** Publishing `pkg` let an import of an unpublished `pkg.name`
+  through, which is how the import above shipped. The scanner now resolves each
+  name: it must be a published submodule or something `pkg` binds. A star import or
+  a module-level `__getattr__` makes the bound set unknowable, and the check stands
+  down for that module rather than guess.
+
+### Changed
+
+- The `dev` extra adds `jsonschema`, so the test suite exercises the reference
+  backend as well as the fallback.
+
+---
+
 ## [0.4.0] — 2026-07-26
 
 The theme: **you should not have to install anything to check a receipt.**
