@@ -22,6 +22,16 @@ The engine runs **entirely on your machine** — no cloud, no API key:
 **Download:** the **Releases** page of this repo, or **[tldr-g.ai](https://tldr-g.ai)**.
 **It's free.** Today the full local engine is **free to download and run** — that's the real, current offering, not a teaser. *(There's no metered cloud and no paywall on the local app; if a tiered model arrives later, a free local tier stays, and early installs keep working.)*
 
+## Ingest your own docs
+
+Drop files, or a whole folder, onto the Cockpit's Ingest Files panel — subfolders are walked automatically, and a click on **Select folder…** does the same through your OS file picker.
+
+Supported types today: `.txt` `.md` `.markdown` `.text` `.pdf` `.docx`. Code files aren't supported yet.
+
+An **NVIDIA GPU is strongly recommended** for ingest — CPU-only works, but it's much slower. Folder watching (auto-ingest anything dropped in a watched inbox folder) is not available in the packaged app yet.
+
+More detail, including what's still unsupported: [docs/FAQ.md](docs/FAQ.md).
+
 ## See it: the visual demo (nothing to install)
 
 **[tldr-g.ai/visual-demo](https://tldr-g.ai/visual-demo/) — the architecture with the hood up.** A corpus of documents drawn as terrain you can descend — continent, island, asset, passage — where brightness is **resolution**: how much of a node the engine actually paid for. The question sits in the command bar **unrun**, on purpose, because the first render should be your act rather than something that already happened before you arrived. Press it and you watch a resolution get chosen per node, a stated token budget get spent, and every choice accounted for afterwards — including the nodes the engine reached and **declined to pay for**, still drawn on the map, because omission is a budget decision and not a deletion. It's a static build: no server, no API key, no network. Source in [`visual-demo/`](visual-demo/); [`DEMO.md`](visual-demo/DEMO.md) is the guided walk for someone seeing it cold.
@@ -90,4 +100,4 @@ python -m pytest -q
 
 ## Status
 
-v0.1.0 — available now. Download from the **Releases** tab above or **[tldr-g.ai](https://tldr-g.ai)**.
+v0.2.2 — available now. Download from the **Releases** tab above or **[tldr-g.ai](https://tldr-g.ai)**.
