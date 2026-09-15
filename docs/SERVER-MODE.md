@@ -259,7 +259,12 @@ through this list end to end:
    token).
 3. Ingest a small document, ask a question, confirm the streamed answer and
    its receipt both arrive.
-4. Open the Board tab and confirm it renders on a phone-sized screen.
+4. Open the Graph tab. In portrait on a phone (under 600 pixels wide) the
+   board is not drawn: you should see one sentence saying it is a
+   larger-screen view and that Search works here. That sentence is the
+   pass. In landscape the board loads but its canvas sits below the
+   controls and is clipped on a phone-height screen (a known defect);
+   a tablet or a desktop is where to look at it.
 5. From a device that is **not** on your tailnet, open the Funnel URL and
    confirm it loads the demo-world instance, not your real graph.
 6. Confirm that device's token is refused (not silently ignored) on
