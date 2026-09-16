@@ -13,7 +13,7 @@ TLDR-G is a local-first **knowledge rendering engine**: it turns your source mat
 The engine runs **entirely on your machine** — no cloud, no API key:
 
 - the **Cockpit desktop app** — ingest your own sources, query them, and watch the engine show its reasoning (the context it rendered, the intent it inferred, the tokens it saved); and
-- **`tp-vrg-mcp`** — an MCP server any agent client (Claude Desktop, Cursor, …) can call as a tool.
+- **`tldr-g-mcp`** — an MCP server any agent client (Claude Desktop, Cursor, …) can call as a tool.
 
 **Requirements (v0.2):** Windows 10/11 (64-bit). An **NVIDIA GPU with ≥4 GB VRAM is strongly recommended** (GTX 1060 6 GB or better) — it runs on CPU-only, but ingest and query are substantially slower there. **16 GB RAM recommended.** Budget **~12 GB of free disk**: the installer is **1.9 GB**, it unpacks to about **5 GB**, and **~4.6 GB (4.24 GiB) of models download once on first launch** (internet needed that first time). *macOS and Linux are fast-follow.*
 
@@ -48,7 +48,7 @@ What is *not* synthetic is the instrument. The hashes are real SHA-256 over the 
 - **[Contract conformance kit](docs/conformance/)** — the JSON Schemas for the envelope, the render trace and the `PortableArtifact` ([`docs/contracts/schemas/`](docs/contracts/schemas/), Draft 2020-12), and a runner that checks an envelope's *shape* against them, with valid and deliberately broken fixtures. Standard library only (it uses `jsonschema` when installed): `python docs/conformance/conformance.py`. The shape is checked here; the signature is checked by `tp-vrg-verify`.
 - **Offline attestation / verify** — `src/tp_vrg/attestation.py` + the `tp-vrg-verify` CLI: Ed25519 detached signatures over those artifacts (same family as Sigstore / Certificate Transparency / eIDAS 2.0 qualified seals — **not** a blockchain, no token, no ledger). Anyone holding an exported artifact runs `tp-vrg-verify <file>` and checks tamper-evidence offline.
 - **[`verify.html`](verify.html) — verify with nothing installed.** One self-contained file: open it in any browser, drop in a receipt, get a verdict. No Python, no install, no network — it works offline from a `file://` URL, because there is no server to talk to. This is the one to hand to a lawyer, an auditor, or a procurement reviewer; the CLI is for people who already have a terminal open.
-- **[Agent quickstart](docs/MCP-QUICKSTART.md)** — wire `tp-vrg-mcp` into Claude Desktop, Cursor, or your own client in about five minutes, and have your agent hand back a signed receipt anyone can check.
+- **[Agent quickstart](docs/MCP-QUICKSTART.md)** — wire `tldr-g-mcp` into Claude Desktop, Cursor, or your own client in about five minutes, and have your agent hand back a signed receipt anyone can check.
 - **Provenance audit** — `tools/provenance_audit.py`: a stdlib-only tool that checks every cited snippet in a render trace actually exists in the source — the "no hallucinated citations" proof.
 - **[`visual-demo/`](visual-demo/)** — the source for the demo above, and the scripts that check its own claims (`node scripts/verify-trust.mjs` rebuilds the corpus, signs a trace, tampers with real bytes, and exits non-zero if a figure drifted).
 - **[`primitives/`](primitives/) — the method drop.** Small self-contained pieces extracted from building the engine, useful on their own: content-addressing hygiene (hash the content, not the checkout), the AST scanner that proves an open-core boundary holds, and the agent-harness starter kit (the contract you hand a coding agent instead of a prompt). Zero dependencies, each carrying the incident that produced it.
@@ -100,4 +100,4 @@ python -m pytest -q
 
 ## Status
 
-v0.2.2 — available now. Download from the **Releases** tab above or **[tldr-g.ai](https://tldr-g.ai)**.
+v0.2.5 — available now. Download from the **Releases** tab above or **[tldr-g.ai](https://tldr-g.ai)**.

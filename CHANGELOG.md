@@ -7,7 +7,7 @@ verification surface, and the adapter interface.
 
 **This version tracks the contract surface, not the engine binary.**
 
-The engine ships as a free local app on its own version line (v0.1.x today). This
+The engine ships as a free local app on its own version line (v0.2.x today). This
 repository ships the *boundary*: the artifact formats, the offline verification
 behaviour, and the interface an integration is written against. They change for
 different reasons and at different rates — a Cockpit UI release should not bump

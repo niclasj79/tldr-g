@@ -1,6 +1,6 @@
 # Give your agent an auditable memory — in five minutes
 
-TLDR-G ships an MCP server, `tp-vrg-mcp`, so any MCP client (Claude Desktop, Cursor, Cline, or your own) can use a local knowledge graph as a tool. Everything runs on your machine: no API key, no account, no data leaving the box.
+TLDR-G ships an MCP server, `tldr-g-mcp`, so any MCP client (Claude Desktop, Cursor, Cline, or your own) can use a local knowledge graph as a tool. Everything runs on your machine: no API key, no account, no data leaving the box.
 
 The part worth your attention is the last tool in the list. Your agent can hand back a **signed receipt** for an answer, and anyone can check that receipt offline — including with [`verify.html`](../verify.html), which needs no install at all.
 
@@ -11,7 +11,7 @@ The part worth your attention is the last tool in the list. Your agent can hand 
 Download the installer from the [Releases](../../releases) page or [tldr-g.ai](https://tldr-g.ai), and run it. That gives you two executables:
 
 - `TLDR-G-Cockpit.exe` — the desktop app
-- `tp-vrg-mcp.exe` — the MCP server your agent talks to
+- `tldr-g-mcp.exe` — the MCP server your agent talks to
 
 **Requirements:** Windows 10/11 (64-bit). An NVIDIA GPU with ≥4 GB VRAM is strongly recommended; CPU-only works but ingest and query are roughly 20–50× slower. Budget ~11 GB of free disk (1.9 GB installer, ~5 GB unpacked, ~4.2 GB of models downloaded once on first launch). On a machine with no internet, use the offline model pack from Releases instead. *macOS and Linux are fast-follow.*
 
@@ -28,7 +28,7 @@ Download the installer from the [Releases](../../releases) page or [tldr-g.ai](h
 {
   "mcpServers": {
     "tldr-g": {
-      "command": "C:\\Program Files\\TLDR-G\\tp-vrg-mcp.exe"
+      "command": "C:\\Program Files\\TLDR-G\\tldr-g-mcp.exe"
     }
   }
 }

@@ -17,9 +17,15 @@ system.
 **Step 1 — integrity (offline):**
 
 ```
-pip install tp-vrg
-tp-vrg-verify the-export.signed.json
+py -3 -m venv .venv
+.venv\Scripts\python.exe -m pip install .
+.venv\Scripts\tp-vrg-verify.exe the-export.signed.json
 ```
+
+Run those from a checkout of this repo — `tp-vrg` is **not** published to PyPI
+or any other package index, so `pip install tp-vrg` resolves to nothing. Pass the
+export by full path if it lives outside the checkout; exit **2** means the file
+could not be read, which is not the same answer as a failed signature.
 
 Exit 0 + `Attestation: VALID` proves the payload is byte-identical (under
 canonical JSON) to what the holder of the printed `key_id` signed. Tamper with
