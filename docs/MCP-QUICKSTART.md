@@ -69,7 +69,7 @@ You now have a JSON receipt. Open [`verify.html`](../verify.html) in any browser
 | Tool | What it does |
 |---|---|
 | `tp_vrg_ingest` | Add text to the graph (`text`, optional `source`, optional `event_timestamp`) |
-| `tp_vrg_query` | Render query-specific context under a token budget (`question`, `token_budget`, default 10000) |
+| `tp_vrg_query` | Render query-specific context under a token budget (`question`, optional `token_budget` — see the note below) |
 | `tp_vrg_explain` | Show the provenance behind an answer (`answer_id`) |
 | `tp_vrg_export_trace` | Export the answer + citations as a **signed** receipt (`answer_id`, `sign`) |
 | `tp_vrg_question_bank` | Questions the current graph implies — useful for agent self-orientation |
@@ -79,6 +79,16 @@ You now have a JSON receipt. Open [`verify.html`](../verify.html) in any browser
 | `tp_vrg_metrics` / `tp_vrg_health` | Engine state |
 | `tp_vrg_janitor` | Maintenance tasks (backbone rebuild, merges) |
 | `tp_vrg_clear` / `tp_vrg_reset_stats` | Destructive — both require `confirm: true` |
+
+### `tp_vrg_query`'s token budget
+
+`token_budget` now defaults to nothing rather than to a literal 10000, so the
+tool can tell "no budget was named" apart from "the caller asked for exactly
+10000". On a plain install this is invisible: an omitted budget still resolves
+to 10000. The distinction only matters when a measurement profile with its own
+frozen ceiling is active, and in that case an omitted budget defers to the
+active profile's ceiling instead of always receiving a flat 10000 — which
+brings `tp_vrg_query` into agreement with how `/query` already behaved.
 
 ### `tp_vrg_query` is not a search tool
 
