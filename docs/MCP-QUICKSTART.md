@@ -90,6 +90,19 @@ frozen ceiling is active, and in that case an omitted budget defers to the
 active profile's ceiling instead of always receiving a flat 10000 — which
 brings `tp_vrg_query` into agreement with how `/query` already behaved.
 
+### What `tp_vrg_query` says about how it chose
+
+A `tp_vrg_query` result carries `render_plan.summary`: a few short sentences
+on what was considered for the question, what was used, what was left out and
+why, and which documents the used passages came from (named, not linked). Show
+`summary.lines` to a person as they are, in order. The same account is split
+into `considered`, `used`, `left_out` and `sources` for code; `sources` is
+`null` when a result did not report them, which is not the same as none. The
+key is additive: every other key in `render_plan` keeps its shape. When a
+request kept no record, the summary's first line says so. A query against an
+empty knowledge graph, or one that fails, returns no `render_plan` at all, so
+check for the key before you read it.
+
 ### `tp_vrg_query` is not a search tool
 
 This is the one thing worth understanding before you build against it. It does not return "the top-k chunks." It **renders** a view of the graph for that question, choosing a level of detail per region under the token budget you gave it — verbatim where the question is specific, summarised where it only needs context, omitted where it is irrelevant.
