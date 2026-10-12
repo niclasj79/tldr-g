@@ -1,0 +1,137 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://tldr-g.ai/contracts/schemas/render-trace-v2.schema.json",
+  "title": "Render Trace v2",
+  "description": "The answer receipt: the signed record returned WITH every answer. It binds the render the model was given (a hash of the exact returned context, the citations to stored source segments by id and hash), the budget, the topology profile's recipe hash, the sufficiency verdict and the principal. It does not contain passage text, source uris or the generated answer text, and every number is an integer. The `render_trace` payload of an Attestation Envelope, beside v1 (dispatch on `trace_version`). Canonical source: src/tp_vrg/answer_receipt.py answer_receipt_block().",
+  "type": "object",
+  "required": [
+    "trace_version",
+    "answer_id",
+    "query_text",
+    "answered_at",
+    "model_label",
+    "surface",
+    "binds",
+    "generation",
+    "provenance_coverage",
+    "citations",
+    "pointers",
+    "evidence",
+    "budget",
+    "recipe",
+    "sufficiency",
+    "principal"
+  ],
+  "properties": {
+    "trace_version": { "const": 2 },
+    "answer_id": { "type": "string", "minLength": 1 },
+    "query_text": { "type": "string" },
+    "answered_at": { "type": ["string", "null"] },
+    "model_label": { "type": ["string", "null"] },
+    "surface": {
+      "description": "Where the receipt was built. Through the MCP daemon proxy the receipt is the daemon's POST /query receipt, so it says query.",
+      "enum": ["query", "answer", "answer_stream", "mcp_query"]
+    },
+    "binds": { "type": "string", "minLength": 1 },
+    "generation": {
+      "description": "What was true when the receipt was signed (before any provider is reached): withheld = the sufficiency gate withheld generation; pending = the route went on to generation, whose outcome is not bound; not-requested = a render-only route.",
+      "enum": ["pending", "withheld", "not-requested"]
+    },
+    "provenance_coverage": { "enum": ["none", "partial", "full"] },
+    "citations": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["cite_order", "segment_id", "source_label", "content_hash", "text_sha256", "verbatim"],
+        "properties": {
+          "cite_order": { "type": ["integer", "null"] },
+          "segment_id": { "type": ["string", "integer", "null"] },
+          "source_label": { "type": ["string", "null"] },
+          "content_hash": { "type": ["string", "null"] },
+          "text_sha256": { "type": ["string", "null"], "pattern": "^sha256:[0-9a-f]{64}$" },
+          "verbatim": {
+            "description": "true = verbatim source text; false = a resolved rendering; null = no stored text (an orphan citation).",
+            "type": ["boolean", "null"]
+          }
+        }
+      }
+    },
+    "resolution_disclosure": { "type": "string" },
+    "pointers": {
+      "description": "Ranked candidates beyond the renderer's text-budget cut, without their scores.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "lod", "reason"],
+        "properties": {
+          "id": { "type": "string", "minLength": 1 },
+          "lod": { "const": "reference" },
+          "reason": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "evidence": {
+      "type": "object",
+      "required": ["context_sha256", "context_tokens_estimated", "rendered_passages"],
+      "properties": {
+        "context_sha256": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+        "context_tokens_estimated": { "type": "integer" },
+        "rendered_passages": { "type": "integer" },
+        "context_note": { "type": "string" }
+      }
+    },
+    "budget": {
+      "type": "object",
+      "required": ["ceiling_tokens", "requested_tokens", "requested_by"],
+      "properties": {
+        "ceiling_tokens": { "type": ["integer", "null"] },
+        "requested_tokens": { "type": "integer" },
+        "requested_by": { "type": "string", "pattern": "^(client|endpoint-default|profile:.+)$" },
+        "ceiling_note": { "type": "string" }
+      }
+    },
+    "recipe": {
+      "type": "object",
+      "required": ["topology_profile", "ingest_regimes"],
+      "properties": {
+        "topology_profile": {
+          "type": "object",
+          "required": ["name", "resolved_hash", "confirmed_by_plan"],
+          "properties": {
+            "name": { "type": "string", "minLength": 1 },
+            "resolved_hash": { "type": "string", "minLength": 1 },
+            "confirmed_by_plan": { "type": "boolean" }
+          }
+        },
+        "ingest_regimes": { "type": "object" }
+      }
+    },
+    "sufficiency": {
+      "type": "object",
+      "required": ["verdict"],
+      "properties": {
+        "verdict": { "type": ["string", "null"] }
+      }
+    },
+    "principal": {
+      "description": "signer is the envelope's signed_by (the verifiers check it); a key-fingerprint signer is the envelope's key_id. caller is the presented token's id, or null with a reason.",
+      "type": "object",
+      "required": ["signer", "signer_kind", "caller", "caller_kind", "note"],
+      "properties": {
+        "signer": { "type": "string", "minLength": 1 },
+        "signer_kind": { "enum": ["key-fingerprint", "did", "operator-label"] },
+        "caller": { "type": ["string", "null"] },
+        "caller_kind": { "enum": ["token", "none"] },
+        "caller_reason": { "type": "string" },
+        "note": { "type": "string" }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "signer_kind": { "const": "key-fingerprint" } } },
+          "then": { "properties": { "signer": { "pattern": "^ed25519:[0-9a-f]{16}$" } } }
+        }
+      ]
+    }
+  },
+  "additionalProperties": true
+}

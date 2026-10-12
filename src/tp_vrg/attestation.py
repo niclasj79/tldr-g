@@ -46,6 +46,7 @@ import hashlib
 import json
 import logging
 import os
+import secrets
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -134,6 +135,14 @@ def load_or_create_signing_key(path: Path | None = None):
     Generation is logged loudly — a new key means previously-issued
     envelopes verify against a DIFFERENT key_id, which an operator must
     know about.
+
+    First use is atomic. Two callers that both find no key (the Cockpit and an
+    MCP process on one home, or two concurrent first answers now that every
+    answer is receipted) each generate one, but only the first to publish its
+    file keeps it: the file appears complete or not at all, it is never
+    overwritten, and the loser returns the WINNER's key. Before 2026-10-02 the
+    second writer replaced the first's file, so every envelope the first caller
+    had signed named a key_id no file held.
     """
     Ed25519PrivateKey, _Ed25519PublicKey, serialization = _require_crypto()
     key_path = path if path is not None else get_attestation_key_path()
@@ -150,7 +159,14 @@ def load_or_create_signing_key(path: Path | None = None):
         format=serialization.PrivateFormat.PKCS8,
         encryption_algorithm=serialization.NoEncryption(),
     )
-    key_path.write_bytes(pem)
+    try:
+        _publish_new_key_file(key_path, pem)
+    except FileExistsError:
+        # Another caller published a key between our exists() and our publish:
+        # sign with THAT key, so every envelope names a key the file holds.
+        return serialization.load_pem_private_key(
+            key_path.read_bytes(), password=None
+        )
     try:
         os.chmod(key_path, 0o600)
     except OSError:  # pragma: no cover - Windows
@@ -162,6 +178,71 @@ def load_or_create_signing_key(path: Path | None = None):
         key_fingerprint(key.public_key()),
     )
     return key
+
+
+def _publish_new_key_file(key_path: Path, pem: bytes) -> None:
+    """Write ``pem`` to ``key_path`` only if no file is there.
+
+    Raises ``FileExistsError`` when another caller published first, and
+    replaces nothing. The bytes go to a private temporary file and are then
+    LINKED into place: a hard link is created atomically and never replaces an
+    existing name, so a concurrent reader sees either no key or a complete one.
+
+    Where the filesystem refuses hard links (exFAT or vfat, some SMB and FUSE
+    mounts), the publish falls back rather than failing, because the base's
+    plain write worked there and a home where no key can ever be created would
+    leave every receipt unavailable and every signed export failing. On Windows
+    the fallback is ``rename``, which is atomic and never replaces a file;
+    elsewhere it is an exclusive create of the key path itself
+    (``O_CREAT | O_EXCL``), which never replaces a file either but is not atomic
+    for a concurrent reader -- the price of a filesystem without links. Both
+    raise ``FileExistsError`` when another caller published first.
+    """
+    tmp = key_path.with_name(f".{key_path.name}.{secrets.token_hex(8)}.tmp")
+    try:
+        _write_new_file(tmp, pem)  # inside the try: a failed write leaves no copy
+        try:
+            os.link(tmp, key_path)
+        except FileExistsError:
+            raise
+        except OSError:
+            if os.name == "nt":
+                os.rename(tmp, key_path)  # never replaces an existing file on Windows
+            else:
+                _write_new_file(key_path, pem)
+    finally:
+        _remove_temporary(tmp)
+
+
+def _remove_temporary(tmp: Path) -> None:
+    """Remove the publish's temporary file; a failure is logged, never raised.
+
+    By the time this runs the key may already be published, so a cleanup
+    failure (a scanner holding the fresh file) must not undo a good publish by
+    raising out of it. The leftover is a second name for the private key, so
+    the warning says where it is and that it should be deleted.
+    """
+    try:
+        tmp.unlink(missing_ok=True)
+    except OSError as exc:
+        logger.warning(
+            "[attestation] could not remove the temporary key file %s (%s); it is a "
+            "copy of the private signing key -- delete it",
+            tmp,
+            type(exc).__name__,
+        )
+
+
+def _write_new_file(path: Path, data: bytes) -> None:
+    """Create ``path`` (owner-only) and write ``data`` to disk; raises
+    ``FileExistsError`` if anything is already there, and replaces nothing."""
+    fd = os.open(
+        path, os.O_WRONLY | os.O_CREAT | os.O_EXCL | getattr(os, "O_BINARY", 0), 0o600
+    )
+    with os.fdopen(fd, "wb") as handle:
+        handle.write(data)
+        handle.flush()
+        os.fsync(handle.fileno())
 
 
 def _public_key_raw(public_key) -> bytes:
@@ -196,6 +277,24 @@ def _protected_header(envelope: dict) -> dict:
     }
 
 
+def resolve_signed_by(public_key, signed_by: str | None = None) -> str:
+    """The ``signed_by`` value an envelope signed with ``public_key`` carries.
+
+    An explicit ``signed_by`` wins, then the operator's configured
+    ``TPVRG_ATTESTATION_IDENTITY`` (a did:web or a label), then the key's own
+    fingerprint -- which every install has, and which is what a fresh install
+    signs with. ONE chain: ``sign_envelope`` resolves through it, and so does
+    the answer receipt, which states its signer inside the signed payload, so
+    the two can only agree. The value is a label: the offline verify proves
+    the holder of ``key_id`` signed, never who that holder is.
+    """
+    return (
+        (signed_by or "").strip()
+        or os.environ.get("TPVRG_ATTESTATION_IDENTITY", "").strip()
+        or key_fingerprint(public_key)
+    )
+
+
 def sign_envelope(
     payload: dict,
     payload_type: str,
@@ -226,9 +325,7 @@ def sign_envelope(
         "payload_hash": payload_hash_hex(payload),
         "signed_at": signed_at
         or datetime.now(timezone.utc).isoformat(timespec="seconds"),
-        "signed_by": (signed_by or "").strip()
-        or os.environ.get("TPVRG_ATTESTATION_IDENTITY", "").strip()
-        or key_fingerprint(public_key),
+        "signed_by": resolve_signed_by(public_key, signed_by),
         "key_id": key_fingerprint(public_key),
         "public_key": base64.b64encode(_public_key_raw(public_key)).decode("ascii"),
     }
@@ -236,6 +333,48 @@ def sign_envelope(
     envelope["payload"] = payload
     envelope["signature"] = base64.b64encode(signature).decode("ascii")
     return envelope
+
+
+_ED25519_P = 2**255 - 19
+
+#: libsodium's small-order blocklist (``ed25519_ref10.c``), compared with the
+#: sign bit masked: the encodings of every point in the 8-torsion subgroup
+#: (y = 0 for both order-4 points, y = 1 the identity, two y for the four
+#: order-8 points, y = p - 1 the order-2 point) plus the non-canonical aliases
+#: y = p and y = p + 1 of y = 0 and y = 1. ``public/overlay/verify.html`` holds
+#: the same seven (``SMALL_ORDER_ENCODINGS``); a differential test compares them.
+_SMALL_ORDER_ENCODINGS: tuple[bytes, ...] = tuple(
+    bytes.fromhex(h)
+    for h in (
+        "0000000000000000000000000000000000000000000000000000000000000000",
+        "0100000000000000000000000000000000000000000000000000000000000000",
+        "26e8958fc2b227b045c3f489f2ef98f0d5dfac05d3c63339b13802886d53fc05",
+        "c7176a703d4dd84fba3c0b760d10670f2a2053fa2c39ccc64ec7fd7792ac037a",
+        "ecffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7f",
+        "edffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7f",
+        "eeffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7f",
+    )
+)
+
+
+def _degenerate_point_reason(point: bytes) -> str | None:
+    """Why a 32-byte public key or signature R is refused, or None.
+
+    A small-order point carries no secret: with such a key, R = identity and
+    S = 0 verify every message whose challenge k is a multiple of the key's
+    order (for the identity key, every message), so an envelope nobody signed
+    reads VALID under OpenSSL. Engine keys always have prime order, so nothing an
+    install signs is refused. A y >= p is no canonical encoding of any point.
+    Anything not 32 bytes long is left to the decoding and the signature check.
+    """
+    if len(point) != 32:
+        return None
+    masked = point[:31] + bytes([point[31] & 0x7F])
+    if masked in _SMALL_ORDER_ENCODINGS:
+        return "degenerate (small-order) key or signature point"
+    if int.from_bytes(masked, "little") >= _ED25519_P:
+        return "degenerate (non-canonical) key or signature point encoding"
+    return None
 
 
 def verify_envelope(envelope: dict) -> dict[str, Any]:
@@ -250,6 +389,18 @@ def verify_envelope(envelope: dict) -> dict[str, Any]:
     canonical JSON) to what the holder of ``key_id`` signed. It does NOT
     by itself prove WHO that holder is — match ``key_id``/``public_key``
     against the signer's did:web document for identity trust.
+
+    Before the signature check it refuses a public key or signature R that is
+    a small-order or non-canonical point (``_degenerate_point_reason``): such a
+    key has no secret, and the Ed25519 equation would hold for a payload nobody
+    signed.
+
+    It also proves the signer LABELS do not lie about the key (see
+    ``_signer_mismatch``): a ``signed_by`` that names an ed25519 key must be
+    this envelope's ``key_id``, and an answer receipt's own
+    ``payload.principal`` must name the envelope's signer. Without that, a
+    stranger's key could sign an envelope whose Signed-by line shows YOUR
+    install's fingerprint, and every check above would pass.
     """
     _priv, Ed25519PublicKey, _ser = _require_crypto()
     if not isinstance(envelope, dict):
@@ -281,13 +432,27 @@ def verify_envelope(envelope: dict) -> dict[str, Any]:
             f"payload canonicalizes to {recomputed} — payload was modified",
         )
 
+    # The degenerate-point refusals run on the raw bytes: the key's before
+    # from_public_bytes, R's before the verify call, the only OpenSSL call that
+    # sees R (from_public_bytes copies the key bytes and validates nothing; it
+    # accepts an off-curve key). A small-order key with R = identity and S = 0,
+    # or with an ordinary R, satisfies the verification equation for a payload
+    # nobody signed, and OpenSSL (like WebCrypto) accepts it. Order within the
+    # block is unchanged (key, then signature), so a malformed envelope keeps
+    # its old reason.
     try:
-        public_key = Ed25519PublicKey.from_public_bytes(
-            base64.b64decode(envelope["public_key"])
-        )
+        public_raw = base64.b64decode(envelope["public_key"])
+        degenerate = _degenerate_point_reason(public_raw)
+        if degenerate is not None:
+            return verdict(False, degenerate)
+        public_key = Ed25519PublicKey.from_public_bytes(public_raw)
         signature = base64.b64decode(envelope["signature"])
     except Exception as exc:
         return verdict(False, f"malformed key or signature encoding: {exc}")
+
+    degenerate = _degenerate_point_reason(signature[:32])
+    if degenerate is not None:
+        return verdict(False, degenerate)
 
     if key_fingerprint(public_key) != envelope["key_id"]:
         return verdict(False, "key_id does not match embedded public key")
@@ -299,12 +464,105 @@ def verify_envelope(envelope: dict) -> dict[str, Any]:
     except Exception:
         return verdict(False, "signature verification FAILED — header or signature tampered")
 
+    mismatch = _signer_mismatch(envelope)
+    if mismatch is not None:
+        return verdict(False, mismatch)
+
     return verdict(True, "signature valid; payload hash matches")
+
+
+def _signer_mismatch(envelope: dict) -> str | None:
+    """Why the envelope's signer labels contradict its key, or None.
+
+    Every verifier shows ``signed_by`` as the signer, and a fresh install's
+    ``signed_by`` IS its key fingerprint (``ed25519:<16 hex>``), so a reader
+    compares that line with the install's fingerprint. ``signed_by`` is signed
+    text the signer chooses, though, so without this rule a stranger's key could
+    sign an envelope labelled with someone else's fingerprint and verify VALID.
+    Two rules, the same in ``public/overlay/verify.html``:
+
+    * a ``signed_by`` that names an ed25519 key at all (``ed25519:`` anywhere,
+      any case) must be exactly this envelope's ``key_id``;
+    * a ``render_trace`` payload that names a ``principal`` (the answer receipt,
+      ``trace_version`` 2) must name the envelope's ``signed_by`` as its
+      ``signer``, and a ``signer_kind`` of ``key-fingerprint`` must be this
+      envelope's ``key_id`` -- so the receipt's own signed claim about its
+      signer is checked, not just carried.
+
+    A configured did:web or operator label passes both, and stays what it was:
+    configured text the offline verify does not resolve.
+    """
+    signed_by = envelope.get("signed_by")
+    key_id = envelope.get("key_id")
+    if isinstance(signed_by, str) and "ed25519:" in signed_by.lower() and signed_by != key_id:
+        return (
+            f"signer mismatch: signed_by {signed_by!r} names an ed25519 key, but this "
+            f"envelope was signed by key_id {key_id!r}"
+        )
+    payload = envelope.get("payload")
+    if (
+        envelope.get("payload_type") == "render_trace"
+        and isinstance(payload, dict)
+        and "principal" in payload
+    ):
+        principal = payload["principal"]
+        signer = principal.get("signer") if isinstance(principal, dict) else None
+        if not isinstance(signer, str) or signer != signed_by:
+            return (
+                f"signer mismatch: the receipt's payload names signer {signer!r}, but the "
+                f"envelope is signed_by {signed_by!r}"
+            )
+        if principal.get("signer_kind") == "key-fingerprint" and signer != key_id:
+            return (
+                f"signer mismatch: the receipt says its signer {signer!r} is the signing "
+                f"key's fingerprint, but this envelope was signed by key_id {key_id!r}"
+            )
+    return None
 
 
 # ---------------------------------------------------------------------------
 # render trace (the Q1 artifact's payload builder)
 # ---------------------------------------------------------------------------
+
+#: The sentence a render trace carries when any cited segment is a RESOLVED
+#: rendering. Shared by both trace versions (``build_render_trace`` here, and the
+#: answer receipt's ``trace_version`` 2 in the engine's ``answer_receipt``), so
+#: the two cannot drift into two different disclosures of one fact.
+RESOLUTION_DISCLOSURE = (
+    "One or more cited segments are RESOLVED renderings (coref / "
+    "defined-term resolution applied), not verbatim source text. The "
+    "verbatim document for each source is its seq=0 segment; content_hash "
+    "is over the verbatim bytes; a reversible resolution overlay records "
+    "every substitution. Verify cited text against the verbatim source."
+)
+
+
+def citation_is_verbatim(citation: dict[str, Any]) -> bool:
+    """Whether a cited segment's stored text is verbatim source text.
+
+    The coref-verbatim-contamination fix: a cited chunk segment may be a
+    RESOLVED rendering (coref / defined-term resolution applied), not verbatim
+    source text, and a signed trace must never imply otherwise -- the verbatim
+    document is each source's seq=0 segment, content_hash is over the verbatim
+    bytes, and the reversible overlay records every substitution. A segment's
+    text is verbatim UNLESS it is a chunk (seq>0) of a source whose resolution
+    overlay is present. ``citation`` is a ``get_citations_for_answer`` row.
+    """
+    seq = citation.get("seq")
+    has_overlay = bool(citation.get("has_overlay"))
+    return not (has_overlay and seq is not None and seq > 0)
+
+
+def provenance_coverage(citations: list[dict[str, Any]]) -> str:
+    """``none`` (no citation resolves to a source), ``full`` (every one does) or
+    ``partial``, over ``get_citations_for_answer`` rows."""
+    total = len(citations)
+    null_sources = sum(1 for c in citations if c.get("source_label") is None)
+    if total == 0 or null_sources == total:
+        return "none"
+    if null_sources == 0:
+        return "full"
+    return "partial"
 
 
 def build_render_trace(answer_id: str, provenance) -> dict[str, Any]:
@@ -343,28 +601,13 @@ def build_render_trace(answer_id: str, provenance) -> dict[str, Any]:
     except ImportError:
         temporal_summary = None
 
-    total = len(citations)
-    null_sources = sum(1 for c in citations if c.get("source_label") is None)
-    if total == 0 or null_sources == total:
-        coverage = "none"
-    elif null_sources == 0:
-        coverage = "full"
-    else:
-        coverage = "partial"
+    coverage = provenance_coverage(citations)
 
-    # Resolution disclosure (coref-verbatim-contamination fix): a cited chunk
-    # segment may be a RESOLVED rendering (coref / defined-term resolution
-    # applied), not verbatim source text. Disclose it per citation so the signed
-    # trace never implies a resolved chunk is verbatim — the verbatim document is
-    # each source's seq=0 segment, content_hash is over the verbatim bytes, and the
-    # reversible overlay records every substitution. A segment's text is verbatim
-    # UNLESS it is a chunk (seq>0) of a source whose resolution overlay is present.
+    # Resolution disclosure: see citation_is_verbatim and RESOLUTION_DISCLOSURE.
     citations_out: list[dict[str, Any]] = []
     any_resolved = False
     for c in citations:
-        seq = c.get("seq")
-        has_overlay = bool(c.get("has_overlay"))
-        is_verbatim = not (has_overlay and seq is not None and seq > 0)
+        is_verbatim = citation_is_verbatim(c)
         if not is_verbatim:
             any_resolved = True
         citations_out.append(
@@ -391,15 +634,21 @@ def build_render_trace(answer_id: str, provenance) -> dict[str, Any]:
         "pointers": list(answer.get("render_pointers") or []),
     }
     if any_resolved:
-        trace["resolution_disclosure"] = (
-            "One or more cited segments are RESOLVED renderings (coref / "
-            "defined-term resolution applied), not verbatim source text. The "
-            "verbatim document for each source is its seq=0 segment; content_hash "
-            "is over the verbatim bytes; a reversible resolution overlay records "
-            "every substitution. Verify cited text against the verbatim source."
-        )
+        trace["resolution_disclosure"] = RESOLUTION_DISCLOSURE
     if temporal_summary is not None:
         trace["temporal_summary"] = temporal_summary
+    # The citation chain this trace signs is the one a delete cuts: when a
+    # delete removed evidence this answer cited, the trace says so instead of
+    # signing a silently shorter chain. Absent when nothing was removed.
+    # Read, never presumed: a store that cannot answer raises here rather than
+    # signing a trace that says nothing was removed.
+    from tp_vrg.provenance_storage import removal_marks_view
+
+    removal_marks = removal_marks_view(
+        provenance.get_removal_marks(answer_id), include_claim_text=True
+    )
+    if removal_marks:
+        trace["evidence_removed"] = removal_marks
     return trace
 
 

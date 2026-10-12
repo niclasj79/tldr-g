@@ -6,5 +6,7 @@
   "bad-key-id.json": "key_id 'ed25519:zzzz...' violates the ^ed25519:[0-9a-f]{16}$ pattern",
   "bad-payload-hash.json": "payload_hash 'md5:deadbeef' violates the ^sha256:[0-9a-f]{64}$ pattern",
   "render-trace-bad-coverage.json": "payload.provenance_coverage 'lots' not in {none, partial, full}",
-  "portable-asset-missing-fields.json": "payload rung=asset but the asset-required fields (asset_id, asset, asset_entities, edge_provenance) are absent"
+  "portable-asset-missing-fields.json": "payload rung=asset but the asset-required fields (asset_id, asset, asset_entities, edge_provenance) are absent",
+  "render-trace-v2-float-budget.json": "a trace_version 2 payload's budget.requested_tokens is 10000.5 (v2 numbers are integers)",
+  "render-trace-v2-key-fingerprint-signer-not-a-fingerprint.json": "a trace_version 2 principal says signer_kind key-fingerprint but its signer 'ops-desk' violates ^ed25519:[0-9a-f]{16}$"
 }

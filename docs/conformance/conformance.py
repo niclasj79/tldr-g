@@ -38,6 +38,27 @@ PAYLOAD_SCHEMA_BY_TYPE = {
     "render_trace": "render-trace-v1.schema.json",
     "portable_artifact": "portable-artifact-v1.schema.json",
 }
+#: A breaking change arrives as a new version BESIDE v1, never underneath it:
+#: a payload type whose shape changed is dispatched on its own version field.
+#: The render trace's v2 is the answer receipt (`trace_version` 2), returned
+#: with every answer; v1 is the export. Any other version falls through to the
+#: type's v1 schema and is rejected by its version const.
+PAYLOAD_SCHEMA_BY_VERSION = {
+    ("render_trace", 2): "render-trace-v2.schema.json",
+}
+
+
+def payload_schema_name(payload_type: Any, payload: Any) -> str | None:
+    """The schema a payload is validated against: by its type, then, where the
+    type is versioned, by ``trace_version`` (an integer; a bool, a float or a
+    string is not a version). None for a type with no payload schema."""
+    if isinstance(payload, dict):
+        version = payload.get("trace_version")
+        if isinstance(version, int) and not isinstance(version, bool):
+            versioned = PAYLOAD_SCHEMA_BY_VERSION.get((payload_type, version))
+            if versioned is not None:
+                return versioned
+    return PAYLOAD_SCHEMA_BY_TYPE.get(payload_type)
 
 
 def load_schema(name: str) -> dict[str, Any]:
@@ -152,10 +173,12 @@ def validate_envelope(envelope: Any, *, force_stdlib: bool = False) -> dict[str,
     errors = list(validate(envelope, load_schema(ENVELOPE_SCHEMA), force_stdlib=force_stdlib))
 
     payload_type = envelope.get("payload_type") if isinstance(envelope, dict) else None
-    if payload_type in PAYLOAD_SCHEMA_BY_TYPE and isinstance(envelope, dict) and isinstance(envelope.get("payload"), dict):
+    payload = envelope.get("payload") if isinstance(envelope, dict) else None
+    schema_name = payload_schema_name(payload_type, payload)
+    if schema_name is not None and isinstance(payload, dict):
         payload_errors = validate(
-            envelope["payload"],
-            load_schema(PAYLOAD_SCHEMA_BY_TYPE[payload_type]),
+            payload,
+            load_schema(schema_name),
             force_stdlib=force_stdlib,
         )
         errors.extend(f"payload/{e}" for e in payload_errors)

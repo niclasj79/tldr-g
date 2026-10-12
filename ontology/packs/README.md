@@ -1,6 +1,6 @@
 # Domain Relation Packs
 
-**Open, forkable extensions to the TLDR-G edge vocabulary.** The core is a *lean, domain-general* set of 84 relation families ([../edge-ontology-reference.md](../edge-ontology-reference.md)), measured **~94–97% domain-general** across 12 registers ([../coverage-report.md](../coverage-report.md)). Domain-*specific* relations do **not** grow that core — they live here, as open JSON packs any domain owner can fork.
+**Open, forkable extensions to the TLDR-G edge vocabulary.** The core is a *lean, domain-general* set of 77 relation families ([../edge-ontology-reference.md](../edge-ontology-reference.md)), measured **~94–97% domain-general** across 12 registers on the earlier 84-family set ([../coverage-report.md](../coverage-report.md)). Domain-*specific* relations do **not** grow that core — they live here, as open JSON packs any domain owner can fork.
 
 ## What a pack is
 

@@ -93,7 +93,8 @@
     <b>What a valid verdict proves.</b> The payload is byte-for-byte what the holder of this
     <code>key_id</code> signed. It does <b>not</b> by itself prove <em>who</em> that holder is — to
     establish identity, match the <code>key_id</code> and <code>public_key</code> shown above against the
-    signer's published <code>did:web</code> document. It also makes no claim about whether the
+    signer's published <code>did:web</code> document. A <code>Signed by</code> line that names an
+    <code>ed25519:</code> key must be this <code>key_id</code>, or the verdict is not valid. It also makes no claim about whether the
     content is <em>true</em>: it proves the record is unaltered, not that the world agrees with it.
   </div>
 
@@ -109,10 +110,19 @@
 // ─────────────────────────────────────────────────────────────────────────────
 // TLDR-G offline receipt verifier — zero install, zero network.
 //
-// Mirrors src/tp_vrg/attestation.py `verify_envelope`. Three independent checks:
+// Mirrors src/tp_vrg/attestation.py `verify_envelope`. Four independent checks,
+// plus one refusal before the second:
 //   1. payload_hash  == sha256(canonical_json(payload))
+//   -  the public key is 32 bytes, and neither it nor the signature's R is a
+//      small-order or non-canonical point (libsodium's blocklist, sign bit
+//      masked; attestation.py `_degenerate_point_reason`) -- such a key signs
+//      nothing, yet the Ed25519 equation holds for a payload nobody signed
 //   2. key_id        == "ed25519:" + sha256(public_key)[:16]
 //   3. signature verifies over canonical_json(protected_header) under public_key
+//   4. the signer labels do not lie about the key (`_signer_mismatch`): a
+//      signed_by naming an ed25519 key must be key_id, and a render_trace
+//      payload's principal must name signed_by (and key_id when its
+//      signer_kind is key-fingerprint)
 //
 // ── The canonicalization problem, and how this avoids it ────────────────────
 // The Python side signs `json.dumps(obj, sort_keys=True, separators=(",",":"),
@@ -345,6 +355,36 @@ async function ed25519VerifyPure(pub, sig, msg) {
   return edEq(edMul(S, BASE), edAdd(R, edMul(k, A)));
 }
 
+// libsodium's small-order blocklist, compared with the sign bit masked: every
+// point of the 8-torsion subgroup plus the non-canonical aliases y = p and
+// y = p + 1. A small-order key with R = identity and S = 0 verifies for a
+// payload nobody signed, and Web Crypto (Chrome, Firefox, Node) and the pure
+// path above both accept it, so these are refused before either runs. The
+// same seven bytes as attestation.py `_SMALL_ORDER_ENCODINGS` (a differential
+// test compares the two lists).
+const SMALL_ORDER_ENCODINGS = [
+  "0000000000000000000000000000000000000000000000000000000000000000",
+  "0100000000000000000000000000000000000000000000000000000000000000",
+  "26e8958fc2b227b045c3f489f2ef98f0d5dfac05d3c63339b13802886d53fc05",
+  "c7176a703d4dd84fba3c0b760d10670f2a2053fa2c39ccc64ec7fd7792ac037a",
+  "ecffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7f",
+  "edffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7f",
+  "eeffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7f",
+].map(h => Uint8Array.from(h.match(/../g), b => parseInt(b, 16)));
+
+function degeneratePointReason(point) {        // attestation.py `_degenerate_point_reason`
+  if (point.length !== 32) return null;
+  const masked = Uint8Array.from(point);
+  masked[31] &= 0x7f;
+  for (const e of SMALL_ORDER_ENCODINGS) {
+    let diff = 0;
+    for (let k = 0; k < 32; k++) diff |= masked[k] ^ e[k];
+    if (diff === 0) return "degenerate (small-order) key or signature point";
+  }
+  if (leToBig(masked) >= Pm) return "degenerate (non-canonical) key or signature point encoding";
+  return null;
+}
+
 async function ed25519Verify(pub, sig, msg) {
   try {
     const key = await crypto.subtle.importKey("raw", pub, { name: "Ed25519" }, false, ["verify"]);
@@ -393,10 +433,26 @@ async function verifyEnvelopeText(text) {
   }
   checks.push({ ok: true, t: "Payload matches its hash (content is unaltered)" });
 
-  // 2 — key_id binds the embedded public key
+  // 2 — the key and R are proper points, and key_id binds the embedded public key.
+  // The degenerate-point refusals (attestation.py, same order: the key, then the
+  // signature's R) run before the fingerprint and before ed25519Verify.
+  const degenerate = (reason) => {
+    checks.push({ ok: false, t: "The key and the signature's R are proper curve points" });
+    return fail(reason);
+  };
   let pub, sig;
-  try { pub = b64ToBytes(str("public_key")); sig = b64ToBytes(str("signature")); }
+  try { pub = b64ToBytes(str("public_key")); }
   catch (e) { return fail("malformed key or signature encoding"); }
+  // attestation.py's Ed25519PublicKey.from_public_bytes refuses any key that is
+  // not 32 bytes long; without this the page named a different reason for it.
+  if (pub.length !== 32) return fail("malformed key or signature encoding");
+  const badKey = degeneratePointReason(pub);
+  if (badKey) return degenerate(badKey);
+  try { sig = b64ToBytes(str("signature")); }
+  catch (e) { return fail("malformed key or signature encoding"); }
+  const badR = degeneratePointReason(sig.slice(0, 32));
+  if (badR) return degenerate(badR);
+  checks.push({ ok: true, t: "The key and the signature's R are proper curve points" });
   const fp = "ed25519:" + (await sha256Hex(pub)).slice(0, 16);
   if (fp !== str("key_id")) {
     checks.push({ ok: false, t: "key_id matches the embedded public key" });
@@ -414,6 +470,35 @@ async function verifyEnvelopeText(text) {
   const sigOk = await ed25519Verify(pub, sig, msg);
   checks.push({ ok: sigOk, t: "Ed25519 signature is valid over the signed header" });
   if (!sigOk) return fail("signature verification FAILED — header or signature tampered");
+
+  // 4 — the signer labels do not lie about the key (attestation.py `_signer_mismatch`).
+  // signed_by is signed text the signer chooses: without this, a stranger's key
+  // could sign an envelope whose Signed-by line shows someone else's fingerprint.
+  const signedBy = get("signed_by");
+  const keyId = str("key_id");
+  if (typeof signedBy === "string" && signedBy.toLowerCase().includes("ed25519:")) {
+    const named = signedBy === keyId;
+    checks.push({ ok: named, t: "Signed by names this envelope's key" });
+    if (!named) return fail("signer mismatch: signed_by " + JSON.stringify(signedBy) +
+                            " names an ed25519 key, but this envelope was signed by key_id " +
+                            JSON.stringify(keyId));
+  }
+  const payload = get("payload");
+  if (str("payload_type") === "render_trace" && payload instanceof Map && payload.has("principal")) {
+    const principal = payload.get("principal");
+    const signer = principal instanceof Map ? principal.get("signer") : undefined;
+    const same = typeof signer === "string" && signer === signedBy;
+    checks.push({ ok: same, t: "The receipt's stated signer is the envelope's signer" });
+    if (!same) return fail("signer mismatch: the receipt's payload names signer " +
+                           JSON.stringify(signer === undefined ? null : signer) +
+                           ", but the envelope is signed_by " + JSON.stringify(signedBy));
+    if (principal.get("signer_kind") === "key-fingerprint" && signer !== keyId) {
+      checks.push({ ok: false, t: "The receipt's key-fingerprint signer is this envelope's key" });
+      return fail("signer mismatch: the receipt says its signer " + JSON.stringify(signer) +
+                  " is the signing key's fingerprint, but this envelope was signed by key_id " +
+                  JSON.stringify(keyId));
+    }
+  }
 
   return { valid: true, reason: "signature valid; payload hash matches", checks, info };
 }
@@ -487,7 +572,8 @@ $("paste").addEventListener("input", (e) => {
 // which runs this exact code under Node against envelopes signed by the Python
 // implementation. The browser never uses this handle.
 if (typeof module !== "undefined" && module.exports) {
-  module.exports = { verifyEnvelopeText, canonicalize, parsePreservingNumbers, codePointCompare, ed25519VerifyPure };
+  module.exports = { verifyEnvelopeText, canonicalize, parsePreservingNumbers, codePointCompare, ed25519VerifyPure,
+                     SMALL_ORDER_ENCODINGS };
 }
 </script>
 </body>

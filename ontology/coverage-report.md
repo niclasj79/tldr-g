@@ -1,5 +1,7 @@
 # Coverage report — how domain-general is the 84-family core?
 
+> **Note:** this report measured the 84-family vocabulary. The core now holds 77 families: four inverse pairs keep one direction and three near-duplicates merged, and the seven retired labels remain extractor aliases in [`edge-ontology.json`](edge-ontology.json). The closure test in [`closure-test/`](closure-test/) maps against the families in that file, so a re-run today maps to the 77. The numbers below have not been re-measured on them.
+
 **Question:** if a frontier-grade LLM reads text from many different registers and proposes relations *in its own words* (not constrained to any list), what fraction of those relations does the 84-family core vocabulary already express?
 
 **Answer:** **~94–97% of distinct proposed relations, ~97–99% edge-weighted**, across 12 registers — with the floors named honestly below.

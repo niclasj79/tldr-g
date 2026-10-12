@@ -61,11 +61,18 @@ from pathlib import Path
 from typing import Any
 
 __all__ = [
+    "DEFAULT_DELETION_REASON",
+    "DELETION_REASONS",
+    "DELETION_REASON_GUIDANCE",
+    "ERASURE_SCOPE",
     "ProvenanceBackend",
     "actor_write_summary",
     "content_address_id",
+    "deletion_origin",
     "ensure_write_actor_schema",
     "record_write_actor",
+    "removal_marks_view",
+    "validate_deletion_reason",
 ]
 
 #: How many hex characters of the sha256 digest a content-addressed id carries.
@@ -92,6 +99,228 @@ def content_address_id(text: str, prefix: str) -> str:
 
 
 _SCHEMA_VERSION = "1"
+
+# ---------------------------------------------------------------- deletion
+#
+# [LASTMILE-DELETION-REASON-CODE-AND-CLAIM-MARKING]: every delete states WHY
+# the unit left the store. Defined once, here, because this module is the one
+# both stores and every door can import (it ships in the public engine-free
+# package, so it stays stdlib-only).
+
+#: Why a unit left the store, a closed set. ``lifecycle``: routine maintenance
+#: (a cleanup, a relocation, a re-import). ``superseded``: replaced by a newer
+#: edition. ``retracted``: withdrawn as wrong. ``erasure``: removed on a
+#: rights request (GDPR Art. 17).
+DELETION_REASONS: tuple[str, ...] = ("lifecycle", "superseded", "retracted", "erasure")
+
+#: The reason an external door applies when the caller names none. The door
+#: says so in its response (``reason_source: "default"``), so a defaulted
+#: reason is never read as a stated one. Storage methods have no default.
+DEFAULT_DELETION_REASON = "lifecycle"
+
+#: Whether the caller named the reason or a door applied the default.
+DELETION_REASON_SOURCES: tuple[str, ...] = ("stated", "default")
+
+#: Where a delete came in, and whether it was a delete or the delete half of a
+#: move (a move's delete always states ``lifecycle``).
+DELETION_SURFACES: tuple[str, ...] = ("http", "mcp", "library")
+DELETION_OPERATIONS: tuple[str, ...] = ("delete", "move")
+
+#: How the actor recorded on a deletion event was established. ``token``: the
+#: id of the bearer token the HTTP request presented. ``auth_off``: an HTTP
+#: request on a server with auth off, so no principal exists. ``mcp_stdio``:
+#: the in-process MCP tool, which carries no credential. ``library_call``: a
+#: direct call into the storage layer (a script, a test, the CLI). Every
+#: basis but ``token`` records the actor as ``unattributed``, never blank.
+DELETION_ACTOR_BASES: tuple[str, ...] = ("token", "auth_off", "mcp_stdio", "library_call")
+
+#: What each reason tells someone reading an answer whose evidence it removed.
+#: Said in the mark itself, so the reason is never left to be guessed. None of
+#: them says "unverifiable": the answer was given while its evidence existed.
+DELETION_REASON_GUIDANCE: dict[str, str] = {
+    "lifecycle": (
+        "the cited evidence was removed in routine maintenance after this answer "
+        "was given; the answer was produced while it was present"
+    ),
+    "superseded": (
+        "the cited evidence was replaced by a newer edition after this answer was "
+        "given; ask again to answer from the current edition"
+    ),
+    "retracted": (
+        "the cited evidence was withdrawn as wrong after this answer was given; "
+        "treat the claims that rested on it as unreliable"
+    ),
+    "erasure": (
+        "the cited evidence was erased on request after this answer was given; "
+        "this version keeps the answer and its text (claim redaction is not "
+        "available yet), and neither claim text that rested on the erased "
+        "source nor the erased segments' ids are repeated here"
+    ),
+}
+
+#: What a delete with reason ``erasure`` did and did not do, returned with its
+#: report so an erasure never claims more than the cascade performs.
+ERASURE_SCOPE: dict[str, list[str]] = {
+    "removed": [
+        "the unit's passages, the nodes and edges derived only from them, their "
+        "embeddings and search-index rows",
+        "the provenance store's segments for those passages (and the source row "
+        "and resolution overlay once nothing else of the source remains), and "
+        "the citations and verification runs that named a removed segment",
+        "the deleted document's label, path and asset on a passage it shared "
+        "with a document that remains: the passage names its remaining owner "
+        "and sits in that owner's asset, or names none and sits in none when "
+        "no record of that owner agrees, so the deleted document's asset row "
+        "goes with its last passage",
+        "the coreference mentions recorded in the removed text",
+        "the ingest-progress ledger row that recorded the document's path, "
+        "once no passage of its source remains",
+    ],
+    "kept": [
+        "stored answers that cited the unit, with their question and answer "
+        "text: this version keeps them, and claim redaction is not available yet",
+        "a removal mark on each such answer: its reason, time, claim index, "
+        "verdict and how many segments were removed, never the segment ids "
+        "(a segment id is a content address of the text) or the claim text",
+        "the text of a passage another remaining document also contains",
+        "the deletion event, which records the reason and a sha256 of the unit "
+        "id, never the id, label, path or text (an HTTP delete's activity "
+        "snapshot, and with auth on its write-actor record, name the unit by "
+        "the same sha256)",
+        "with the opt-in RCG shadow mode on (off by default), the outbox rows "
+        "that mirror the delete, which name the unit id",
+    ],
+    "not_done": [
+        "no successor generation and no erasure certificate is produced",
+        "a sealed generation, a backup or an export made before this delete is "
+        "not touched",
+        "log files outside the stores are not touched (a request log may hold "
+        "the request line, which names the unit id; the engine's own log names "
+        "an erased unit by the event's sha256)",
+    ],
+}
+
+
+#: Said once at the head of every rendered set of removal marks.
+REMOVAL_MARKS_NOTE = (
+    "Evidence this answer cited, or was verified against, was removed from the "
+    "store after the answer was given. Each mark counts the removed segments, "
+    "names them unless they were erased, and says why they were removed. A "
+    "verification run that rested on removed evidence was dropped with it; "
+    "verifying again checks the answer against what remains."
+)
+
+
+def removal_marks_view(
+    marks: Sequence[Mapping[str, Any]],
+    *,
+    include_claim_text: bool,
+) -> dict[str, Any] | None:
+    """Render stored removal marks for a trace or an explain response.
+
+    ``None`` when there are no marks, so a caller adds the key only when a
+    delete actually removed something this answer rested on (the trace of an
+    untouched answer stays byte-identical). ``include_claim_text`` False gives
+    the lean form (the per-answer receipt carries no claim text at all);
+    either way a mark written under ``erasure`` has no claim text and no
+    segment ids to give, only their count.
+    Integers and strings only: no floats reach a signed payload.
+    """
+    marks = list(marks or ())
+    if not marks:
+        return None
+    out: list[dict[str, Any]] = []
+    reasons: list[str] = []
+    for mark in marks:
+        reason = str(mark["reason"])
+        if reason not in reasons:
+            reasons.append(reason)
+        item: dict[str, Any] = {
+            "grain": str(mark["grain"]),
+            "reason": reason,
+            "removed_at": str(mark["removed_at"]),
+            "removed_segment_count": int(mark["segment_count"]),
+        }
+        # Never under erasure: a real segment id is a content address of the
+        # erased text (``content_address_id``), so naming it would let anyone
+        # holding a copy of the text confirm it was in the store.
+        if mark["segment_ids"]:
+            item["removed_segment_ids"] = list(mark["segment_ids"])
+        if mark.get("claim_index") is not None:
+            item["claim_index"] = int(mark["claim_index"])
+        if mark.get("verdict") is not None:
+            item["verdict_at_removal"] = str(mark["verdict"])
+        if include_claim_text and mark.get("claim_text") is not None:
+            item["claim_text"] = str(mark["claim_text"])
+        out.append(item)
+    return {
+        "note": REMOVAL_MARKS_NOTE,
+        "reasons": {reason: DELETION_REASON_GUIDANCE[reason] for reason in reasons},
+        "marks": out,
+    }
+
+
+def validate_deletion_reason(reason: object) -> str:
+    """Return ``reason`` if it is one of :data:`DELETION_REASONS`, else raise.
+
+    Called before anything is deleted, so a bad reason never reaches a store.
+    """
+    if not isinstance(reason, str) or reason not in DELETION_REASONS:
+        raise ValueError(
+            f"unknown deletion reason {reason!r}: expected one of "
+            f"{', '.join(DELETION_REASONS)}"
+        )
+    return reason
+
+
+def deletion_origin(
+    *,
+    reason: object,
+    reason_source: str,
+    surface: str,
+    operation: str,
+    actor: str | None,
+    actor_basis: str | None,
+) -> dict[str, str]:
+    """Validate everything a deletion event records about how the delete came in.
+
+    Raises ``ValueError`` on any value outside its closed set, BEFORE anything
+    is deleted. ``actor`` is recorded only with basis ``token``; every other
+    basis records ``unattributed`` with the basis named (INV-2b: never blank,
+    never a guess). With no basis given, a library or MCP call states its own;
+    an HTTP door must say which of ``token`` / ``auth_off`` applies.
+    """
+    validate_deletion_reason(reason)
+    if reason_source not in DELETION_REASON_SOURCES:
+        raise ValueError(f"unknown reason_source {reason_source!r}")
+    if surface not in DELETION_SURFACES:
+        raise ValueError(f"unknown deletion surface {surface!r}")
+    if operation not in DELETION_OPERATIONS:
+        raise ValueError(f"unknown deletion operation {operation!r}")
+    if operation == "move" and reason != "lifecycle":
+        raise ValueError("the delete half of a move states reason 'lifecycle'")
+    if actor_basis is None:
+        actor_basis = {"library": "library_call", "mcp": "mcp_stdio"}.get(surface)
+        if actor_basis is None:
+            raise ValueError("an HTTP delete must state its actor basis")
+    if actor_basis not in DELETION_ACTOR_BASES:
+        raise ValueError(f"unknown actor basis {actor_basis!r}")
+    if actor_basis == "token":
+        if not isinstance(actor, str) or not actor.strip():
+            raise ValueError("actor basis 'token' needs the token id as actor")
+        recorded_actor = actor.strip()
+    else:
+        if actor:
+            raise ValueError(f"actor basis {actor_basis!r} records no actor")
+        recorded_actor = "unattributed"
+    return {
+        "reason": str(reason),
+        "reason_source": reason_source,
+        "surface": surface,
+        "operation": operation,
+        "actor": recorded_actor,
+        "actor_basis": actor_basis,
+    }
 
 #: How many actor rows the bounded report renders. The audit trail is
 #: append-only and unbounded; the REPORT is a render over it, not a dump
@@ -1082,6 +1311,200 @@ class ProvenanceBackend:
             self._conn.commit()
         return max(0, removed)
 
+    def _ensure_removal_marks_schema(self) -> None:
+        """The removal-mark table, created by the first delete that marks an
+        answer (never at open: the open path must not grow a write)."""
+        assert self._conn is not None
+        self._conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS answer_removal_marks (
+                mark_id     INTEGER PRIMARY KEY,
+                answer_id   TEXT NOT NULL,
+                grain       TEXT NOT NULL,
+                claim_index INTEGER,
+                verdict     TEXT,
+                claim_text  TEXT,
+                segment_ids TEXT NOT NULL,
+                segment_count INTEGER NOT NULL,
+                reason      TEXT NOT NULL,
+                removed_at  TEXT NOT NULL
+            )
+            """
+        )
+        self._conn.execute(
+            "CREATE INDEX IF NOT EXISTS idx_removal_marks_answer "
+            "ON answer_removal_marks(answer_id)"
+        )
+
+    def _rows_naming_segments(self, sql: str, segment_ids: list[str]) -> list[Any]:
+        """``sql`` with ``{placeholders}`` run over ``segment_ids`` in chunks
+        (SQLite caps bound parameters)."""
+        assert self._conn is not None
+        rows: list[Any] = []
+        for start in range(0, len(segment_ids), 500):
+            chunk = segment_ids[start:start + 500]
+            rows.extend(
+                self._conn.execute(
+                    sql.format(placeholders=",".join("?" for _ in chunk)), chunk
+                ).fetchall()
+            )
+        return rows
+
+    def _mark_answers_for_removed_segments(
+        self,
+        segment_ids: list[str],
+        reason: str,
+    ) -> int:
+        """Record, per affected answer, what a delete is about to remove from
+        under it. Returns the number of marks written.
+
+        Runs BEFORE the purge that follows it (the citations and the whole
+        verification run of every answer with a claim on a removed segment;
+        ``_invalidate_verdicts_for_segments``), because that purge is what
+        erases the evidence of what was there. The purge itself stays: the
+        marks are an ADDITIVE record in their own table, keyed by answer, so a
+        later re-verify (which rewrites the sidecar) leaves them in place.
+
+        Two grains. ``claim``: each verified claim whose recorded candidate set
+        included a removed segment, with its verdict at removal and, except
+        under ``erasure``, its text (under erasure the text is derived from the
+        erased source, so only the claim's index is kept). ``answer``: each
+        answer whose citations included a removed segment, verified or not
+        (claim grain exists only where a verification ran).
+
+        Under ``erasure`` a mark keeps the COUNT of removed segments, never
+        their ids: a segment id is a content address of the erased text. And
+        an earlier mark on an affected answer loses its claim text too: an
+        earlier delete purged the run that recorded which other segments a
+        claim rested on, so its text may rest on what is erased now.
+        """
+        assert self._conn is not None
+        if not segment_ids:
+            return 0
+        removed = sorted(set(segment_ids))
+        claim_segments: dict[tuple[str, int], set[str]] = {}
+        for row in self._rows_naming_segments(
+            "SELECT answer_id, claim_index, segment_id FROM answer_claim_evidence "
+            "WHERE segment_id IN ({placeholders})",
+            removed,
+        ):
+            key = (str(row["answer_id"]), int(row["claim_index"]))
+            claim_segments.setdefault(key, set()).add(str(row["segment_id"]))
+        answer_segments: dict[str, set[str]] = {}
+        for row in self._rows_naming_segments(
+            "SELECT answer_id, segment_id FROM answer_citations "
+            "WHERE segment_id IN ({placeholders})",
+            removed,
+        ):
+            answer_segments.setdefault(str(row["answer_id"]), set()).add(
+                str(row["segment_id"])
+            )
+        if not claim_segments and not answer_segments:
+            return 0
+        self._ensure_removal_marks_schema()
+        erasure = reason == "erasure"
+        if erasure:
+            affected = sorted(set(answer_segments) | {a for a, _ in claim_segments})
+            for start in range(0, len(affected), 500):
+                chunk = affected[start:start + 500]
+                self._conn.execute(
+                    "UPDATE answer_removal_marks SET claim_text = NULL "
+                    f"WHERE answer_id IN ({','.join('?' for _ in chunk)})",
+                    chunk,
+                )
+
+        def _segments(ids: set[str]) -> tuple[str, int]:
+            return ("[]" if erasure else json.dumps(sorted(ids))), len(ids)
+
+        removed_at = datetime.now(timezone.utc).isoformat(timespec="seconds")
+        rows: list[tuple[Any, ...]] = []
+        for answer_id in sorted(answer_segments):
+            rows.append((
+                answer_id, "answer", None, None, None,
+                *_segments(answer_segments[answer_id]), reason, removed_at,
+            ))
+        for (answer_id, claim_index) in sorted(claim_segments):
+            claim = self._conn.execute(
+                "SELECT verdict, claim_text FROM answer_claims "
+                "WHERE answer_id = ? AND claim_index = ?",
+                (answer_id, claim_index),
+            ).fetchone()
+            verdict = None if claim is None else str(claim["verdict"])
+            claim_text = (
+                None if claim is None or reason == "erasure" else str(claim["claim_text"])
+            )
+            rows.append((
+                answer_id, "claim", claim_index, verdict, claim_text,
+                *_segments(claim_segments[(answer_id, claim_index)]),
+                reason, removed_at,
+            ))
+        self._conn.executemany(
+            "INSERT INTO answer_removal_marks (answer_id, grain, claim_index, "
+            "verdict, claim_text, segment_ids, segment_count, reason, removed_at) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            rows,
+        )
+        return len(rows)
+
+    def get_removal_marks(self, answer_id: str) -> list[dict[str, Any]]:
+        """The removal marks recorded for one answer, oldest first.
+
+        No table means no delete has ever marked an answer in this store: that
+        is an empty list by construction, not a swallowed error. The read
+        never creates the table.
+        """
+        assert self._conn is not None
+        present = self._conn.execute(
+            "SELECT 1 FROM sqlite_master WHERE type = 'table' "
+            "AND name = 'answer_removal_marks'"
+        ).fetchone()
+        if present is None:
+            return []
+        return [
+            {
+                "grain": row["grain"],
+                "claim_index": row["claim_index"],
+                "verdict": row["verdict"],
+                "claim_text": row["claim_text"],
+                "segment_ids": json.loads(row["segment_ids"]),
+                "segment_count": int(row["segment_count"]),
+                "reason": row["reason"],
+                "removed_at": row["removed_at"],
+            }
+            for row in self._conn.execute(
+                "SELECT grain, claim_index, verdict, claim_text, segment_ids, "
+                "segment_count, reason, removed_at FROM answer_removal_marks "
+                "WHERE answer_id = ? ORDER BY mark_id",
+                (answer_id,),
+            ).fetchall()
+        ]
+
+    def _forget_mentions_without_a_segment(self, source_id: str) -> int | None:
+        """Delete ``source_id``'s mention-ledger rows whose segment it no longer
+        owns. Returns the count, or None when this build has no mention ledger.
+
+        A mention row anchors verbatim surface text in one ``(source_id, seq)``
+        segment and references ``sources(source_id)``, so it must leave before
+        the source row does (with foreign keys on, a cascade that deleted the
+        source first raised and rolled the whole delete back) and with the
+        segment whose text it quotes. Run after the cascade has removed or
+        re-pointed the segments; a source losing all of them loses every row.
+        """
+        assert self._conn is not None
+        present = self._conn.execute(
+            "SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'mention_ledger'"
+        ).fetchone()
+        if present is None:
+            return None
+        before = self._conn.total_changes
+        self._conn.execute(
+            "DELETE FROM mention_ledger WHERE source_id = ? AND NOT EXISTS ("
+            "SELECT 1 FROM source_segments AS ss "
+            "WHERE ss.source_id = mention_ledger.source_id AND ss.seq = mention_ledger.seq)",
+            (source_id,),
+        )
+        return self._conn.total_changes - before
+
     def _invalidate_verdicts_for_segments(self, segment_ids: list[str]) -> int:
         """Drop every verification run that depended on any deleted segment.
 
@@ -1382,6 +1805,15 @@ class ProvenanceBackend:
         ).fetchone()
         return row["source_id"] if row else None
 
+    def source_label(self, source_id: str) -> str | None:
+        """The label a source was recorded under, or None if there is no row."""
+        assert self._conn is not None
+        row = self._conn.execute(
+            "SELECT source_label FROM sources WHERE source_id = ?",
+            (source_id,),
+        ).fetchone()
+        return None if row is None else str(row["source_label"])
+
     def source_exists(self, source_id: str) -> bool:
         """Return True if the provenance store has a source row."""
         assert self._conn is not None
@@ -1391,12 +1823,16 @@ class ProvenanceBackend:
         ).fetchone()
         return row is not None
 
-    def delete_source_cascade(self, source_id: str) -> dict[str, int]:
+    def delete_source_cascade(self, source_id: str, *, reason: str) -> dict[str, Any]:
         """Delete a source and only the final-owner segments it owns.
+
+        ``reason`` is one of :data:`DELETION_REASONS` and is required: every
+        internal caller states why. It is validated before anything is touched.
 
         If the caller already opened a provenance batch, this method leaves
         commit/rollback to that caller. Otherwise it wraps itself in a batch.
         """
+        validate_deletion_reason(reason)
         assert self._conn is not None
         owns_batch = not self._in_batch
         if owns_batch:
@@ -1449,7 +1885,13 @@ class ProvenanceBackend:
 
             citations_removed = 0
             verdicts_removed = 0
+            marks_written = 0
             if exclusive_segment_ids:
+                # Marks before anything is purged: what the purge erases is the
+                # evidence of what the answers rested on.
+                marks_written = self._mark_answers_for_removed_segments(
+                    exclusive_segment_ids, reason
+                )
                 # Verdicts first: they name the segments as their candidate
                 # set, so they must die with the evidence, not after it.
                 verdicts_removed = self._invalidate_verdicts_for_segments(
@@ -1470,6 +1912,8 @@ class ProvenanceBackend:
                     (segment_id,),
                 )
             segments_removed = self._conn.total_changes - before
+
+            mentions_removed = self._forget_mentions_without_a_segment(source_id)
 
             before = self._conn.total_changes
             self._conn.execute(
@@ -1493,6 +1937,9 @@ class ProvenanceBackend:
                 "citations_removed": int(citations_removed),
                 "overlays_removed": int(overlays_removed),
                 "claim_verdicts_removed": int(verdicts_removed),
+                "mentions_removed": mentions_removed,
+                "answer_removal_marks_written": int(marks_written),
+                "deletion_reason": reason,
             }
         except Exception:
             if owns_batch:
@@ -1503,7 +1950,9 @@ class ProvenanceBackend:
         self,
         source_id: str,
         segment_ids: list[str],
-    ) -> dict[str, int]:
+        *,
+        reason: str,
+    ) -> dict[str, Any]:
         """Delete one asset's provenance footprint without erasing siblings.
 
         Asset identity lives in graph.db; provenance.db is source/segment
@@ -1516,7 +1965,11 @@ class ProvenanceBackend:
         If the caller already opened a provenance batch, commit/rollback stays
         with that caller so the graph and provenance deletes can be staged
         together.
+
+        ``reason`` is one of :data:`DELETION_REASONS` and is required; it is
+        validated before anything is touched.
         """
+        validate_deletion_reason(reason)
         assert self._conn is not None
         source_id = (source_id or "").strip()
         if not source_id:
@@ -1529,6 +1982,23 @@ class ProvenanceBackend:
             citations_removed = 0
             segments_removed = 0
             verdicts_removed = 0
+            # The segments this cascade will remove: owned by this source and
+            # by no other (the loop below removes exactly these). Marked once,
+            # before any of them is purged.
+            removable = [
+                segment_id
+                for segment_id in unique_segment_ids
+                if self._conn.execute(
+                    "SELECT 1 FROM segment_sources "
+                    "WHERE source_id = ? AND segment_id = ?",
+                    (source_id, segment_id),
+                ).fetchone() is not None
+                and int(self._conn.execute(
+                    "SELECT COUNT(*) FROM segment_sources WHERE segment_id = ?",
+                    (segment_id,),
+                ).fetchone()[0]) == 1
+            ]
+            marks_written = self._mark_answers_for_removed_segments(removable, reason)
             for segment_id in unique_segment_ids:
                 owned = self._conn.execute(
                     "SELECT 1 FROM segment_sources "
@@ -1570,6 +2040,8 @@ class ProvenanceBackend:
                 )
                 segments_removed += self._conn.total_changes - before
 
+            mentions_removed = self._forget_mentions_without_a_segment(source_id)
+
             remaining = int(
                 self._conn.execute(
                     "SELECT COUNT(*) FROM segment_sources WHERE source_id = ?",
@@ -1602,6 +2074,9 @@ class ProvenanceBackend:
                 "overlays_removed": int(overlays_removed),
                 "claim_verdicts_removed": int(verdicts_removed),
                 "segments_remaining": remaining,
+                "mentions_removed": mentions_removed,
+                "answer_removal_marks_written": int(marks_written),
+                "deletion_reason": reason,
             }
         except Exception:
             if owns_batch:
@@ -1654,6 +2129,13 @@ class ProvenanceBackend:
             DELETE FROM sources;
             """
         )
+        # The marks are keyed by answer; with every answer gone they mark
+        # nothing. The table exists only once a delete has marked something.
+        if self._conn.execute(
+            "SELECT 1 FROM sqlite_master WHERE type = 'table' "
+            "AND name = 'answer_removal_marks'"
+        ).fetchone() is not None:
+            self._conn.execute("DELETE FROM answer_removal_marks")
         self._conn.commit()
 
     def close(self) -> None:

@@ -1,6 +1,6 @@
 {
  "ontology": "tldr-g-edge-ontology",
- "version": 1,
+ "version": 2,
  "families": {
   "founded": {
    "description": "a person or organization founded an organization or institution",
@@ -12,18 +12,8 @@
     "organization"
    ],
    "tier": "semantic",
-   "sigma_family": "authorial"
-  },
-  "founded_by": {
-   "description": "an organization was founded by a person",
-   "head_types": [
-    "organization"
-   ],
-   "tail_types": [
-    "person"
-   ],
-   "tier": "semantic",
-   "sigma_family": "authorial"
+   "sigma_family": "authorial",
+   "symmetric": false
   },
   "ceo_of": {
    "description": "a person explicitly holds or held the title of chief executive officer or chief executive of an organization",
@@ -34,7 +24,8 @@
     "organization"
    ],
    "tier": "semantic",
-   "sigma_family": "factual"
+   "sigma_family": "factual",
+   "symmetric": false
   },
   "works_at": {
    "description": "a person is employed by or works at an organization",
@@ -45,7 +36,8 @@
     "organization"
    ],
    "tier": "semantic",
-   "sigma_family": "factual"
+   "sigma_family": "factual",
+   "symmetric": false
   },
   "member_of": {
    "description": "a person or organization is a member of a group or organization",
@@ -57,7 +49,8 @@
     "organization"
    ],
    "tier": "semantic",
-   "sigma_family": "factual"
+   "sigma_family": "factual",
+   "symmetric": false
   },
   "subsidiary_of": {
    "description": "an organization is a subsidiary or division of another organization",
@@ -68,20 +61,8 @@
     "organization"
    ],
    "tier": "semantic",
-   "sigma_family": "factual"
-  },
-  "owns": {
-   "description": "a person or organization owns an asset, product, or organization",
-   "head_types": [
-    "person",
-    "organization"
-   ],
-   "tail_types": [
-    "organization",
-    "product"
-   ],
-   "tier": "semantic",
-   "sigma_family": "factual"
+   "sigma_family": "factual",
+   "symmetric": false
   },
   "acquired": {
    "description": "an organization acquired or bought another organization",
@@ -92,18 +73,22 @@
     "organization"
    ],
    "tier": "semantic",
-   "sigma_family": "episodic"
+   "sigma_family": "episodic",
+   "symmetric": false
   },
   "partnered_with": {
-   "description": "an organization partnered or collaborated with another organization",
+   "description": "a person or organization partnered, collaborated, or worked together with another person or organization on a shared work, project, or undertaking; co-authors and co-stars qualify, and co-occurrence or a shared topic alone does not",
    "head_types": [
+    "person",
     "organization"
    ],
    "tail_types": [
+    "person",
     "organization"
    ],
    "tier": "semantic",
-   "sigma_family": "episodic"
+   "sigma_family": "episodic",
+   "symmetric": true
   },
   "located_in": {
    "description": "a person resides in, an organization operates from, or a geographic location lies within another geographic location",
@@ -116,7 +101,8 @@
     "location"
    ],
    "tier": "semantic",
-   "sigma_family": "factual"
+   "sigma_family": "factual",
+   "symmetric": false
   },
   "at_location": {
    "description": "an event occurs at, or a person, organization, physical object, or phenomenon is explicitly present at, a geographic location",
@@ -131,7 +117,8 @@
     "location"
    ],
    "tier": "semantic",
-   "sigma_family": "factual"
+   "sigma_family": "factual",
+   "symmetric": false
   },
   "headquartered_in": {
    "description": "an organization is explicitly stated to have its principal headquarters in a geographic location",
@@ -142,7 +129,8 @@
     "location"
    ],
    "tier": "semantic",
-   "sigma_family": "factual"
+   "sigma_family": "factual",
+   "symmetric": false
   },
   "born_in": {
    "description": "a person's birth is explicitly stated to have occurred in a geographic location",
@@ -153,7 +141,8 @@
     "location"
    ],
    "tier": "temporal",
-   "sigma_family": "temporal"
+   "sigma_family": "temporal",
+   "symmetric": false
   },
   "died_in": {
    "description": "a person's death is explicitly stated to have occurred in a geographic location",
@@ -164,7 +153,8 @@
     "location"
    ],
    "tier": "temporal",
-   "sigma_family": "temporal"
+   "sigma_family": "temporal",
+   "symmetric": false
   },
   "nationality": {
    "description": "a person is explicitly identified as a citizen or national of a country or nation",
@@ -175,7 +165,8 @@
     "location"
    ],
    "tier": "semantic",
-   "sigma_family": "factual"
+   "sigma_family": "factual",
+   "symmetric": false
   },
   "created": {
    "description": "a person or organization created a work, product, or concept",
@@ -188,20 +179,8 @@
     "concept"
    ],
    "tier": "semantic",
-   "sigma_family": "authorial"
-  },
-  "created_by": {
-   "description": "a work, product, or concept was created by a person or organization",
-   "head_types": [
-    "product",
-    "concept"
-   ],
-   "tail_types": [
-    "person",
-    "organization"
-   ],
-   "tier": "semantic",
-   "sigma_family": "authorial"
+   "sigma_family": "authorial",
+   "symmetric": false
   },
   "authored": {
    "description": "a person authored or wrote a document, book, or work",
@@ -213,7 +192,8 @@
     "concept"
    ],
    "tier": "semantic",
-   "sigma_family": "authorial"
+   "sigma_family": "authorial",
+   "symmetric": false
   },
   "developed": {
    "description": "a person or organization designed, engineered, or substantially advanced a product, technology, method, or technical system",
@@ -226,7 +206,8 @@
     "concept"
    ],
    "tier": "semantic",
-   "sigma_family": "authorial"
+   "sigma_family": "authorial",
+   "symmetric": false
   },
   "part_of": {
    "description": "a structural component, section, geographic subdivision, or organizational unit belongs within a larger whole, not merely a class or association",
@@ -241,21 +222,8 @@
     "product"
    ],
    "tier": "structural",
-   "sigma_family": "factual"
-  },
-  "has_part": {
-   "description": "a whole has a structurally identifiable component, section, geographic subdivision, or organizational unit; incidental contents do not qualify",
-   "head_types": [
-    "concept",
-    "organization",
-    "product"
-   ],
-   "tail_types": [
-    "concept",
-    "product"
-   ],
-   "tier": "structural",
-   "sigma_family": "factual"
+   "sigma_family": "factual",
+   "symmetric": false
   },
   "contains": {
    "description": "a container, document, collection, location, or event includes non-structural content, occupants, items, or participants",
@@ -270,7 +238,8 @@
     "person"
    ],
    "tier": "structural",
-   "sigma_family": "factual"
+   "sigma_family": "factual",
+   "symmetric": false
   },
   "has_attribute": {
    "description": "a subject is assigned an explicit descriptive attribute, classification, status, role, or measured value",
@@ -284,21 +253,8 @@
     "concept"
    ],
    "tier": "structural",
-   "sigma_family": "factual"
-  },
-  "has_property": {
-   "description": "a subject intrinsically exhibits an explicit trait, capability, physical characteristic, or quality",
-   "head_types": [
-    "concept",
-    "organization",
-    "product",
-    "person"
-   ],
-   "tail_types": [
-    "concept"
-   ],
-   "tier": "structural",
-   "sigma_family": "factual"
+   "sigma_family": "factual",
+   "symmetric": false
   },
   "is_a": {
    "description": "a class or named type is a subtype of a broader class, not one individual instance of it",
@@ -312,7 +268,8 @@
     "concept"
    ],
    "tier": "structural",
-   "sigma_family": "factual"
+   "sigma_family": "factual",
+   "symmetric": false
   },
   "instance_of": {
    "description": "a specific named subject or occurrence is one concrete member of a general class, not a subtype of that class",
@@ -326,7 +283,8 @@
     "concept"
    ],
    "tier": "structural",
-   "sigma_family": "factual"
+   "sigma_family": "factual",
+   "symmetric": false
   },
   "made_of": {
    "description": "a physical object or structure consists materially of a substance or component, not organizational or class members",
@@ -339,7 +297,8 @@
     "product"
    ],
    "tier": "structural",
-   "sigma_family": "factual"
+   "sigma_family": "factual",
+   "symmetric": false
   },
   "form_of": {
    "description": "a subject is an alternate version, inflection, or embodiment of the same identity or content, not the action 'to form'",
@@ -352,7 +311,8 @@
     "product"
    ],
    "tier": "structural",
-   "sigma_family": "factual"
+   "sigma_family": "factual",
+   "symmetric": false
   },
   "married_to": {
    "description": "a person is or was married to another person",
@@ -363,7 +323,8 @@
     "person"
    ],
    "tier": "semantic",
-   "sigma_family": "episodic"
+   "sigma_family": "episodic",
+   "symmetric": true
   },
   "parent_of": {
    "description": "a person is the parent of another person",
@@ -374,7 +335,8 @@
     "person"
    ],
    "tier": "semantic",
-   "sigma_family": "factual"
+   "sigma_family": "factual",
+   "symmetric": false
   },
   "succeeded_by": {
    "description": "a person or organization is replaced by another holder of the same office, leadership position, governing role, or institutional function",
@@ -387,20 +349,8 @@
     "organization"
    ],
    "tier": "temporal",
-   "sigma_family": "temporal"
-  },
-  "preceded_by": {
-   "description": "a person or organization had another as the previous holder of the same office, governing role, or institutional function",
-   "head_types": [
-    "person",
-    "organization"
-   ],
-   "tail_types": [
-    "person",
-    "organization"
-   ],
-   "tier": "temporal",
-   "sigma_family": "temporal"
+   "sigma_family": "temporal",
+   "symmetric": false
   },
   "caused": {
    "description": "an event, action, condition, or mechanism directly produces or materially brings about a distinct event or outcome",
@@ -413,20 +363,8 @@
     "concept"
    ],
    "tier": "semantic",
-   "sigma_family": "causal"
-  },
-  "has_prerequisite": {
-   "description": "an event, concept, or action requires another condition before it",
-   "head_types": [
-    "event",
-    "concept"
-   ],
-   "tail_types": [
-    "event",
-    "concept"
-   ],
-   "tier": "semantic",
-   "sigma_family": "causal"
+   "sigma_family": "causal",
+   "symmetric": false
   },
   "requires": {
    "description": "an action, event, or concept requires another condition or resource",
@@ -441,7 +379,8 @@
     "product"
    ],
    "tier": "semantic",
-   "sigma_family": "causal"
+   "sigma_family": "causal",
+   "symmetric": false
   },
   "depends_on": {
    "description": "the continued existence, operation, validity, or outcome of a subject materially relies on a specified resource, condition, system, or actor",
@@ -458,7 +397,8 @@
     "organization"
    ],
    "tier": "semantic",
-   "sigma_family": "causal"
+   "sigma_family": "causal",
+   "symmetric": false
   },
   "entails": {
    "description": "a statement, event, or concept logically entails another",
@@ -471,7 +411,8 @@
     "concept"
    ],
    "tier": "semantic",
-   "sigma_family": "causal"
+   "sigma_family": "causal",
+   "symmetric": false
   },
   "motivated_by_goal": {
    "description": "an intentional action, person, or organization acts because it seeks a stated future goal or intended outcome",
@@ -485,7 +426,8 @@
     "event"
    ],
    "tier": "semantic",
-   "sigma_family": "causal"
+   "sigma_family": "causal",
+   "symmetric": false
   },
   "participated_in": {
    "description": "a person or organization participated in an event",
@@ -497,10 +439,11 @@
     "event"
    ],
    "tier": "semantic",
-   "sigma_family": "episodic"
+   "sigma_family": "episodic",
+   "symmetric": false
   },
   "signed": {
-   "description": "a person or organization formally signs, executes, or ratifies a named law, agreement, treaty, or document",
+   "description": "a person or organization formally signs, executes, ratifies, or approves a named law, agreement, treaty, or document",
    "head_types": [
     "person",
     "organization"
@@ -511,7 +454,8 @@
     "event"
    ],
    "tier": "semantic",
-   "sigma_family": "authorial"
+   "sigma_family": "authorial",
+   "symmetric": false
   },
   "applies_to": {
    "description": "a named law, rule, policy, requirement, standard, or formal classification governs a subject or jurisdiction",
@@ -525,7 +469,8 @@
     "person"
    ],
    "tier": "semantic",
-   "sigma_family": "causal"
+   "sigma_family": "causal",
+   "symmetric": false
   },
   "used_for": {
    "description": "a tool, artifact, method, facility, or resource is intentionally employed to perform a stated task or achieve a stated purpose",
@@ -538,7 +483,8 @@
     "event"
    ],
    "tier": "semantic",
-   "sigma_family": "factual"
+   "sigma_family": "factual",
+   "symmetric": false
   },
   "capable_of": {
    "description": "a person, organization, product, or concept is capable of an action",
@@ -553,7 +499,8 @@
     "concept"
    ],
    "tier": "semantic",
-   "sigma_family": "factual"
+   "sigma_family": "factual",
+   "symmetric": false
   },
   "receives_action": {
    "description": "a person, organization, product, law, or place receives or undergoes a named action, treatment, decision, designation, or award",
@@ -569,7 +516,8 @@
     "concept"
    ],
    "tier": "semantic",
-   "sigma_family": "episodic"
+   "sigma_family": "episodic",
+   "symmetric": false
   },
   "synonym": {
    "description": "two terms have equivalent meaning, or two names or aliases denote the same referent; similarity and versioning do not qualify",
@@ -580,7 +528,8 @@
     "concept"
    ],
    "tier": "semantic",
-   "sigma_family": "factual"
+   "sigma_family": "factual",
+   "symmetric": true
   },
   "antonym": {
    "description": "two concepts, names, or terms have opposite meanings",
@@ -591,7 +540,8 @@
     "concept"
    ],
    "tier": "semantic",
-   "sigma_family": "factual"
+   "sigma_family": "factual",
+   "symmetric": true
   },
   "manner_of": {
    "description": "an action or concept is a manner, method, or style of another",
@@ -604,20 +554,26 @@
     "concept"
    ],
    "tier": "semantic",
-   "sigma_family": "factual"
+   "sigma_family": "factual",
+   "symmetric": false
   },
   "derived_from": {
-   "description": "a concept, product, or work is derived from another source",
+   "description": "a concept, product, or work is derived from or based on another source, or a person, organization, or work is explicitly stated to be inspired by another person, organization, or work; resemblance or a shared topic alone does not qualify",
    "head_types": [
     "concept",
-    "product"
+    "product",
+    "person",
+    "organization"
    ],
    "tail_types": [
     "concept",
-    "product"
+    "product",
+    "person",
+    "organization"
    ],
    "tier": "semantic",
-   "sigma_family": "authorial"
+   "sigma_family": "authorial",
+   "symmetric": false
   },
   "similar_to": {
    "description": "two named subjects are explicitly stated to resemble one another in kind, meaning, role, or behavior; rivalry, ranking, re-enactment, and mere relatedness are comparisons but not resemblance",
@@ -634,7 +590,8 @@
     "person"
    ],
    "tier": "semantic",
-   "sigma_family": "factual"
+   "sigma_family": "factual",
+   "symmetric": true
   },
   "distinct_from": {
    "description": "two named subjects are explicitly contrasted or stated not to be the same; replacement, independence, and separation from another are not identity distinctions",
@@ -651,7 +608,8 @@
     "person"
    ],
    "tier": "semantic",
-   "sigma_family": "factual"
+   "sigma_family": "factual",
+   "symmetric": true
   },
   "defined_as": {
    "description": "a term or symbol receives an explicit meaning, criterion, scope, or value, not a classification, alias, or state change",
@@ -665,7 +623,8 @@
     "concept"
    ],
    "tier": "semantic",
-   "sigma_family": "authorial"
+   "sigma_family": "authorial",
+   "symmetric": false
   },
   "related_to": {
    "description": "two subjects have an explicit relationship with no more specific canonical family; co-occurrence alone does not qualify",
@@ -676,7 +635,8 @@
     "concept"
    ],
    "tier": "semantic",
-   "sigma_family": "factual"
+   "sigma_family": "factual",
+   "symmetric": true
   },
   "occurred_on": {
    "description": "an event occurred on or during a date or time period",
@@ -687,7 +647,8 @@
     "date"
    ],
    "tier": "temporal",
-   "sigma_family": "temporal"
+   "sigma_family": "temporal",
+   "symmetric": false
   },
   "publishes": {
    "description": "an agent publishes, releases, ships, or launches a work or version",
@@ -701,7 +662,8 @@
     "event"
    ],
    "tier": "semantic",
-   "sigma_family": "authorial"
+   "sigma_family": "authorial",
+   "symmetric": false
   },
   "transacts": {
    "description": "a person or organization buys, sells, pays for, or funds a named good, service, asset, security, contract, or funded undertaking; the date, place, or amount of a transaction is not the thing transacted",
@@ -715,7 +677,8 @@
     "concept"
    ],
    "tier": "semantic",
-   "sigma_family": "episodic"
+   "sigma_family": "episodic",
+   "symmetric": false
   },
   "uses": {
    "description": "an agent or system uses, applies, or consumes a tool, method, or resource",
@@ -730,7 +693,8 @@
     "concept"
    ],
    "tier": "semantic",
-   "sigma_family": "factual"
+   "sigma_family": "factual",
+   "symmetric": false
   },
   "has": {
    "description": "a person or organization owns or formally holds an asset, right, credential, position, or resource, not merely receives it",
@@ -743,7 +707,8 @@
     "concept"
    ],
    "tier": "semantic",
-   "sigma_family": "factual"
+   "sigma_family": "factual",
+   "symmetric": false
   },
   "enables": {
    "description": "a condition, capability, tool, law, or action makes a specified action or outcome possible",
@@ -759,7 +724,8 @@
     "event"
    ],
    "tier": "semantic",
-   "sigma_family": "causal"
+   "sigma_family": "causal",
+   "symmetric": false
   },
   "prevents_constrains": {
    "description": "a law, condition, mechanism, or action materially blocks, limits, or binds a specified action or outcome",
@@ -775,7 +741,8 @@
     "event"
    ],
    "tier": "semantic",
-   "sigma_family": "causal"
+   "sigma_family": "causal",
+   "symmetric": false
   },
   "improves": {
    "description": "a specified intervention, feature, or change produces an explicit improvement in a target's performance, quality, capability, or outcome",
@@ -789,7 +756,8 @@
     "product"
    ],
    "tier": "semantic",
-   "sigma_family": "causal"
+   "sigma_family": "causal",
+   "symmetric": false
   },
   "transforms": {
    "description": "a process, input, or intervention explicitly changes the state, scale, quantity, or representation of a target",
@@ -804,7 +772,8 @@
     "product"
    ],
    "tier": "semantic",
-   "sigma_family": "causal"
+   "sigma_family": "causal",
+   "symmetric": false
   },
   "replaces_supersedes": {
    "description": "a newer product, system, policy, standard, organization, or version displaces an older functional counterpart; role-holders use succeeded_by",
@@ -819,7 +788,8 @@
     "organization"
    ],
    "tier": "temporal",
-   "sigma_family": "temporal"
+   "sigma_family": "temporal",
+   "symmetric": false
   },
   "becomes": {
    "description": "a subject enters a new role, class, condition, identity, or state rather than remaining unchanged",
@@ -833,7 +803,8 @@
     "concept"
    ],
    "tier": "semantic",
-   "sigma_family": "factual"
+   "sigma_family": "factual",
+   "symmetric": false
   },
   "describes": {
    "description": "an authored work, depiction, or person is the describer and explicitly describes, represents, depicts, or illustrates a named subject, object, event, or state of affairs; a date or place mentioned alongside a description is not what is described",
@@ -848,7 +819,8 @@
     "event"
    ],
    "tier": "semantic",
-   "sigma_family": "authorial"
+   "sigma_family": "authorial",
+   "symmetric": false
   },
   "asserts": {
    "description": "a person, organization, or authored work explicitly states a claim, report, proposal, prediction, or recommendation, not a mere mention",
@@ -862,7 +834,8 @@
     "event"
    ],
    "tier": "semantic",
-   "sigma_family": "authorial"
+   "sigma_family": "authorial",
+   "symmetric": false
   },
   "references": {
    "description": "a person, organization, or authored work explicitly cites, quotes, names, or hyperlinks a source or referent",
@@ -878,7 +851,8 @@
     "organization"
    ],
    "tier": "semantic",
-   "sigma_family": "authorial"
+   "sigma_family": "authorial",
+   "symmetric": false
   },
   "measures_evaluates": {
    "description": "a person, organization, or instrument explicitly measures, tests, scores, ranks, or evaluates a specified target against a criterion or metric",
@@ -893,7 +867,8 @@
     "event"
    ],
    "tier": "semantic",
-   "sigma_family": "episodic"
+   "sigma_family": "episodic",
+   "symmetric": false
   },
   "verifies": {
    "description": "an agent verifies, validates, confirms, audits, or proves a claim",
@@ -908,7 +883,8 @@
     "event"
    ],
    "tier": "semantic",
-   "sigma_family": "factual"
+   "sigma_family": "factual",
+   "symmetric": false
   },
   "discovers": {
    "description": "a person, organization, or instrument newly identifies a previously unknown object, location, phenomenon, fact, or pattern through observation or investigation",
@@ -923,7 +899,8 @@
     "event"
    ],
    "tier": "semantic",
-   "sigma_family": "episodic"
+   "sigma_family": "episodic",
+   "symmetric": false
   },
   "selects_decides": {
    "description": "an agent selects, chooses, picks, or decides on an option",
@@ -937,7 +914,8 @@
     "event"
    ],
    "tier": "semantic",
-   "sigma_family": "episodic"
+   "sigma_family": "episodic",
+   "symmetric": false
   },
   "knows_learns": {
    "description": "an agent learns, understands, teaches, or trains on knowledge",
@@ -950,7 +928,8 @@
     "concept"
    ],
    "tier": "semantic",
-   "sigma_family": "episodic"
+   "sigma_family": "episodic",
+   "symmetric": false
   },
   "tracks_monitors": {
    "description": "a person, organization, or instrument repeatedly observes or records a target's state, location, or changes over time",
@@ -965,7 +944,8 @@
     "event"
    ],
    "tier": "semantic",
-   "sigma_family": "episodic"
+   "sigma_family": "episodic",
+   "symmetric": false
   },
   "expects_predicts": {
    "description": "an agent expects, predicts, assumes, or projects an outcome",
@@ -979,7 +959,8 @@
     "event"
    ],
    "tier": "semantic",
-   "sigma_family": "episodic"
+   "sigma_family": "episodic",
+   "symmetric": false
   },
   "operates_maintains": {
    "description": "a person or organization operates, runs, manages, maintains, or administers a facility, system, or process",
@@ -994,7 +975,8 @@
     "concept"
    ],
    "tier": "semantic",
-   "sigma_family": "factual"
+   "sigma_family": "factual",
+   "symmetric": false
   },
   "leads": {
    "description": "a person commands, directs, or chairs an organization, team, program, project, or effort; explicit CEO titles use ceo_of",
@@ -1008,7 +990,8 @@
     "product"
    ],
    "tier": "semantic",
-   "sigma_family": "factual"
+   "sigma_family": "factual",
+   "symmetric": false
   },
   "achieves_addresses": {
    "description": "a person, organization, or product attains a stated goal or outcome, or concretely addresses a specified problem",
@@ -1022,7 +1005,8 @@
     "event"
    ],
    "tier": "semantic",
-   "sigma_family": "episodic"
+   "sigma_family": "episodic",
+   "symmetric": false
   },
   "targets_aims": {
    "description": "a person, organization, or product intentionally pursues, prioritizes, or is designed toward a stated goal, audience, outcome, or operational target",
@@ -1036,7 +1020,8 @@
     "event"
    ],
    "tier": "semantic",
-   "sigma_family": "causal"
+   "sigma_family": "causal",
+   "symmetric": false
   },
   "competes_outperforms": {
    "description": "a person, organization, team, or product directly competes with or explicitly outperforms another in the same contest or market",
@@ -1051,7 +1036,8 @@
     "product"
    ],
    "tier": "semantic",
-   "sigma_family": "episodic"
+   "sigma_family": "episodic",
+   "symmetric": false
   },
   "fails_on": {
    "description": "a person, organization, system, method, or action fails a task, requirement, operating condition, or intended outcome",
@@ -1067,7 +1053,8 @@
     "event"
    ],
    "tier": "semantic",
-   "sigma_family": "episodic"
+   "sigma_family": "episodic",
+   "symmetric": false
   },
   "transfers_to": {
    "description": "a person, organization, or product is explicitly moved, assigned, delivered, sold, or conveyed to a named recipient or destination",
@@ -1083,7 +1070,8 @@
     "location"
    ],
    "tier": "semantic",
-   "sigma_family": "episodic"
+   "sigma_family": "episodic",
+   "symmetric": false
   },
   "connects_to": {
    "description": "two endpoints have an explicit physical, network, transport, interface, or structural link that permits passage, communication, attachment, or coupling",
@@ -1100,7 +1088,8 @@
     "person"
    ],
    "tier": "semantic",
-   "sigma_family": "factual"
+   "sigma_family": "factual",
+   "symmetric": true
   },
   "combines_with": {
    "description": "two inputs are merged, mixed, integrated, or joined into one composite system, substance, organization, or result",
@@ -1115,7 +1104,8 @@
     "organization"
    ],
    "tier": "semantic",
-   "sigma_family": "factual"
+   "sigma_family": "factual",
+   "symmetric": true
   },
   "processes_data": {
    "description": "a system ingests, extracts, retrieves, renders, computes, or queries data",
@@ -1129,7 +1119,8 @@
     "product"
    ],
    "tier": "semantic",
-   "sigma_family": "episodic"
+   "sigma_family": "episodic",
+   "symmetric": false
   },
   "stores_preserves": {
    "description": "a system stores, saves, records, logs, archives, or preserves data or provenance",
@@ -1143,10 +1134,113 @@
     "law"
    ],
    "tier": "semantic",
-   "sigma_family": "factual"
+   "sigma_family": "factual",
+   "symmetric": false
   }
  },
- "family_count": 84,
+ "family_count": 77,
+ "extractor_aliases": {
+  "created_by": {
+   "family": "created",
+   "swap": true,
+   "stored_as_family": true,
+   "description": "a work, product, or concept was created by a person or organization",
+   "head_types": [
+    "product",
+    "concept"
+   ],
+   "tail_types": [
+    "person",
+    "organization"
+   ]
+  },
+  "founded_by": {
+   "family": "founded",
+   "swap": true,
+   "stored_as_family": true,
+   "description": "an organization was founded by a person",
+   "head_types": [
+    "organization"
+   ],
+   "tail_types": [
+    "person"
+   ]
+  },
+  "has_part": {
+   "family": "part_of",
+   "swap": true,
+   "stored_as_family": false,
+   "description": "a whole has a structurally identifiable component, section, geographic subdivision, or organizational unit; incidental contents do not qualify",
+   "head_types": [
+    "concept",
+    "organization",
+    "product"
+   ],
+   "tail_types": [
+    "concept",
+    "product"
+   ],
+   "hold_reason": "part_of is a hierarchy relation, which the default rendered context does not show as a fact; stored as has_part, the fact still renders"
+  },
+  "has_prerequisite": {
+   "family": "requires",
+   "swap": false,
+   "stored_as_family": true,
+   "description": "an event, concept, or action requires another condition before it",
+   "head_types": [
+    "event",
+    "concept"
+   ],
+   "tail_types": [
+    "event",
+    "concept"
+   ]
+  },
+  "has_property": {
+   "family": "has_attribute",
+   "swap": false,
+   "stored_as_family": true,
+   "description": "a subject intrinsically exhibits an explicit trait, capability, physical characteristic, or quality",
+   "head_types": [
+    "concept",
+    "organization",
+    "product",
+    "person"
+   ],
+   "tail_types": [
+    "concept"
+   ]
+  },
+  "owns": {
+   "family": "has",
+   "swap": false,
+   "stored_as_family": false,
+   "description": "a person or organization owns an asset, product, or organization",
+   "head_types": [
+    "person",
+    "organization"
+   ],
+   "tail_types": [
+    "organization",
+    "product"
+   ],
+   "hold_reason": "has is also a function word, which the relation filter drops from the rendered context; stored as owns, the fact still renders"
+  },
+  "preceded_by": {
+   "family": "succeeded_by",
+   "swap": true,
+   "stored_as_family": true,
+   "description": "a person or organization had another as the previous holder of the same office, governing role, or institutional function",
+   "head_types": [
+    "person",
+    "organization"
+   ],
+   "tail_types": [
+    "person",
+    "organization"
+   ]
+  }
+ },
  "string_to_family": {
   "achieve": "achieves_addresses",
   "acquire": "acquired",
@@ -1266,7 +1360,7 @@
   "fit": "similar_to",
   "flag": "asserts",
   "focus": "targets_aims",
-  "follow": "preceded_by",
+  "follow": "succeeded_by",
   "force": "caused",
   "form": "created",
   "formalize": "created",
@@ -1338,7 +1432,7 @@
   "outperform": "competes_outperforms",
   "overlap": "similar_to",
   "override": "replaces_supersedes",
-  "own": "owns",
+  "own": "has",
   "parse": "processes_data",
   "participate": "participated_in",
   "pass": "transfers_to",
@@ -1445,6 +1539,9 @@
   "write": "created",
   "yield": "caused"
  },
+ "string_to_family_swaps": [
+  "follow"
+ ],
  "sigma_classes": [
   "temporal",
   "causal",

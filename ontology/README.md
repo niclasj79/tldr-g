@@ -2,14 +2,14 @@
 
 **A measured domain-general edge ontology, the ruler that measured it, and the open format to extend it.**
 
-Most relation ontologies *assert* generality. This one *measured* it: **~94–97% of the relations a frontier-grade reader proposes across 12 text registers** (financial, legal statute, clinical, telecom, scientific, news, code, multilingual, and more — including real GDPR statute at 100% and formal 3GPP specs at 100%) resolve to one of its **84 canonical relation families**. The number, the method, and the honest floors are in [coverage-report.md](coverage-report.md).
+Most relation ontologies *assert* generality. This one *measured* it: **~94–97% of the relations a frontier-grade reader proposes across 12 text registers** (financial, legal statute, clinical, telecom, scientific, news, code, multilingual, and more — including real GDPR statute at 100% and formal 3GPP specs at 100%) resolve to one of its canonical relation families. That was measured on the 84-family vocabulary of the time; the vocabulary now holds **77 families**, with the seven labels it merged kept as extractor aliases, and the coverage has not been re-measured on it. The number, the method, and the honest floors are in [coverage-report.md](coverage-report.md).
 
 ## What's in this bundle
 
 | File | What it is |
 |---|---|
-| [`edge-ontology-reference.md`](edge-ontology-reference.md) | The human reference — all 84 families by axis, with directional glosses, tiers, σ-classes, and inverses. |
-| [`edge-ontology.json`](edge-ontology.json) | The machine export — every family's gloss + type hints + tier + σ-class, plus the ~300-entry observed-string → family normalization map. Language-neutral; load it from anything. |
+| [`edge-ontology-reference.md`](edge-ontology-reference.md) | The human reference — all 77 families by axis, with directional glosses, tiers and σ-classes, plus the seven extractor aliases and the family each means. |
+| [`edge-ontology.json`](edge-ontology.json) | The machine export — every family's gloss + type hints + tier + σ-class, plus the ~300-entry observed-string → family normalization map (every target is a family; `string_to_family_swaps` names the strings whose head and tail swap) and the extractor-alias table. Language-neutral; load it from anything. |
 | [`packs/`](packs/) | The open extension format: domain relation packs as plain JSON (`telecom.json`, `legal.json` bundled). Extend the vocabulary for your domain **by adding a file, not by retraining or forking the core.** |
 | [`closure-test/`](closure-test/) | The ruler — the vocabulary-closure test that produced the coverage numbers. Run it on **your own corpus** to measure how much of your domain the core already covers, and to derive your pack's candidate families from the gap residue. |
 | [`coverage-report.md`](coverage-report.md) | The measurement: 12-register coverage table, method, threshold calibration, and the honest caveats. |

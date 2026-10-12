@@ -1,0 +1,76 @@
+{
+  "attestation_version": 1,
+  "payload_type": "render_trace",
+  "payload": {
+    "trace_version": 2,
+    "answer_id": "0f8c1b2e-5d7a-4c3b-9e1f-2a6b8c4d0e9f",
+    "query_text": "What controls did the vendor attest?",
+    "answered_at": "2026-10-02T00:00:00+00:00",
+    "model_label": "tp-vrg",
+    "surface": "answer",
+    "binds": "the rendered evidence given for this question; not the generated answer text",
+    "generation": "pending",
+    "provenance_coverage": "full",
+    "citations": [
+      {
+        "cite_order": 0,
+        "segment_id": "src_soc2::seg1",
+        "source_label": "Nordbridge SOC 2 report",
+        "content_hash": "sha256:abababababababababababababababababababababababababababababababab",
+        "text_sha256": "sha256:cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd",
+        "verbatim": true
+      },
+      {
+        "cite_order": 1,
+        "segment_id": "seg-orphan",
+        "source_label": null,
+        "content_hash": null,
+        "text_sha256": null,
+        "verbatim": null
+      }
+    ],
+    "pointers": [
+      {
+        "id": "src_soc2::seg9",
+        "lod": "reference",
+        "reason": "rank 4: beyond the text-budget cut"
+      }
+    ],
+    "evidence": {
+      "context_sha256": "sha256:efefefefefefefefefefefefefefefefefefefefefefefefefefefefefefefef",
+      "context_tokens_estimated": 1487,
+      "rendered_passages": 2
+    },
+    "budget": {
+      "ceiling_tokens": 10000,
+      "requested_tokens": 10000,
+      "requested_by": "endpoint-default"
+    },
+    "recipe": {
+      "topology_profile": {
+        "name": "product",
+        "resolved_hash": "8282828282828282828282828282828282828282828282828282828282828282",
+        "confirmed_by_plan": true
+      },
+      "ingest_regimes": {
+        "mixed": false
+      }
+    },
+    "sufficiency": {
+      "verdict": "sufficient"
+    },
+    "principal": {
+      "signer": "ops-desk",
+      "signer_kind": "key-fingerprint",
+      "caller": "tok:0123456789abcdef",
+      "caller_kind": "token",
+      "note": "signer names the signing key, not a person"
+    }
+  },
+  "payload_hash": "sha256:e3e3e3e3e3e3e3e3e3e3e3e3e3e3e3e3e3e3e3e3e3e3e3e3e3e3e3e3e3e3e3e3",
+  "signed_at": "2026-10-02T00:00:00+00:00",
+  "signed_by": "ops-desk",
+  "key_id": "ed25519:0123456789abcdef",
+  "public_key": "bm90LWEtcmVhbC1wdWJsaWMta2V5",
+  "signature": "bm90LWEtcmVhbC1zaWduYXR1cmU="
+}

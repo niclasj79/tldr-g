@@ -100,4 +100,4 @@ python -m pytest -q
 
 ## Status
 
-v0.3.0 — available now. Download from the **Releases** tab above or **[tldr-g.ai](https://tldr-g.ai)**.
+v0.3.1 — available now. Download from the **Releases** tab above or **[tldr-g.ai](https://tldr-g.ai)**.

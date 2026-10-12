@@ -36,4 +36,4 @@ In the Cockpit, the **Clear Graph** button (in the danger zone of the Ingest pan
 
 ## How do I verify a receipt?
 
-Open [verify.html](../verify.html) in any browser and drop a receipt on it. No install, no network — it works offline from a `file://` URL. The `tp-vrg-verify` CLI does the same three checks (payload hash, key-id binding, Ed25519 signature) for anyone who already has a terminal open.
+Open [verify.html](../verify.html) in any browser and drop a receipt on it. No install, no network — it works offline from a `file://` URL. The `tp-vrg-verify` CLI does the same checks (payload hash, key-id binding, Ed25519 signature, and that a signer naming a key is the key that signed) for anyone who already has a terminal open.

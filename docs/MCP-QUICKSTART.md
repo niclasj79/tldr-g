@@ -109,7 +109,7 @@ This is the one thing worth understanding before you build against it. It does n
 
 Practically, for an agent author:
 
-- **Pass a real `token_budget`.** It is the control surface. A smaller budget does not truncate the answer — it renders a more compressed view of the same territory. If you never vary it, you never see the mechanism work.
+- **Pass a real `token_budget`.** It is the control surface, and a hard limit: the context never exceeds it. What does not fit is left out, and the response's `render_plan` names what was left out and why. Vary the budget and compare the render plans to see what a tighter budget gives up.
 - **Ingest at the grain you'll ask at.** The graph connects across documents, so several small related ingests generally beat one large blob.
 - **Reach for `tp_vrg_export_trace` whenever the answer matters.** It is the difference between an agent that asserts and an agent that can be checked.
 

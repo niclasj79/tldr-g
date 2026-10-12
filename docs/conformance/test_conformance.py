@@ -19,9 +19,31 @@ import conformance
 def test_schemas_are_loadable_and_well_formed() -> None:
     env = conformance.load_schema(conformance.ENVELOPE_SCHEMA)
     assert env["title"] == "Attestation Envelope v1"
-    for name in conformance.PAYLOAD_SCHEMA_BY_TYPE.values():
+    names = [*conformance.PAYLOAD_SCHEMA_BY_TYPE.values(),
+             *conformance.PAYLOAD_SCHEMA_BY_VERSION.values()]
+    for name in names:
         schema = conformance.load_schema(name)
         assert schema["$schema"].startswith("https://json-schema.org/draft/2020-12")
+
+
+def test_a_render_trace_is_dispatched_on_its_trace_version() -> None:
+    """v2 (the answer receipt) arrives beside v1, never underneath it: each
+    version is checked against its own schema, and an unknown version is
+    rejected rather than waved through."""
+    v2 = json.loads(
+        (conformance.FIXTURE_DIR / "valid" / "envelope-render-trace-v2.json").read_text(encoding="utf-8")
+    )
+    assert conformance.payload_schema_name("render_trace", v2["payload"]) == "render-trace-v2.schema.json"
+    assert conformance.validate_envelope(v2)["conforms"] is True
+    v1 = json.loads(
+        (conformance.FIXTURE_DIR / "valid" / "envelope-render-trace.json").read_text(encoding="utf-8")
+    )
+    assert conformance.payload_schema_name("render_trace", v1["payload"]) == "render-trace-v1.schema.json"
+    for version in (3, True, 2.0, "2"):
+        odd = json.loads(json.dumps(v2))
+        odd["payload"]["trace_version"] = version
+        assert conformance.validate_envelope(odd)["conforms"] is False, version
+        assert conformance.validate_envelope(odd, force_stdlib=True)["conforms"] is False, version
 
 
 def test_jsonschema_is_the_active_backend() -> None:
