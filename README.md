@@ -10,7 +10,7 @@ TLDR-G is a local-first **knowledge rendering engine**: it turns your source mat
 
 ## Get the engine (free)
 
-The engine runs **entirely on your machine** — no cloud, no API key:
+The engine runs **entirely on your machine** — no cloud, no API key in the raw configuration:
 
 - the **Cockpit desktop app** — ingest your own sources, query them, and watch the engine show its reasoning (the context it rendered, the intent it inferred, the tokens it saved); and
 - **`tldr-g-mcp`** — an MCP server any agent client (Claude Desktop, Cursor, …) can call as a tool.
