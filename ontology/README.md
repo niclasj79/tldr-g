@@ -2,21 +2,21 @@
 
 **A measured domain-general edge ontology, the ruler that measured it, and the open format to extend it.**
 
-Most relation ontologies *assert* generality. This one *measured* it: **~94–97% of the relations a frontier-grade reader proposes across 12 text registers** (financial, legal statute, clinical, telecom, scientific, news, code, multilingual, and more — including real GDPR statute at 100% and formal 3GPP specs at 100%) resolve to one of its canonical relation families. That was measured on the 84-family vocabulary of the time; the vocabulary now holds **77 families**, with the seven labels it merged kept as extractor aliases, and the coverage has not been re-measured on it. The number, the method, and the honest floors are in [coverage-report.md](coverage-report.md).
+Most relation ontologies *assert* generality. This one *measured* it: **~94–97% of the relations a frontier-grade reader proposes across 12 text registers** (financial, legal statute, clinical, telecom, scientific, news, code, multilingual, and more — including real GDPR statute at 100% and formal 3GPP specs at 100%) resolve to one of its canonical relation families. That was measured on the 84-family vocabulary of the time; the vocabulary now holds **73 families**, with the eleven labels it merged kept as extractor aliases, four families renamed (their old names are listed for graphs that still store them) and one declared twin set, and the coverage has not been re-measured on it. The number, the method, and the honest floors are in [coverage-report.md](coverage-report.md).
 
 ## What's in this bundle
 
 | File | What it is |
 |---|---|
-| [`edge-ontology-reference.md`](edge-ontology-reference.md) | The human reference — all 77 families by axis, with directional glosses, tiers and σ-classes, plus the seven extractor aliases and the family each means. |
-| [`edge-ontology.json`](edge-ontology.json) | The machine export — every family's gloss + type hints + tier + σ-class, plus the ~300-entry observed-string → family normalization map (every target is a family; `string_to_family_swaps` names the strings whose head and tail swap) and the extractor-alias table. Language-neutral; load it from anything. |
+| [`edge-ontology-reference.md`](edge-ontology-reference.md) | The human reference — all 73 families by axis, with directional glosses, tiers and σ-classes, plus the eleven extractor aliases and the family each means, the four renamed labels, and the declared twin set. |
+| [`edge-ontology.json`](edge-ontology.json) | The machine export (version 3) — every family's gloss + type hints + tier + σ-class, plus the ~300-entry observed-string → family normalization map (every target is a family; `string_to_family_swaps` names the strings whose head and tail swap), the extractor-alias table, the renamed-label table (an old name → its family, so a file-only consumer can read a graph written before a rename) and the twin sets. Language-neutral; load it from anything. |
 | [`packs/`](packs/) | The open extension format: domain relation packs as plain JSON (`telecom.json`, `legal.json` bundled). Extend the vocabulary for your domain **by adding a file, not by retraining or forking the core.** |
 | [`closure-test/`](closure-test/) | The ruler — the vocabulary-closure test that produced the coverage numbers. Run it on **your own corpus** to measure how much of your domain the core already covers, and to derive your pack's candidate families from the gap residue. |
 | [`coverage-report.md`](coverage-report.md) | The measurement: 12-register coverage table, method, threshold calibration, and the honest caveats. |
 
 ## The design in one paragraph
 
-Every edge stores its relation as a **canonical family** from a closed, corpus-harvested vocabulary, with the original free string preserved as an open-world `subtype`. Each family carries a directional gloss (head → tail), a **tier** (`structural` / `semantic` / `temporal`), and a **σ-class** (`factual` / `episodic` / `authorial` / `causal` / `temporal`) — the render/bundle class downstream algebra consumes. Free strings resolve to families via an exact-string map (~300 entries) backed by an embedding-nearest-gloss resolver; what resolves nowhere is a measured **gap**, and gaps are how the vocabulary grows: cluster the residue, gloss the clusters, ship them as a pack.
+Every edge stores its relation as a **canonical family** from a closed, corpus-harvested vocabulary; while it is extracted, the original free string is kept beside it as an open-world `subtype` (not yet persisted with the stored edge). Each family carries a directional gloss (head → tail), a **tier** (`structural` / `semantic` / `temporal`), and a **σ-class** (`factual` / `episodic` / `authorial` / `causal` / `temporal`) — the render/bundle class downstream algebra consumes. Free strings resolve to families via an exact-string map (~300 entries) backed by an embedding-nearest-gloss resolver; what resolves nowhere is a measured **gap**, and gaps are how the vocabulary grows: cluster the residue, gloss the clusters, ship them as a pack.
 
 ## Why the trio matters
 

@@ -1,20 +1,7 @@
 {
  "ontology": "tldr-g-edge-ontology",
- "version": 2,
+ "version": 3,
  "families": {
-  "founded": {
-   "description": "a person or organization founded an organization or institution",
-   "head_types": [
-    "person",
-    "organization"
-   ],
-   "tail_types": [
-    "organization"
-   ],
-   "tier": "semantic",
-   "sigma_family": "authorial",
-   "symmetric": false
-  },
   "ceo_of": {
    "description": "a person explicitly holds or held the title of chief executive officer or chief executive of an organization",
    "head_types": [
@@ -40,7 +27,7 @@
    "symmetric": false
   },
   "member_of": {
-   "description": "a person or organization is a member of a group or organization",
+   "description": "a person or organization belongs by membership to a group or organization; a structural unit of the group, such as a division or department, uses part_of",
    "head_types": [
     "person",
     "organization"
@@ -91,39 +78,14 @@
    "symmetric": true
   },
   "located_in": {
-   "description": "a person resides in, an organization operates from, or a geographic location lies within another geographic location",
+   "description": "a person resides in or is present at, an organization operates from or is headquartered in, an event occurs at, or a physical object, phenomenon, or smaller geographic location lies within, a geographic location",
    "head_types": [
     "organization",
     "location",
-    "person"
-   ],
-   "tail_types": [
-    "location"
-   ],
-   "tier": "semantic",
-   "sigma_family": "factual",
-   "symmetric": false
-  },
-  "at_location": {
-   "description": "an event occurs at, or a person, organization, physical object, or phenomenon is explicitly present at, a geographic location",
-   "head_types": [
     "person",
-    "organization",
     "event",
     "concept",
     "product"
-   ],
-   "tail_types": [
-    "location"
-   ],
-   "tier": "semantic",
-   "sigma_family": "factual",
-   "symmetric": false
-  },
-  "headquartered_in": {
-   "description": "an organization is explicitly stated to have its principal headquarters in a geographic location",
-   "head_types": [
-    "organization"
    ],
    "tail_types": [
     "location"
@@ -169,14 +131,15 @@
    "symmetric": false
   },
   "created": {
-   "description": "a person or organization created a work, product, or concept",
+   "description": "a person or organization created a work, product, or concept, or founded an organization or institution",
    "head_types": [
     "person",
     "organization"
    ],
    "tail_types": [
     "product",
-    "concept"
+    "concept",
+    "organization"
    ],
    "tier": "semantic",
    "sigma_family": "authorial",
@@ -242,7 +205,7 @@
    "symmetric": false
   },
   "has_attribute": {
-   "description": "a subject is assigned an explicit descriptive attribute, classification, status, role, or measured value",
+   "description": "a subject is assigned an explicit descriptive attribute, status, role, or measured value; a class the subject belongs to uses is_a or instance_of, and an asset, right, credential, or position it owns or formally holds is a possession, not an attribute",
    "head_types": [
     "concept",
     "organization",
@@ -300,7 +263,7 @@
    "sigma_family": "factual",
    "symmetric": false
   },
-  "form_of": {
+  "version_of": {
    "description": "a subject is an alternate version, inflection, or embodiment of the same identity or content, not the action 'to form'",
    "head_types": [
     "concept",
@@ -367,23 +330,7 @@
    "symmetric": false
   },
   "requires": {
-   "description": "an action, event, or concept requires another condition or resource",
-   "head_types": [
-    "event",
-    "concept",
-    "product"
-   ],
-   "tail_types": [
-    "event",
-    "concept",
-    "product"
-   ],
-   "tier": "semantic",
-   "sigma_family": "causal",
-   "symmetric": false
-  },
-  "depends_on": {
-   "description": "the continued existence, operation, validity, or outcome of a subject materially relies on a specified resource, condition, system, or actor",
+   "description": "an action, event, or concept requires another condition or resource, or the continued existence, operation, validity, or outcome of a subject materially relies on a specified resource, condition, system, or actor",
    "head_types": [
     "event",
     "concept",
@@ -611,8 +558,8 @@
    "sigma_family": "factual",
    "symmetric": true
   },
-  "defined_as": {
-   "description": "a term or symbol receives an explicit meaning, criterion, scope, or value, not a classification, alias, or state change",
+  "means": {
+   "description": "a term or symbol receives an explicit meaning, criterion, scope, or value, not a classification, alias, or state change; a work depicting or describing a subject uses describes",
    "head_types": [
     "concept",
     "product",
@@ -651,7 +598,7 @@
    "symmetric": false
   },
   "publishes": {
-   "description": "an agent publishes, releases, ships, or launches a work or version",
+   "description": "an agent publishes, releases, ships, or launches a work or version, making it available; bringing the work into being uses created",
    "head_types": [
     "person",
     "organization"
@@ -666,7 +613,7 @@
    "symmetric": false
   },
   "transacts": {
-   "description": "a person or organization buys, sells, pays for, or funds a named good, service, asset, security, contract, or funded undertaking; the date, place, or amount of a transaction is not the thing transacted",
+   "description": "a person or organization buys, sells, pays for, or funds a named good, service, asset, security, contract, or funded undertaking, as a purchase or payment; the date, place, or amount of a transaction is not the thing transacted, and the movement of an item to its recipient uses transfers_to",
    "head_types": [
     "person",
     "organization"
@@ -696,8 +643,8 @@
    "sigma_family": "factual",
    "symmetric": false
   },
-  "has": {
-   "description": "a person or organization owns or formally holds an asset, right, credential, position, or resource, not merely receives it",
+  "holds": {
+   "description": "a person or organization owns or formally holds an asset, right, credential, position, or resource, not merely receives it; a descriptive trait, status, or measured value of the subject uses has_attribute",
    "head_types": [
     "person",
     "organization"
@@ -791,8 +738,8 @@
    "sigma_family": "temporal",
    "symmetric": false
   },
-  "becomes": {
-   "description": "a subject enters a new role, class, condition, identity, or state rather than remaining unchanged",
+  "changes_into": {
+   "description": "a subject enters a new role, class, condition, identity, or state rather than remaining unchanged, a change over time; a standing membership in a broader class uses is_a",
    "head_types": [
     "person",
     "organization",
@@ -807,7 +754,7 @@
    "symmetric": false
   },
   "describes": {
-   "description": "an authored work, depiction, or person is the describer and explicitly describes, represents, depicts, or illustrates a named subject, object, event, or state of affairs; a date or place mentioned alongside a description is not what is described",
+   "description": "an authored work, depiction, or person is the describer and explicitly describes, represents, depicts, or illustrates a named subject, object, event, or state of affairs; a date or place mentioned alongside a description is not what is described, and a term or symbol receiving its meaning is a definition, not a description",
    "head_types": [
     "person",
     "product",
@@ -1057,7 +1004,7 @@
    "symmetric": false
   },
   "transfers_to": {
-   "description": "a person, organization, or product is explicitly moved, assigned, delivered, sold, or conveyed to a named recipient or destination",
+   "description": "a person, organization, or product is explicitly moved, assigned, delivered, sold, or conveyed to a named recipient or destination, a movement to the recipient; the purchase or payment itself uses transacts",
    "head_types": [
     "person",
     "organization",
@@ -1138,8 +1085,24 @@
    "symmetric": false
   }
  },
- "family_count": 77,
+ "family_count": 73,
  "extractor_aliases": {
+  "at_location": {
+   "family": "located_in",
+   "swap": false,
+   "stored_as_family": true,
+   "description": "an event occurs at, or a person, organization, physical object, or phenomenon is explicitly present at, a geographic location",
+   "head_types": [
+    "person",
+    "organization",
+    "event",
+    "concept",
+    "product"
+   ],
+   "tail_types": [
+    "location"
+   ]
+  },
   "created_by": {
    "family": "created",
    "swap": true,
@@ -1154,8 +1117,39 @@
     "organization"
    ]
   },
+  "depends_on": {
+   "family": "requires",
+   "swap": false,
+   "stored_as_family": true,
+   "description": "the continued existence, operation, validity, or outcome of a subject materially relies on a specified resource, condition, system, or actor",
+   "head_types": [
+    "event",
+    "concept",
+    "product",
+    "organization"
+   ],
+   "tail_types": [
+    "event",
+    "concept",
+    "product",
+    "organization"
+   ]
+  },
+  "founded": {
+   "family": "created",
+   "swap": false,
+   "stored_as_family": true,
+   "description": "a person or organization founded an organization or institution",
+   "head_types": [
+    "person",
+    "organization"
+   ],
+   "tail_types": [
+    "organization"
+   ]
+  },
   "founded_by": {
-   "family": "founded",
+   "family": "created",
    "swap": true,
    "stored_as_family": true,
    "description": "an organization was founded by a person",
@@ -1180,7 +1174,7 @@
     "concept",
     "product"
    ],
-   "hold_reason": "part_of is a hierarchy relation, which the default rendered context does not show as a fact; stored as has_part, the fact still renders"
+   "hold_reason": "held on 2026-09-29 because part_of is a hierarchy relation that an earlier renderer did not show as a fact; that renderer was removed on 2026-10-12, so the original reason no longer applies, and lifting the hold is a pending decision"
   },
   "has_prerequisite": {
    "family": "requires",
@@ -1211,10 +1205,22 @@
     "concept"
    ]
   },
-  "owns": {
-   "family": "has",
+  "headquartered_in": {
+   "family": "located_in",
    "swap": false,
-   "stored_as_family": false,
+   "stored_as_family": true,
+   "description": "an organization is explicitly stated to have its principal headquarters in a geographic location",
+   "head_types": [
+    "organization"
+   ],
+   "tail_types": [
+    "location"
+   ]
+  },
+  "owns": {
+   "family": "holds",
+   "swap": false,
+   "stored_as_family": true,
    "description": "a person or organization owns an asset, product, or organization",
    "head_types": [
     "person",
@@ -1223,8 +1229,7 @@
    "tail_types": [
     "organization",
     "product"
-   ],
-   "hold_reason": "has is also a function word, which the relation filter drops from the rendered context; stored as owns, the fact still renders"
+   ]
   },
   "preceded_by": {
    "family": "succeeded_by",
@@ -1241,6 +1246,72 @@
    ]
   }
  },
+ "renamed_labels": {
+  "becomes": {
+   "family": "changes_into",
+   "description": "a subject enters a new role, class, condition, identity, or state rather than remaining unchanged",
+   "head_types": [
+    "person",
+    "organization",
+    "product",
+    "concept"
+   ],
+   "tail_types": [
+    "concept"
+   ],
+   "tier": "semantic",
+   "sigma_family": "factual"
+  },
+  "defined_as": {
+   "family": "means",
+   "description": "a term or symbol receives an explicit meaning, criterion, scope, or value, not a classification, alias, or state change",
+   "head_types": [
+    "concept",
+    "product",
+    "organization",
+    "person"
+   ],
+   "tail_types": [
+    "concept"
+   ],
+   "tier": "semantic",
+   "sigma_family": "authorial"
+  },
+  "form_of": {
+   "family": "version_of",
+   "description": "a subject is an alternate version, inflection, or embodiment of the same identity or content, not the action 'to form'",
+   "head_types": [
+    "concept",
+    "product"
+   ],
+   "tail_types": [
+    "concept",
+    "product"
+   ],
+   "tier": "structural",
+   "sigma_family": "factual"
+  },
+  "has": {
+   "family": "holds",
+   "description": "a person or organization owns or formally holds an asset, right, credential, position, or resource, not merely receives it",
+   "head_types": [
+    "person",
+    "organization"
+   ],
+   "tail_types": [
+    "product",
+    "concept"
+   ],
+   "tier": "semantic",
+   "sigma_family": "factual"
+  }
+ },
+ "twin_sets": [
+  [
+   "part_of",
+   "subsidiary_of"
+  ]
+ ],
  "string_to_family": {
   "achieve": "achieves_addresses",
   "acquire": "acquired",
@@ -1255,7 +1326,7 @@
   "announce": "asserts",
   "answer": "asserts",
   "anticipate": "expects_predicts",
-  "appear": "becomes",
+  "appear": "has_attribute",
   "apply": "uses",
   "archive": "stores_preserves",
   "argue": "asserts",
@@ -1270,7 +1341,7 @@
   "avoid": "prevents_constrains",
   "bake": "processes_data",
   "beat": "competes_outperforms",
-  "become": "becomes",
+  "become": "changes_into",
   "benchmark": "measures_evaluates",
   "bind": "connects_to",
   "block": "prevents_constrains",
@@ -1303,7 +1374,7 @@
   "conflict": "distinct_from",
   "connect": "connects_to",
   "consolidate": "combines_with",
-  "constitute": "becomes",
+  "constitute": "is_a",
   "constrain": "prevents_constrains",
   "consume": "uses",
   "contain": "contains",
@@ -1315,12 +1386,12 @@
   "crash": "fails_on",
   "create": "created",
   "decide": "selects_decides",
-  "define": "defined_as",
+  "define": "means",
   "deliver": "achieves_addresses",
   "demand": "requires",
   "demonstrate": "describes",
-  "denote": "defined_as",
-  "depend": "depends_on",
+  "denote": "means",
+  "depend": "requires",
   "depict": "describes",
   "deploy": "publishes",
   "derive": "derived_from",
@@ -1336,7 +1407,7 @@
   "distribute": "transfers_to",
   "drive": "caused",
   "embed": "processes_data",
-  "emerge": "becomes",
+  "emerge": "changes_into",
   "emit": "publishes",
   "enable": "enables",
   "enforce": "prevents_constrains",
@@ -1366,18 +1437,18 @@
   "formalize": "created",
   "frame": "describes",
   "fund": "transacts",
-  "gain": "has",
+  "gain": "holds",
   "gate": "prevents_constrains",
   "generate": "created",
-  "get": "has",
+  "get": "holds",
   "govern": "operates_maintains",
   "grow": "transforms",
   "handle": "operates_maintains",
-  "have": "has",
+  "have": "holds",
   "head": "leads",
   "help": "enables",
   "highlight": "describes",
-  "hold": "has",
+  "hold": "holds",
   "host": "operates_maintains",
   "identify": "discovers",
   "illustrate": "describes",
@@ -1398,7 +1469,7 @@
   "join": "participated_in",
   "justify": "verifies",
   "know": "knows_learns",
-  "land": "at_location",
+  "land": "located_in",
   "launch": "publishes",
   "lead": "leads",
   "leak": "fails_on",
@@ -1406,7 +1477,7 @@
   "let": "enables",
   "limit": "prevents_constrains",
   "link": "connects_to",
-  "live": "at_location",
+  "live": "located_in",
   "log": "stores_preserves",
   "lose": "competes_outperforms",
   "maintain": "operates_maintains",
@@ -1414,7 +1485,7 @@
   "manage": "operates_maintains",
   "map": "processes_data",
   "match": "similar_to",
-  "mean": "defined_as",
+  "mean": "means",
   "measure": "measures_evaluates",
   "meet": "achieves_addresses",
   "mention": "references",
@@ -1432,7 +1503,7 @@
   "outperform": "competes_outperforms",
   "overlap": "similar_to",
   "override": "replaces_supersedes",
-  "own": "has",
+  "own": "holds",
   "parse": "processes_data",
   "participate": "participated_in",
   "pass": "transfers_to",
@@ -1456,7 +1527,7 @@
   "quote": "references",
   "rank": "measures_evaluates",
   "reach": "achieves_addresses",
-  "receive": "has",
+  "receive": "receives_action",
   "recognize": "discovers",
   "recommend": "asserts",
   "record": "stores_preserves",
@@ -1466,17 +1537,17 @@
   "reflect": "describes",
   "reject": "prevents_constrains",
   "release": "publishes",
-  "rely": "depends_on",
-  "remain": "becomes",
+  "rely": "requires",
+  "remain": "has_attribute",
   "render": "processes_data",
   "replace": "replaces_supersedes",
   "report": "asserts",
   "represent": "describes",
   "require": "requires",
   "resemble": "similar_to",
-  "reside": "at_location",
+  "reside": "located_in",
   "restrict": "prevents_constrains",
-  "retain": "has",
+  "retain": "holds",
   "retire": "replaces_supersedes",
   "retrieve": "processes_data",
   "reveal": "describes",
@@ -1496,14 +1567,14 @@
   "ship": "publishes",
   "show": "describes",
   "sign": "signed",
-  "sit": "at_location",
+  "sit": "located_in",
   "solve": "achieves_addresses",
-  "specify": "defined_as",
+  "specify": "means",
   "spend": "transacts",
   "split": "combines_with",
   "spot": "discovers",
   "state": "asserts",
-  "stay": "becomes",
+  "stay": "has_attribute",
   "steer": "operates_maintains",
   "store": "stores_preserves",
   "suggest": "asserts",
@@ -1522,7 +1593,7 @@
   "transform": "transforms",
   "trigger": "caused",
   "tune": "transforms",
-  "turn": "becomes",
+  "turn": "changes_into",
   "uncover": "discovers",
   "understand": "knows_learns",
   "unify": "combines_with",

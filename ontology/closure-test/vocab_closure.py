@@ -102,9 +102,34 @@ def extract(args):
 
 # ---------------------------------------------------------------- phase 2: map
 def _load_ontology(path):
+    """The core families, the known string map, and the names a pack may not claim.
+
+    A pack family named like a core family, an extractor alias or a renamed label is
+    ignored by the engine (see ../packs/README.md), so all three are read here.
+    """
     data = json.loads(Path(path).read_text(encoding="utf-8"))
     families = dict(data["families"])
-    return families, dict(data.get("string_to_family", {}))
+    reserved = (set(families) | set(data.get("extractor_aliases") or {})
+                | set(data.get("renamed_labels") or {}))
+    return families, dict(data.get("string_to_family", {})), reserved
+
+
+def merge_packs(families, reserved, packs):
+    """The core plus the packs' families, merged the way the engine loads them.
+
+    A pack family whose name is reserved (a core family, an extractor alias or a
+    renamed label) or whose entry is not an object is ignored, so the coverage reported
+    is coverage the engine can store; between packs, a later pack's entry replaces an
+    earlier one's. Returns the merged families and the sorted names that were ignored.
+    """
+    merged, ignored = dict(families), set()
+    for pack in packs:
+        for name, meta in (pack.get("families") or {}).items():
+            if name in reserved or not isinstance(meta, dict):
+                ignored.add(name)
+                continue
+            merged[name] = meta
+    return merged, sorted(ignored)
 
 
 def _embedder(model_name):
@@ -120,11 +145,13 @@ def _embedder(model_name):
 
 def mapcov(args):
     import numpy as np
-    families, string_to_family = _load_ontology(args.ontology)
-    for pack_path in args.pack or []:
-        pack = json.loads(Path(pack_path).read_text(encoding="utf-8"))
-        for name, meta in pack.get("families", {}).items():
-            families.setdefault(name, meta)  # additive: core wins on collision
+    families, string_to_family, reserved = _load_ontology(args.ontology)
+    packs = [json.loads(Path(p).read_text(encoding="utf-8")) for p in args.pack or []]
+    families, pack_ignored = merge_packs(families, reserved, packs)
+    if pack_ignored:
+        print("  pack families ignored (named like a core family, an extractor alias or a "
+              f"renamed label, or malformed; the engine ignores them too): {', '.join(pack_ignored)}",
+              file=sys.stderr)
     embed = _embedder(args.embedding_model)
 
     data = json.loads(Path(args.edges).read_text(encoding="utf-8"))
@@ -189,6 +216,7 @@ def mapcov(args):
     report = {
         "threshold": thr,
         "families": len(fams),
+        "pack_families_ignored": pack_ignored,
         "distinct_relations": n,
         "distinct_coverage": round(float(covered.mean()), 3),
         "edge_coverage": round(edge_cov, 3),

@@ -552,6 +552,18 @@ def actor_write_summary(
     return summary
 
 
+class UnknownCursorError(LookupError):
+    """A list cursor that names no row the caller may page from.
+
+    :meth:`ProvenanceBackend.list_answers` takes the previous page's last
+    answer id as its cursor. One that names no such row -- the store was
+    cleared since, or the row is another caller's -- is refused rather than
+    answered with an empty or misplaced page (INV-2). The refusal is the same
+    for both, and never echoes the cursor, so a scoped caller cannot use it to
+    probe for other callers' rows.
+    """
+
+
 class ProvenanceBackend:
     """SQLite-backed provenance store (F16)."""
 
@@ -1611,6 +1623,208 @@ class ProvenanceBackend:
         ).fetchall()
         return [dict(r) for r in rows]
 
+    def list_answers(
+        self,
+        *,
+        limit: int,
+        before: str | None = None,
+        only_user_id: str | None = None,
+    ) -> dict[str, Any]:
+        """One page of the stored answers, newest first (the Trust room's render list).
+
+        Newest first is the store's insertion order: a keyset on the answers
+        rowid. The cursor is never that rowid, which is a position across every
+        caller's rows (a scoped caller could count the rows others recorded
+        between its own) and restarts at ``clear_all`` (a stale one would page
+        the new rows as older ones). ``next_before`` is the answer id of the
+        page's last row; passed back as ``before``, it is resolved here to its
+        position, within ``only_user_id``'s rows when that is given, and the
+        page holds the rows older than it. A cursor that names no such row
+        raises :class:`UnknownCursorError`, never an empty or misplaced page.
+        With ``only_user_id`` the page holds only the rows recorded for that
+        caller, and ``total`` counts only theirs.
+
+        Every column is named, so a column added to ``answers`` later is never
+        read here. The page carries flags and counts; the answer's own text and
+        render plan stay with the per-answer routes.
+
+        ``verification`` says what the signed claim check says: a run record,
+        or claims stored before run records were kept (dated by the first
+        claim, naming the tiers their verdicts name), as
+        ``output_verifier.build_verification_trace`` reads them.
+
+        Read-only: ``answer_removal_marks`` is read only when a delete has
+        created it, and never created here. It raises on ``sqlite3.Error`` and
+        on an unreadable verification record (``ValueError``), and never returns
+        an empty page for a failure (INV-2b). An unreadable pointer list reads
+        as ``pointer_count: None``, decided in the SQL rather than in an except.
+        The statements are separate reads: a caller sharing the connection with
+        a writer serialises against it (the HTTP route holds the app lock).
+        """
+        assert self._conn is not None
+        if isinstance(limit, bool) or not isinstance(limit, int) or limit < 1:
+            raise ValueError(f"limit must be a positive int, got {limit!r}")
+        if before is not None and (not isinstance(before, str) or not before):
+            raise ValueError(
+                "before must be a next_before cursor (a non-empty answer id), "
+                f"got {type(before).__name__}"
+            )
+        where: list[str] = []
+        params: list[Any] = []
+        if before is not None:
+            if only_user_id is None:
+                anchor = self._conn.execute(
+                    "SELECT rowid FROM answers WHERE answer_id = ?", (before,)
+                ).fetchone()
+            else:
+                anchor = self._conn.execute(
+                    "SELECT rowid FROM answers WHERE answer_id = ? AND user_id = ?",
+                    (before, only_user_id),
+                ).fetchone()
+            if anchor is None:
+                # One message for "gone" and "not yours", and no echo of the
+                # cursor: the refusal is not an oracle for other callers' rows.
+                raise UnknownCursorError(
+                    "the cursor names no answer this list can page from: the "
+                    "store was cleared since, or the answer is not in this scope"
+                )
+            where.append("a.rowid < ?")
+            params.append(int(anchor[0]))
+        if only_user_id is not None:
+            where.append("a.user_id = ?")
+            params.append(only_user_id)
+        clause = (" WHERE " + " AND ".join(where)) if where else ""
+        # LIMIT limit + 1: the extra row only says whether an older page exists.
+        fetched = self._conn.execute(
+            "SELECT a.answer_id, a.query_text, a.answered_at, "
+            "a.model_label, a.user_id, "
+            "a.response_recorded_at IS NOT NULL AS has_response, "
+            "CASE WHEN json_valid(a.render_pointers) THEN "
+            "CASE WHEN json_type(a.render_pointers) = 'array' "
+            "THEN json_array_length(a.render_pointers) END END AS pointer_count, "
+            "(SELECT COUNT(*) FROM answer_citations c "
+            "WHERE c.answer_id = a.answer_id) AS citation_count, "
+            "v.verified_at AS verified_at, v.tiers_offered AS tiers_offered "
+            "FROM answers a LEFT JOIN answer_verification_runs v "
+            "ON v.answer_id = a.answer_id"
+            + clause
+            + " ORDER BY a.rowid DESC LIMIT ?",
+            (*params, limit + 1),
+        ).fetchall()
+        more = len(fetched) > limit
+        page = fetched[:limit]
+        ids = [str(row["answer_id"]) for row in page]
+        verdict_counts: dict[str, dict[str, int]] = {}
+        first_claims: dict[str, tuple[Any, bool]] = {}
+        removal_counts: dict[str, dict[str, int]] = {}
+        if ids:
+            # The chunked IN helper; the ids it binds here are answer ids.
+            for row in self._rows_naming_segments(
+                "SELECT answer_id, verdict, COUNT(*) AS n FROM answer_claims "
+                "WHERE answer_id IN ({placeholders}) GROUP BY answer_id, verdict",
+                ids,
+            ):
+                verdict_counts.setdefault(str(row["answer_id"]), {})[
+                    str(row["verdict"])
+                ] = int(row["n"])
+            # Claims with no run record were written before run records were
+            # kept, and nothing backfills one. The signed claim check counts
+            # them as a verification that ran, dated by the first claim; read
+            # them the same way, never as "not checked".
+            claims_only = [
+                str(row["answer_id"])
+                for row in page
+                if str(row["answer_id"]) in verdict_counts
+            ]
+            if claims_only:
+                for row in self._rows_naming_segments(
+                    "SELECT c.answer_id, c.verified_at, EXISTS (SELECT 1 FROM "
+                    "answer_claims n WHERE n.answer_id = c.answer_id "
+                    "AND n.tier = 'nli') AS nli_judged FROM answer_claims c "
+                    "WHERE c.answer_id IN ({placeholders}) AND c.claim_index = "
+                    "(SELECT MIN(m.claim_index) FROM answer_claims m "
+                    "WHERE m.answer_id = c.answer_id)",
+                    claims_only,
+                ):
+                    first_claims[str(row["answer_id"])] = (
+                        row["verified_at"], bool(row["nli_judged"])
+                    )
+            marks_table = self._conn.execute(
+                "SELECT 1 FROM sqlite_master WHERE type = 'table' "
+                "AND name = 'answer_removal_marks'"
+            ).fetchone()
+            if marks_table is not None:
+                for row in self._rows_naming_segments(
+                    "SELECT answer_id, reason, COUNT(*) AS n FROM answer_removal_marks "
+                    "WHERE answer_id IN ({placeholders}) GROUP BY answer_id, reason",
+                    ids,
+                ):
+                    removal_counts.setdefault(str(row["answer_id"]), {})[
+                        str(row["reason"])
+                    ] = int(row["n"])
+        if only_user_id is None:
+            total_row = self._conn.execute("SELECT COUNT(*) FROM answers").fetchone()
+        else:
+            total_row = self._conn.execute(
+                "SELECT COUNT(*) FROM answers WHERE user_id = ?", (only_user_id,)
+            ).fetchone()
+
+        rows: list[dict[str, Any]] = []
+        for row in page:
+            answer_id = str(row["answer_id"])
+            verification: dict[str, Any] | None = None
+            if row["verified_at"] is not None:
+                # No try: an unreadable run record raises, as get_verification_run does.
+                tiers = json.loads(row["tiers_offered"] or "[]")
+                if not isinstance(tiers, list):
+                    raise ValueError(
+                        f"answer {answer_id!r} has a structurally invalid "
+                        "verification record (tiers_offered is not a list)"
+                    )
+                verification = {
+                    "verified_at": row["verified_at"],
+                    "tiers": verification_tiers_run(
+                        ran=True, nli_judged=first_claims.get(answer_id, (None, False))[1],
+                    ),
+                    "tiers_offered": tiers,
+                    "counts": verdict_counts.get(answer_id, {}),
+                }
+            elif answer_id in verdict_counts:
+                # The trace's rule for claims with no run record: the quote
+                # floor ran; embedding and entailment only if a stored claim
+                # names the entailment tier. Pinned to agree with
+                # build_verification_trace by tests/test_provenance_list_answers.py.
+                first_verified_at, nli_judged = first_claims[answer_id]
+                verification = {
+                    "verified_at": first_verified_at,
+                    "tiers": verification_tiers_run(ran=True, nli_judged=nli_judged),
+                    "counts": verdict_counts[answer_id],
+                }
+            marks = removal_counts.get(answer_id)
+            rows.append({
+                "answer_id": answer_id,
+                "query_text": row["query_text"],
+                "answered_at": row["answered_at"],
+                "model_label": row["model_label"],
+                "user_id": row["user_id"],
+                "has_response": bool(row["has_response"]),
+                "citation_count": int(row["citation_count"]),
+                "pointer_count": (
+                    None if row["pointer_count"] is None else int(row["pointer_count"])
+                ),
+                "verification": verification,
+                "evidence_removed": (
+                    None
+                    if not marks
+                    else {"marks": sum(marks.values()), "reasons": sorted(marks)}
+                ),
+            })
+        return {
+            "rows": rows,
+            "total": int(total_row[0]),
+            "next_before": str(page[-1]["answer_id"]) if more else None,
+        }
+
     # ----------------------------------------- reading-order fiber (F16+)
 
     def get_segment_context(
@@ -2170,3 +2384,11 @@ class ProvenanceBackend:
             "integrity": integrity_row[0] if integrity_row else "unknown",
             "path": str(self._path),
         }
+
+
+# Moved from output_verifier (INV-8: the public SDK ships this module, not that one).
+def verification_tiers_run(*, ran: bool, nli_judged: bool, is_abstention: bool = False) -> list[str]:
+    """Derive executed tiers from persisted verdicts, never offered capabilities."""
+    if is_abstention or not ran:
+        return []
+    return ["quote_floor", "embedding", "nli"] if nli_judged else ["quote_floor"]

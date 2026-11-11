@@ -1,6 +1,6 @@
 # Domain Relation Packs
 
-**Open, forkable extensions to the TLDR-G edge vocabulary.** The core is a *lean, domain-general* set of 77 relation families ([../edge-ontology-reference.md](../edge-ontology-reference.md)), measured **~94–97% domain-general** across 12 registers on the earlier 84-family set ([../coverage-report.md](../coverage-report.md)). Domain-*specific* relations do **not** grow that core — they live here, as open JSON packs any domain owner can fork.
+**Open, forkable extensions to the TLDR-G edge vocabulary.** The core is a *lean, domain-general* set of 73 relation families ([../edge-ontology-reference.md](../edge-ontology-reference.md)), measured **~94–97% domain-general** across 12 registers on the earlier 84-family set ([../coverage-report.md](../coverage-report.md)). Domain-*specific* relations do **not** grow that core — they live here, as open JSON packs any domain owner can fork.
 
 ## What a pack is
 
@@ -28,13 +28,13 @@ Field rules:
 - `tier` ∈ `structural | semantic | temporal`.
 - `sigma_family` ∈ `factual | episodic | authorial | causal | temporal` (the render/bundle classes).
 - `head_types` / `tail_types` — optional hints (not enforced in v1).
-- Packs are **additive** — a family whose name collides with a core family is ignored (the core wins). You extend, you don't override.
+- Packs are **additive** — a family whose name collides with a core family, an extractor alias or a renamed label is ignored (the core wins). You extend, you don't override.
 
 ## Authoring your own (the closure-test loop)
 
 1. Run the closure test ([../closure-test/vocab_closure.py](../closure-test/vocab_closure.py)) over **your** corpus, mapping against the core. The **covered %** is how general the core already is for you (usually 90%+).
 2. The **gap residue** (relations with no nearest core family) clusters into your candidate pack families.
-3. Name + gloss them as `packs/<yourdomain>.json`; re-run the closure test with `--pack packs/<yourdomain>.json` → coverage approaches ~100%.
+3. Name + gloss them as `packs/<yourdomain>.json`; re-run the closure test with `--pack packs/<yourdomain>.json` → coverage approaches ~100%. A pack family the engine would ignore (see the field rules above) is ignored by the closure test too, and named in its output (`pack_families_ignored`), so rename it.
 4. Ship it — or open a PR to add it here as an example for others.
 
 ## Bundled packs

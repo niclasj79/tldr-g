@@ -19,7 +19,7 @@ The engine runs **entirely on your machine** — no cloud, no API key in the raw
 
 **Two kinds of configuration.** The **raw configuration** is the deterministic floor: three small local models, no generative model, and nothing leaves your machine; you, or your agent, read the rendered evidence. The **production configurations** add a language model that writes answers or reads your documents at ingest, either hosted (no local LLM needed) or local (nothing leaves your machine). Every tier per model slot, and what it needs: [docs/CONFIGURATIONS.md](docs/CONFIGURATIONS.md).
 
-**Requirements, raw configuration (v0.3.1):** Windows 10/11 (64-bit). An **NVIDIA GPU with ≥4 GB VRAM is strongly recommended** (GTX 1060 6 GB or better) — it runs on CPU-only, but ingest and query are substantially slower there. **16 GB RAM recommended.** Budget **~12 GB of free disk**: the installer is **1.9 GB**, it unpacks to about **5 GB**, and **~4.6 GB (4.24 GiB) of models download once on first launch** (internet needed that first time). *macOS and Linux are fast-follow.*
+**Requirements, raw configuration (v0.3.2):** Windows 10/11 (64-bit). An **NVIDIA GPU with ≥4 GB VRAM is strongly recommended** (GTX 1060 6 GB or better) — it runs on CPU-only, but ingest and query are substantially slower there. **16 GB RAM recommended.** Budget **~12 GB of free disk**: the installer is **1.9 GB**, it unpacks to about **5 GB**, and **~4.6 GB (4.24 GiB) of models download once on first launch** (internet needed that first time). *macOS and Linux are fast-follow.*
 
 **No internet on the target machine?** Download the **offline model pack** from Releases instead — a separate, checksummed artifact carrying exactly the model weights the engine pins, so an air-gapped or regulated machine can install without ever reaching a third party. Two sizes: **1.25 GiB** if the machine only queries an existing graph, **4.24 GiB** if it also ingests documents. It ships its own standalone verifier.
 
@@ -93,7 +93,7 @@ python examples/quickstart.py
 
 ## Versioning
 
-This repo's version tracks the **contract surface** — the artifact formats, the verification behaviour, the adapter interface — **not** the engine binary's version (now v0.3.1). They change for different reasons, and this is the one your integration pins. Within a major version, an artifact that verifies today verifies tomorrow. Full rule + history: [CHANGELOG.md](CHANGELOG.md).
+This repo's version tracks the **contract surface** — the artifact formats, the verification behaviour, the adapter interface — **not** the engine binary's version (now v0.3.2). They change for different reasons, and this is the one your integration pins. Within a major version, an artifact that verifies today verifies tomorrow. Full rule + history: [CHANGELOG.md](CHANGELOG.md).
 
 ## Tests
 
@@ -104,4 +104,4 @@ python -m pytest -q
 
 ## Status
 
-v0.3.1 — available now. Download from the **Releases** tab above or **[tldr-g.ai](https://tldr-g.ai)**.
+v0.3.2 — available now. Download from the **Releases** tab above or **[tldr-g.ai](https://tldr-g.ai)**.
