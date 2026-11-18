@@ -6,12 +6,24 @@
 <title>TLDR-G — the knowledge rendering engine</title>
 <meta name="description" content="A knowledge rendering engine: it renders the context an answer needs instead of retrieving chunks. Local-first, sovereign, evidence-grade. Free engine, open SDK." />
 <link rel="stylesheet" href="style.css" />
+<link rel="icon" type="image/svg+xml" href="favicon.svg" />
+<meta property="og:type" content="website" />
+<meta property="og:url" content="https://tldr-g.ai/" />
+<meta property="og:title" content="TLDR-G — the knowledge rendering engine" />
+<meta property="og:description" content="Render the context an answer needs, and check what every answer was based on. Watch the three-minute demo." />
+<meta property="og:image" content="https://tldr-g.ai/og.png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta property="og:image:alt" content="The TLDR-G logo, knowledge rendering engine, and the line: Render the context an answer needs." />
+<meta name="twitter:card" content="summary_large_image" />
+<link rel="preload" href="fonts/Geist-latin.woff2" as="font" type="font/woff2" crossorigin />
 </head>
 <body>
 <header class="nav">
   <div class="wrap">
-    <a class="brand" href="./">TLDR-G</a>
+    <a class="brand" href="./"><img class="lockup" src="brand/tldrg-lockup-dark.svg" alt="TLDR-G" width="112" height="30" /></a>
     <nav>
+      <a href="#watch">Watch</a>
       <a href="#how">How</a>
       <a href="#proof">Proof</a>
       <a href="/visual-demo/">Demo</a>
@@ -39,6 +51,48 @@
       <a class="btn ghost" href="#whitepaper">Get the whitepaper</a>
     </div>
     <p class="fineprint">Free engine (closed binary, for now) · Open SDK (Apache-2.0) · On-device · EU-resident by construction</p>
+  </section>
+
+  <!-- The demo film (draft 5, 2026-11-18). Self-hosted on purpose: no third-party player,
+       no cookies, no consent banner on a page about evidence staying where it belongs.
+       The subtitles are burned into the picture; the transcript below is the same text. -->
+  <section id="watch" class="wrap">
+    <h2>See it in three minutes</h2>
+    <p>Three questions about a made-up lender's documents, and with each answer, one thing you can
+    check: the sources it used, whether the decision still holds, and a signed receipt of what the
+    model was given, verified offline.</p>
+    <video class="film" controls preload="metadata" playsinline width="1920" height="1080"
+           poster="video/tldr-g-demo-film-poster.jpg">
+      <source src="video/tldr-g-demo-film.mp4" type="video/mp4" />
+      Your browser can't play this video. <a href="video/tldr-g-demo-film.mp4">Download it (MP4, 19 MB)</a>.
+    </video>
+    <p class="fineprint">The lender and its documents are fictional. Narrated in Niclas's own voice,
+    generated with ElevenLabs.</p>
+    <details class="transcript">
+      <summary>Read the transcript</summary>
+      <div>
+        <p>Hi, I'm Niclas. I built TLDR-G, the knowledge rendering engine. Let me show you what it does, on a small set of made-up documents.</p>
+        <p>TLDR-G sits between your documents and an AI model. When you ask a question, it picks out the evidence the model needs, and it shows you what it picked. So you can check what an answer is based on, instead of just trusting it.</p>
+        <p>For this demo, we made up a lender, Hägervik Kredit. Nine documents. In March, their council pushed back an automated affordability check. In May, they reversed that. And we added one document that looks relevant and isn't: a vendor assessment on the same topic. That's our decoy.</p>
+        <p>I'll ask three questions, and for each one I'll show you something you can check.</p>
+        <p>First: why was the check pushed back?</p>
+        <p>Here's the answer. Two reasons, both from the March meeting notes. And it mentions that the decision was reversed later, which is easy to miss.</p>
+        <p>So what did the model actually get? This panel lists every passage it was given. The vendor assessment is here, so the model saw it. The answer doesn't cite it. It cites the meeting notes.</p>
+        <p>Up here, you can see this run uses a cloud model, so you can see where your evidence goes.</p>
+        <p>Second: does that decision still hold?</p>
+        <p>The answer says March was reversed in May, and it points to the decision log.</p>
+        <p>Let's check that. I open the decision log straight from the answer, and here's the line: this entry supersedes the March decision. That's the source itself.</p>
+        <p>Third, and this is the one people remember: what was the board's position? There is no board in these documents.</p>
+        <p>And the answer says so. It doesn't invent one.</p>
+        <p>You can check that too. These are the nine documents it was given. None of them mentions a board.</p>
+        <p>So how do you prove later what the model was given? Every answer here gets a signed receipt, with the question and fingerprints of the evidence. It's signed before the model is even asked.</p>
+        <p>I click Verify, and all seven checks pass. You can also export it and check it offline, with a small standalone verifier. No server, no account.</p>
+        <p>Watch this: I change one character in the question, and it fails. Put it back, and it passes.</p>
+        <p>To be clear, this proves what went into the answer. Whether the answer is right is still your reviewers' call.</p>
+        <p>One last thing: the engine runs on your machine. I used a cloud model to write these answers. If your evidence has to stay in-house, pick a local model, or take just the context, with no model at all.</p>
+        <p>That's TLDR-G. To try it on your own documents, go to tldr-g.ai.</p>
+      </div>
+    </details>
   </section>
 
   <section id="problem" class="wrap band">
@@ -187,7 +241,7 @@
         <figcaption class="fineprint" style="margin-top:.5rem;">INVALID — a tampered citation is caught and flagged.</figcaption>
       </figure>
     </div>
-    <p class="fineprint" style="text-align:center;margin-top:1rem;">A 2-minute walkthrough is coming; the verify step is runnable today from the <a href="https://github.com/niclasj79/tldr-g">SDK</a>.</p>
+    <p class="fineprint" style="text-align:center;margin-top:1rem;">The <a href="#watch">walkthrough</a> shows both, live; the verify step is runnable today from the <a href="https://github.com/niclasj79/tldr-g">SDK</a>.</p>
   </section>
 
   <!-- Visual demo. The one interactive thing on the site: the architecture with the hood
@@ -205,7 +259,7 @@
 <footer class="wrap">
   <div class="foot-grid">
     <div>
-      <p class="brand">TLDR-G</p>
+      <img class="lockup" src="brand/tldrg-lockup-dark.svg" alt="TLDR-G" width="104" height="28" />
       <p class="muted">A knowledge rendering engine. Built in Sweden 🇸🇪 · EU-resident by construction.</p>
     </div>
     <div>

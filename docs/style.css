@@ -1,6 +1,11 @@
+/* Brand type, self-hosted (SIL OFL 1.1, fonts/OFL-geist.txt): Geist for headings, Geist Mono
+   for small capitals, as in the logo (docs/design/visuals/brand/README.md, Type). Latin subset. */
+@font-face{font-family:"Geist"; src:url("fonts/Geist-latin.woff2") format("woff2"); font-weight:100 900; font-display:swap}
+@font-face{font-family:"Geist Mono"; src:url("fonts/GeistMono-latin.woff2") format("woff2"); font-weight:100 900; font-display:swap}
+
 :root{
   --bg:#0f1115; --panel:#161922; --ink:#e8eaf0; --muted:#9aa3b2;
-  --accent:#6ea8fe; --line:#262b36; --band:#12151c; --good:#3fb950;
+  --accent:#FBC11E; --line:#262b36; --band:#12151c; --good:#3fb950;
   --max:1040px; --radius:14px;
 }
 *{box-sizing:border-box}
@@ -70,3 +75,25 @@ footer{border-top:1px solid var(--line); padding:48px 24px 64px}
   border:1px solid var(--line); background:var(--panel); color:var(--ink); font-size:1rem}
 .signup input[type=email]:focus{outline:none; border-color:var(--accent)}
 .signup .btn{cursor:pointer; border:0; font-family:inherit; font-size:1rem}
+
+/* brand lockup in the nav (canon: docs/design/visuals/brand/README.md, "site nav") */
+.brand .lockup{display:block; height:30px; width:auto}
+
+/* the demo film */
+.film{display:block; width:100%; height:auto; margin-top:24px; background:#000;
+  border:1px solid var(--line); border-radius:var(--radius)}
+.transcript{margin-top:18px; max-width:720px}
+.transcript summary{cursor:pointer; color:var(--accent)}
+.transcript p{color:var(--muted)}
+
+/* narrow screens: the nav keeps one line (it had no small-screen rule before the film added a link) */
+@media (max-width:900px){ .nav nav a{margin-left:14px; font-size:.9rem} }
+@media (max-width:720px){ .nav nav a:not(.ghost):not([href="#watch"]){display:none} }
+
+/* in-page links land below the sticky nav */
+section[id]{scroll-margin-top:64px}
+
+/* brand type on headings and the eyebrow */
+h1,h2,h3,.btn{font-family:"Geist",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+.eyebrow{font-family:"Geist Mono",ui-monospace,SFMono-Regular,Consolas,monospace; font-weight:500}
+footer .lockup{display:block; height:28px; width:auto; margin-bottom:10px}
