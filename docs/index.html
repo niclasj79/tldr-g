@@ -4,7 +4,7 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>TLDR-G — the knowledge rendering engine</title>
-<meta name="description" content="A knowledge rendering engine: it renders the context an answer needs instead of retrieving chunks. Local-first, sovereign, evidence-grade. Free engine, open SDK." />
+<meta name="description" content="TLDR-G picks the evidence a question needs from your own documents, shows you what it picked, and signs a receipt anyone can check offline. Runs on your machine. Free engine, open SDK." />
 <link rel="stylesheet" href="style.css" />
 <link rel="icon" type="image/svg+xml" href="favicon.svg" />
 <meta property="og:type" content="website" />
@@ -28,7 +28,7 @@
       <a href="#proof">Proof</a>
       <a href="/visual-demo/">Demo</a>
       <a href="#sovereign">Sovereign</a>
-      <a href="#open">Open</a>
+      <a href="#install">Get it</a>
       <a href="learn/">Learn</a>
       <a class="ghost" href="https://github.com/niclasj79/tldr-g">GitHub</a>
     </nav>
@@ -40,15 +40,15 @@
     <p class="eyebrow">A knowledge rendering engine</p>
     <h1>Render the context an answer needs.<br/>Don't <em>just</em> retrieve chunks.</h1>
     <p class="lede">
-      TLDR-G builds a structured graph of your knowledge and <em>renders</em> exactly the
-      context a question needs — preserving the connections, the provenance, and a hard
-      token budget — and exports a receipt a third party can verify offline. It runs on
-      your machine, against the model you choose.
+      Ask a question of your own documents. TLDR-G picks out the evidence the model needs,
+      <em>shows you what it picked</em>, and signs a receipt anyone can check offline. It runs
+      on your machine, with the model you choose.
     </p>
+    <p class="tagline">Know what matters. See what changed. Prove why.</p>
     <div class="cta">
-      <a class="btn" href="#install">Install</a>
-      <a class="btn ghost" href="https://github.com/niclasj79/tldr-g">Read the SDK</a>
-      <a class="btn ghost" href="#whitepaper">Get the whitepaper</a>
+      <a class="btn" href="#watch">Watch the demo</a>
+      <a class="btn ghost" href="#install">Install</a>
+      <a class="btn ghost" href="#updates">Get launch updates</a>
     </div>
     <p class="fineprint">Free engine (closed binary, for now) · Open SDK (Apache-2.0) · On-device · EU-resident by construction</p>
   </section>
@@ -96,17 +96,16 @@
   </section>
 
   <section id="problem" class="wrap band">
-    <h2>Retrieval loses the truth it was supposed to carry</h2>
+    <h2>Finding the document was never the hard part</h2>
     <p>
-      The dominant pattern — chunk, embed, retrieve top-k, stuff into context — throws away
-      the thing that made the knowledge meaningful: its <strong>structure</strong>. Connected
-      facts arrive as disconnected fragments. Sources blur into a summary you can't check.
-      And the context window fills with near-duplicates while the one bridging fact is missing.
+      Every document was findable. The hard part is knowing which one decides the question: which
+      version applied, what replaced it, where the decision is written down. A pipeline that hands
+      the model the most similar chunks can get you yesterday's decision, quoted perfectly, with
+      nothing to show what the model was given.
     </p>
-    <p class="claim">
-      TLDR-G matches a full-context baseline's answer quality at roughly
-      <strong>88% fewer tokens</strong> on legal multi-hop — and 67–88% fewer across benchmarks —
-      because it renders what matters instead of stuffing everything.
+    <p>
+      TLDR-G picks the evidence a question needs, shows you what it picked, and keeps a signed
+      record of it. So you can check an answer instead of trusting it.
     </p>
   </section>
 
@@ -114,21 +113,21 @@
     <h2>How it works</h2>
     <div class="grid">
       <div class="card">
-        <h3>Build a graph, not a pile</h3>
-        <p>Your documents become a two-scale graph of atoms and passages, with typed
-        connections across structural, temporal, causal, and authorial axes.</p>
+        <h3>Know what matters</h3>
+        <p>Your documents become a knowledge graph: passages, and the names and relations in them,
+        each tied to the exact text it came from. For each question the engine selects the
+        evidence and fits it under a hard token budget, a ceiling and never a target.</p>
       </div>
       <div class="card">
-        <h3>Render, don't dump</h3>
-        <p>For each question, the engine descends the graph and allocates a hard token
-        budget across what's relevant — verbatim where it matters, summarized where it
-        doesn't. A relevance gradient, not a fixed truncation.</p>
+        <h3>See what changed</h3>
+        <p>Every answer lists the passages it was given and opens each one at its source. When a
+        decision was later reversed, you read the line that reversed it, in the document itself.</p>
       </div>
       <div class="card">
-        <h3>Keep the receipts</h3>
-        <p>Every rendered passage carries verbatim provenance back to its source. A built-in
-        <code>verify</code> step lets anyone confirm the cited text actually exists in the
-        original — no trust required.</p>
+        <h3>Prove why</h3>
+        <p>Each answer gets a signed receipt: the question and fingerprints of the evidence, signed
+        before any model is asked. Anyone can check it offline with a standalone verifier. It
+        proves what went in; whether the answer is right stays your reviewers' call.</p>
       </div>
     </div>
   </section>
@@ -137,38 +136,37 @@
     <h2>Proof, not adjectives</h2>
     <ul class="proof">
       <li class="claim">
-          Parity with a full-context baseline at ~88% fewer tokens on legal multi-hop (67–88% across benchmarks).
+        On a small legal set (five public filings, 18 questions, one model, May 2026), the rendered
+        context matched full-context answer quality at about 12K instead of 104K tokens. One corpus:
+        it shows the mechanism works, and it is not a comparison with any product.
       </li>
-      <li>On-device, single-file (SQLite) storage — your data never has to leave the machine.</li>
-      <li>Verifiable provenance: a runnable <code>verify</code> step over signed attestations.</li>
-      <li>A hard token budget enforced as law — high-signal context is protected, not truncated.</li>
+      <li>Runs on your machine. The whole knowledge graph is one local file (SQLite).</li>
+      <li>A signed receipt for every answer, and a verifier that needs no server and no account.</li>
+      <li>The source behind every passage, one click away.</li>
     </ul>
-    <p><a class="btn ghost" href="https://github.com/niclasj79/tldr-g">See the benchmark note + reproduce it</a></p>
   </section>
 
   <section id="sovereign" class="wrap">
     <h2>Sovereign by construction</h2>
     <p>
-      The week this launched, a US government directive cut off foreign access to a leading
-      frontier model overnight, and that model's terms forced 30-day data retention with no
-      enterprise exception. Depending on someone else's cloud for your knowledge layer is a
-      risk that can materialize without warning.
+      Your documents, and the index built from them, should not depend on someone else's cloud
+      staying available or keeping its terms.
     </p>
     <div class="grid">
       <div class="card">
         <h3>Local-first</h3>
-        <p>The engine runs on your hardware. Your data plane is yours; nothing is sent anywhere
-        by default.</p>
+        <p>The engine and the knowledge graph run on your hardware. The app shows, on every page,
+        where your evidence is sent.</p>
       </div>
       <div class="card">
-        <h3>Model-agnostic</h3>
-        <p>The deterministic core needs no LLM at all. Where a model helps, bring your own —
-        local, EU-hosted, or open-weights. No lock-in to any provider.</p>
+        <h3>Your choice of model</h3>
+        <p>Answers can come from a local model or a cloud model you choose. Or take just the context,
+        with no model at all.</p>
       </div>
       <div class="card">
         <h3>Inspectable</h3>
-        <p>Provenance is verifiable and the contracts are open. We apply the same transparency
-        we sell — to ourselves.</p>
+        <p>The receipt formats and the verifier are open source, so you can check our work without
+        trusting us.</p>
       </div>
     </div>
   </section>
@@ -195,53 +193,53 @@
     <h2>Get it</h2>
     <div class="grid">
       <div class="card">
-        <h3>Developers — build &amp; verify now</h3>
-        <p>The open SDK: integration contracts + offline verification. Clone, <code>pip install -e .</code>,
-        run the quickstart (sign → verify → tamper).</p>
+        <h3>Developers: build and verify now</h3>
+        <p>The open SDK: integration contracts and offline verification. Clone, <code>pip install -e .</code>,
+        and run the quickstart (sign, verify, tamper). No engine and no API key needed.</p>
         <p><a class="btn small" href="https://github.com/niclasj79/tldr-g">Get the SDK</a></p>
       </div>
       <div class="card">
-        <h3>The engine — free download</h3>
-        <p>The local Cockpit desktop app + <code>tp-vrg-mcp</code> server + HTTP API. Free to use.</p>
-        <p class="fineprint"><strong>Requirements (v0.1):</strong> Windows 10/11 (64-bit). NVIDIA GPU with ≥4&nbsp;GB VRAM strongly recommended (GTX&nbsp;1060&nbsp;6&nbsp;GB or better) — runs on CPU-only, but ingest and query are ~20–50× slower. 16&nbsp;GB RAM recommended. ~3&nbsp;GB of models download once on first launch. <em>macOS and Linux: fast-follow.</em></p>
+        <h3>The engine: free download</h3>
+        <p>The Cockpit desktop app, the <code>tldr-g-mcp</code> server for your AI tools, and an HTTP API. Free to use.</p>
+        <p class="fineprint"><strong>Requirements (v0.3.2):</strong> Windows 10/11 (64-bit). An NVIDIA GPU with ≥4&nbsp;GB VRAM is strongly recommended (GTX&nbsp;1060&nbsp;6&nbsp;GB or better); it runs on CPU only, but ingest and questions are substantially slower there. 16&nbsp;GB RAM recommended. About 12&nbsp;GB of free disk: the installer is 1.9&nbsp;GB, it unpacks to about 5&nbsp;GB, and about 4.6&nbsp;GB of models download once on first launch. <em>macOS and Linux: fast-follow.</em></p>
         <p><a class="btn small" href="https://github.com/niclasj79/tldr-g/releases">Download free (Windows)</a></p>
       </div>
     </div>
-    <p class="fineprint">A composable developer distribution is on the roadmap — see the Learn page for where this is going.</p>
+    <p class="fineprint">Setup guides (agents over MCP, server mode, installing without internet) are on the <a href="learn/">Learn</a> page.</p>
   </section>
 
-  <section id="whitepaper" class="wrap band">
-    <h2>Get the whitepaper</h2>
+  <section id="updates" class="wrap band">
+    <h2>Get launch updates</h2>
     <p>
-      The full technical paper — the rendering thesis, the substrate and engine, the provenance and
-      sovereignty layer, the engineering discipline, and an honest evaluation. Leave your email and
-      we'll send it over, along with the occasional launch update.
+      New releases and what they change, a few times a year. Leave your email below. Want to see it
+      on your own documents first? <a href="mailto:niclas@tldr-g.ai?subject=TLDR-G%20demo">Email Niclas</a>
+      for a thirty-minute demo.
     </p>
-    <!-- Email capture. -->
+    <!-- Email capture (Airtable Waitlist form). -->
     <iframe class="airtable-embed signup-embed"
             src="https://airtable.com/embed/appDSTEUZRTgUVZFL/pagloT2rd7D50c4Jw/form"
-            title="Get the whitepaper — email signup"
+            title="Get launch updates: email signup"
             frameborder="0" width="100%" height="533"
             style="background: transparent; border: 1px solid var(--line); border-radius: 12px;"></iframe>
-    <p class="fineprint">No spam — your email is used only to send the whitepaper and the
-      occasional launch update, and you can unsubscribe anytime.</p>
+    <p class="fineprint">No spam: your email is used only for launch updates, and you can
+      unsubscribe anytime.</p>
   </section>
 
-  <!-- Receipt diptych. -->
+  <!-- Receipt diptych: take 3's frames of the standalone verifier (2026-11-18), the same page as verify.html in the SDK repo. -->
   <section class="wrap demo" id="see-it">
     <h2>See the receipt</h2>
-    <p>Every answer carries a signed receipt. Anyone can verify it offline — no trust required. Here is what pass and fail look like.</p>
+    <p>Every answer carries a signed receipt. Anyone can check it offline, without trusting us. Here is what pass and fail look like.</p>
     <div class="receipt-diptych" style="display:flex;gap:1.25rem;flex-wrap:wrap;justify-content:center;align-items:flex-start;margin-top:1rem;">
       <figure style="flex:1 1 320px;max-width:520px;margin:0;">
-        <img src="receiptvalid.png" alt="A verification receipt reading VALID — the cited text is confirmed present, verbatim, in the original source." style="width:100%;height:auto;border:1px solid var(--line);border-radius:12px;" />
-        <figcaption class="fineprint" style="margin-top:.5rem;">VALID — the cited passage is confirmed verbatim in the source.</figcaption>
+        <img src="receipt-valid.png" alt="The offline verifier showing VALID: this file has not changed since it was signed." style="width:100%;height:auto;border:1px solid var(--line);border-radius:12px;" />
+        <figcaption class="fineprint" style="margin-top:.5rem;">VALID: the receipt has not changed since it was signed.</figcaption>
       </figure>
       <figure style="flex:1 1 320px;max-width:520px;margin:0;">
-        <img src="receiptinvalid.png" alt="A verification receipt reading INVALID — a tampered citation is detected and rejected." style="width:100%;height:auto;border:1px solid var(--line);border-radius:12px;" />
-        <figcaption class="fineprint" style="margin-top:.5rem;">INVALID — a tampered citation is caught and flagged.</figcaption>
+        <img src="receipt-invalid.png" alt="The offline verifier showing INVALID after one character of the question was changed." style="width:100%;height:auto;border:1px solid var(--line);border-radius:12px;" />
+        <figcaption class="fineprint" style="margin-top:.5rem;">INVALID: one character changed, and the check fails.</figcaption>
       </figure>
     </div>
-    <p class="fineprint" style="text-align:center;margin-top:1rem;">The <a href="#watch">walkthrough</a> shows both, live; the verify step is runnable today from the <a href="https://github.com/niclasj79/tldr-g">SDK</a>.</p>
+    <p class="fineprint" style="text-align:center;margin-top:1rem;">The <a href="#watch">walkthrough</a> shows both, live. The verifier is a single page in the <a href="https://github.com/niclasj79/tldr-g">SDK</a>.</p>
   </section>
 
   <!-- Visual demo. The one interactive thing on the site: the architecture with the hood
