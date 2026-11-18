@@ -9,6 +9,7 @@
     --void:#0A0D13; --surface:#11151E; --surface2:#161B27; --line:#232B3D;
     --render:#2EE6D0; --evidence:#E8C268; --ink:#E8EBF4; --ink-dim:#8A93AB;
     --ok:#4ADE80; --alarm:#F06A6A;
+    --ok-fill:#17843F; --alarm-fill:#C0352B; /* banner fills: white text at 4.5:1 or more */
     --font:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
     --mono:"JetBrains Mono",ui-monospace,"SF Mono","Cascadia Mono",Consolas,monospace;
   }
@@ -20,7 +21,17 @@
   main { max-width:820px; margin:0 auto; }
   h1 { font-size:24px; font-weight:650; margin:0 0 6px; letter-spacing:-0.01em; }
   .sub { color:var(--ink-dim); font-size:14px; margin:0 0 24px; }
+  /* the brand: the canon lockup (docs/design/visuals/brand/svg), inlined so the file stays
+     self-contained; its ink follows the page's colour, its three nodes stay gold */
+  .brand { display:flex; align-items:center; justify-content:space-between; gap:16px; margin:0 0 26px; color:var(--ink); }
+  .lockup { display:block; height:38px; width:auto; }
+  .brand-tag { font-family:var(--mono); font-size:11.5px; letter-spacing:.14em; text-transform:uppercase; color:var(--ink-dim); }
+  .stamp { display:block; height:22px; width:auto; margin-left:auto; flex:none; opacity:.92; }
+  .brandline { margin:0 0 6px; color:var(--ink); }
   .drop {
+    /* a <label> is inline by default: without display:block its border and padding
+       wrap around each line of text instead of framing the zone (founder, 10-21) */
+    display:block;
     border:1px dashed var(--line); border-radius:14px; background:var(--surface);
     padding:36px 24px; text-align:center; cursor:pointer; transition:border-color .12s;
   }
@@ -34,14 +45,20 @@
     padding:10px 12px; font-family:var(--mono); font-size:12px; resize:vertical;
   }
   textarea:focus { outline:none; border-color:var(--render); }
-  .verdict { margin-top:22px; border-radius:14px; padding:20px 22px; border:1px solid var(--line);
-             background:var(--surface); display:none; }
+  .verdict { margin-top:22px; border-radius:14px; border:1px solid var(--line);
+             background:var(--surface); display:none; overflow:hidden; }
   .verdict.show { display:block; }
-  .verdict.valid { border-left:4px solid var(--ok); }
-  .verdict.invalid { border-left:4px solid var(--alarm); }
-  .verdict h2 { margin:0 0 4px; font-size:20px; font-weight:650; }
-  .verdict.valid h2 { color:var(--ok); }
-  .verdict.invalid h2 { color:var(--alarm); }
+  /* the verdict is the loudest thing on the page: a solid green or red banner */
+  .banner { display:flex; align-items:center; gap:18px; padding:20px 24px; color:#FFFFFF; }
+  .verdict.valid .banner { background:var(--ok-fill); }
+  .verdict.invalid .banner { background:var(--alarm-fill); }
+  .verdict.show .banner { animation:land .24s cubic-bezier(.2,.8,.2,1) both; }
+  .glyph { font-size:54px; line-height:1; font-weight:700; flex:none; }
+  .verdict h2 { margin:0; font-size:40px; line-height:1.05; font-weight:800; letter-spacing:.05em; }
+  .banner-sub { margin:6px 0 0; font-size:15px; }
+  .verdict-body { padding:18px 22px 20px; }
+  @keyframes land { from { opacity:0; transform:scale(1.03); } to { opacity:1; transform:none; } }
+  @media (prefers-reduced-motion: reduce) { .verdict.show .banner { animation:none; } }
   .reason { color:var(--ink-dim); font-size:13px; margin-bottom:16px; }
   table { width:100%; border-collapse:collapse; font-size:12.5px; }
   td { padding:6px 0; vertical-align:top; border-top:1px solid var(--line); }
@@ -68,7 +85,11 @@
 </head>
 <body>
 <main>
-  <h1>Verify a TLDR-G receipt</h1>
+  <header class="brand">
+    <svg class="lockup" viewBox="0 0 593.942 158.9" stroke-linecap="butt" role="img" aria-label="TLDR-G"><path d="M155.945 69.705A64.059 64.059 0 1 1 135.91 32.221" fill="none" stroke="currentColor" stroke-width="6.783"/><path d="M143.623 40.676A64.059 64.059 0 0 1 155.172 65.585" fill="none" stroke="currentColor" stroke-width="6.783"/><path d="M29.389 117.362L146.091 30.98" stroke="currentColor" stroke-width="3.423"/><path d="M80.866 79.26L113.397 102.403" stroke="currentColor" stroke-width="3.423"/><path d="M113.397 102.403L146.764 77.705" stroke="currentColor" stroke-width="3.423"/><path d="M114.232 54.562L146.764 77.705" stroke="currentColor" stroke-width="3.423"/><circle cx="21.64" cy="123.098" r="7.411" fill="none" stroke="currentColor" stroke-width="4.459"/><circle cx="153.84" cy="25.245" r="7.411" fill="none" stroke="currentColor" stroke-width="4.459"/><circle cx="80.866" cy="79.26" r="10.048" fill="#FBC11E"/><circle cx="114.232" cy="54.562" r="10.048" fill="#FBC11E"/><circle cx="113.397" cy="102.403" r="10.048" fill="#FBC11E"/><circle cx="146.764" cy="77.705" r="10.048" fill="currentColor"/><path d="M213.342 114.95V56.73H192.082V43.95H249.862V56.73H228.602V114.95ZM262.302 114.95V43.95H277.502V110.89L269.062 102.17H310.242V114.95ZM325.202 114.95V43.95H349.662Q366.962 43.95 376.262 53.2Q385.562 62.45 385.562 79.55Q385.562 96.55 376.412 105.75Q367.262 114.95 350.262 114.95ZM340.402 102.17H349.662Q360.002 102.17 364.952 96.59Q369.902 91.01 369.902 79.49Q369.902 67.89 364.952 62.31Q360.002 56.73 349.662 56.73H340.402ZM400.802 114.95V43.95H431.902Q439.702 43.95 445.432 46.55Q451.162 49.15 454.292 53.91Q457.422 58.67 457.422 65.15Q457.422 70.07 455.382 73.88Q453.342 77.69 449.782 80.07Q446.222 82.45 441.642 83.07L441.282 82.11Q448.382 82.11 452.102 85.2Q455.822 88.29 456.302 94.59L458.062 114.95H442.582L441.262 96.99Q440.982 92.89 438.742 90.94Q436.502 88.99 431.142 88.99H416.002V114.95ZM416.002 76.21H430.182Q435.722 76.21 438.772 73.66Q441.822 71.11 441.822 66.45Q441.822 61.69 438.732 59.21Q435.642 56.73 429.742 56.73H416.002ZM470.782 91.91V79.63H505.142V91.91ZM549.782 116.55Q539.542 116.55 532.202 111.84Q524.862 107.13 520.932 98.81Q517.002 90.49 517.002 79.55Q517.002 68.85 521.012 60.45Q525.022 52.05 532.562 47.2Q540.102 42.35 550.702 42.35Q559.922 42.35 566.252 45.42Q572.582 48.49 576.392 54.09Q580.202 59.69 581.742 67.25L565.962 67.97Q564.902 62.03 561.362 58.58Q557.822 55.13 550.822 55.13Q544.702 55.13 540.672 58.35Q536.642 61.57 534.652 67.07Q532.662 72.57 532.662 79.55Q532.662 86.63 534.612 92.09Q536.562 97.55 540.642 100.66Q544.722 103.77 551.062 103.77Q555.802 103.77 559.232 101.88Q562.662 99.99 564.652 96.66Q566.642 93.33 566.982 89.11H550.842V78.03H581.942V114.95H572.542L571.702 99.75L573.502 100.55Q572.482 105.29 569.112 108.89Q565.742 112.49 560.752 114.52Q555.762 116.55 549.782 116.55Z" fill="currentColor"/></svg>
+    <span class="brand-tag">Offline verifier</span>
+  </header>
+  <h1>Verify a receipt</h1>
   <p class="sub">
     Checks a signed artifact offline, in this page. Nothing is uploaded — there is no server to upload to.
     Works with no internet connection and no software installed.
@@ -83,10 +104,19 @@
   <textarea id="paste" placeholder="…or paste the receipt JSON here" spellcheck="false"></textarea>
 
   <section class="verdict" id="verdict" aria-live="polite">
-    <h2 id="headline"></h2>
-    <div class="reason" id="reason"></div>
-    <table id="fields"></table>
-    <div class="checks" id="checks"></div>
+    <div class="banner">
+      <span class="glyph" id="glyph" aria-hidden="true"></span>
+      <div>
+        <h2 id="headline"></h2>
+        <p class="banner-sub" id="banner-sub"></p>
+      </div>
+      <svg class="stamp" viewBox="0 0 593.942 158.9" stroke-linecap="butt" aria-hidden="true"><path d="M155.945 69.705A64.059 64.059 0 1 1 135.91 32.221" fill="none" stroke="currentColor" stroke-width="6.783"/><path d="M143.623 40.676A64.059 64.059 0 0 1 155.172 65.585" fill="none" stroke="currentColor" stroke-width="6.783"/><path d="M29.389 117.362L146.091 30.98" stroke="currentColor" stroke-width="3.423"/><path d="M80.866 79.26L113.397 102.403" stroke="currentColor" stroke-width="3.423"/><path d="M113.397 102.403L146.764 77.705" stroke="currentColor" stroke-width="3.423"/><path d="M114.232 54.562L146.764 77.705" stroke="currentColor" stroke-width="3.423"/><circle cx="21.64" cy="123.098" r="7.411" fill="none" stroke="currentColor" stroke-width="4.459"/><circle cx="153.84" cy="25.245" r="7.411" fill="none" stroke="currentColor" stroke-width="4.459"/><circle cx="80.866" cy="79.26" r="10.048" fill="currentColor"/><circle cx="114.232" cy="54.562" r="10.048" fill="currentColor"/><circle cx="113.397" cy="102.403" r="10.048" fill="currentColor"/><circle cx="146.764" cy="77.705" r="10.048" fill="currentColor"/><path d="M213.342 114.95V56.73H192.082V43.95H249.862V56.73H228.602V114.95ZM262.302 114.95V43.95H277.502V110.89L269.062 102.17H310.242V114.95ZM325.202 114.95V43.95H349.662Q366.962 43.95 376.262 53.2Q385.562 62.45 385.562 79.55Q385.562 96.55 376.412 105.75Q367.262 114.95 350.262 114.95ZM340.402 102.17H349.662Q360.002 102.17 364.952 96.59Q369.902 91.01 369.902 79.49Q369.902 67.89 364.952 62.31Q360.002 56.73 349.662 56.73H340.402ZM400.802 114.95V43.95H431.902Q439.702 43.95 445.432 46.55Q451.162 49.15 454.292 53.91Q457.422 58.67 457.422 65.15Q457.422 70.07 455.382 73.88Q453.342 77.69 449.782 80.07Q446.222 82.45 441.642 83.07L441.282 82.11Q448.382 82.11 452.102 85.2Q455.822 88.29 456.302 94.59L458.062 114.95H442.582L441.262 96.99Q440.982 92.89 438.742 90.94Q436.502 88.99 431.142 88.99H416.002V114.95ZM416.002 76.21H430.182Q435.722 76.21 438.772 73.66Q441.822 71.11 441.822 66.45Q441.822 61.69 438.732 59.21Q435.642 56.73 429.742 56.73H416.002ZM470.782 91.91V79.63H505.142V91.91ZM549.782 116.55Q539.542 116.55 532.202 111.84Q524.862 107.13 520.932 98.81Q517.002 90.49 517.002 79.55Q517.002 68.85 521.012 60.45Q525.022 52.05 532.562 47.2Q540.102 42.35 550.702 42.35Q559.922 42.35 566.252 45.42Q572.582 48.49 576.392 54.09Q580.202 59.69 581.742 67.25L565.962 67.97Q564.902 62.03 561.362 58.58Q557.822 55.13 550.822 55.13Q544.702 55.13 540.672 58.35Q536.642 61.57 534.652 67.07Q532.662 72.57 532.662 79.55Q532.662 86.63 534.612 92.09Q536.562 97.55 540.642 100.66Q544.722 103.77 551.062 103.77Q555.802 103.77 559.232 101.88Q562.662 99.99 564.652 96.66Q566.642 93.33 566.982 89.11H550.842V78.03H581.942V114.95H572.542L571.702 99.75L573.502 100.55Q572.482 105.29 569.112 108.89Q565.742 112.49 560.752 114.52Q555.762 116.55 549.782 116.55Z" fill="currentColor"/></svg>
+    </div>
+    <div class="verdict-body">
+      <div class="reason" id="reason"></div>
+      <table id="fields"></table>
+      <div class="checks" id="checks"></div>
+    </div>
   </section>
 
   <div class="note">
@@ -99,6 +129,7 @@
   </div>
 
   <footer>
+    <p class="brandline">TLDR-G, the knowledge rendering engine · tldr-g.ai</p>
     Ed25519 + SHA-256, verified locally via the Web Crypto API with a pure-JavaScript fallback.
     This file is self-contained and offline — save it and it keeps working.
     Same result as the <code>tp-vrg-verify</code> CLI.
@@ -509,8 +540,14 @@ const $ = (id) => document.getElementById(id);
 
 function render(res) {
   const box = $("verdict");
+  box.className = "verdict";
+  void box.offsetWidth; // restart the banner's landing on every check
   box.className = "verdict show " + (res.valid ? "valid" : "invalid");
-  $("headline").textContent = res.valid ? "✓  Verified" : "✕  Not verified";
+  $("glyph").textContent = res.valid ? "✓" : "✕";
+  $("headline").textContent = res.valid ? "VALID" : "INVALID";
+  $("banner-sub").textContent = res.valid
+    ? "This file has not changed since it was signed."
+    : "This file failed the check. Do not rely on it.";
   $("reason").textContent = res.reason;
 
   const rows = [];
