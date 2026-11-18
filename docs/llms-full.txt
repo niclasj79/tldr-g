@@ -33,7 +33,7 @@ On a small legal set (five public filings, 18 questions, one model, May 2026), t
 
 ## Where to go next
 
-- Home and the three-minute demo film (with transcript): https://tldr-g.ai/#watch
+- Home and the three-minute demo film: https://tldr-g.ai/#watch
 - Guides (requirements, MCP, server mode, offline install, FAQ): https://tldr-g.ai/learn/
 - SDK and the offline verifier: https://github.com/niclasj79/tldr-g
 - Launch updates (email signup): https://tldr-g.ai/#updates

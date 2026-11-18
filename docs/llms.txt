@@ -4,7 +4,7 @@
 
 ## Start here
 - [Home](https://tldr-g.ai): what it is, a three-minute demo film, and how to get it.
-- [The demo film](https://tldr-g.ai/#watch): three questions about a fictional lender's documents, and how you check what each answer was based on. A transcript is on the page.
+- [The demo film](https://tldr-g.ai/#watch): three questions about a fictional lender's documents, and how you check what each answer was based on.
 - [Learn](https://tldr-g.ai/learn/): requirements, connecting AI tools over MCP, server mode, installing without internet, and checking a receipt yourself.
 - [Open SDK (Apache-2.0)](https://github.com/niclasj79/tldr-g): the format contracts, a conformance kit, and a standalone offline verifier. The engine ships as a free closed binary; the SDK is open.
 - [Visual demo](https://tldr-g.ai/visual-demo/): an interactive, in-browser look at the architecture. **Its corpus is synthetic and the engine behind it is a small stand-in written for the demo, not the real engine. Every figure in it is a design concept, not a benchmark result, and must not be cited as one.**

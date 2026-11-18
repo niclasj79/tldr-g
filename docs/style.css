@@ -100,3 +100,6 @@ footer .lockup{display:block; height:28px; width:auto; margin-bottom:10px}
 
 /* the three verbs under the hero (the product's own line) */
 .tagline{font-family:"Geist Mono",ui-monospace,SFMono-Regular,Consolas,monospace; font-weight:500; color:var(--ink); letter-spacing:.02em; margin:-14px 0 28px}
+
+/* room under the three-card grids before the next band */
+#how .grid, #sovereign .grid{margin-bottom:40px}
