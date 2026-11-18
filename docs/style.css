@@ -103,3 +103,15 @@ footer .lockup{display:block; height:28px; width:auto; margin-bottom:10px}
 
 /* room under the three-card grids before the next band */
 #how .grid, #sovereign .grid{margin-bottom:40px}
+
+/* hero backdrop: the lens image on the right, faded into the page so the headline stays clear */
+.hero-band{position:relative; overflow:hidden; border-bottom:1px solid var(--line)}
+.hero-band::before{content:""; position:absolute; inset:0; background:url("hero-lens.webp") right center / auto 100% no-repeat}
+.hero-band::after{content:""; position:absolute; inset:0;
+  background:linear-gradient(90deg, var(--bg) 0%, var(--bg) 36%, rgba(15,17,21,.72) 56%, rgba(15,17,21,.1) 100%),
+             linear-gradient(0deg, var(--bg) 0%, rgba(15,17,21,0) 22%)}
+.hero-band .hero{position:relative; z-index:1}
+@media (max-width:900px){
+  .hero-band::before{background-image:url("hero-lens-960.webp"); background-size:cover; background-position:68% center; opacity:.5}
+  .hero-band::after{background:linear-gradient(0deg, var(--bg) 0%, rgba(15,17,21,.55) 70%)}
+}
