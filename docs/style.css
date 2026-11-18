@@ -115,3 +115,30 @@ footer .lockup{display:block; height:28px; width:auto; margin-bottom:10px}
   .hero-band::before{background-image:url("hero-lens-960.webp"); background-size:cover; background-position:68% center; opacity:.5}
   .hero-band::after{background:linear-gradient(0deg, var(--bg) 0%, rgba(15,17,21,.55) 70%)}
 }
+
+/* "How it works" band: the graph image above the heading, fading into the page before the cards */
+.graph-band{position:relative; overflow:hidden}
+.graph-band::before{content:""; position:absolute; left:0; right:0; top:0; height:440px;
+  background:url("graph-band.webp") center top / cover no-repeat; opacity:.75}
+.graph-band::after{content:""; position:absolute; left:0; right:0; top:0; height:440px;
+  background:linear-gradient(180deg, var(--bg) 0%, rgba(15,17,21,.25) 30%, rgba(15,17,21,.6) 70%, var(--bg) 100%)}
+.graph-band #how{position:relative; z-index:1; padding-top:180px}
+
+/* a real product frame beside its explanation */
+.feature{display:grid; grid-template-columns:minmax(0,340px) 1fr; gap:36px; align-items:center; margin:0}
+.feature img{width:100%; height:auto; border-radius:var(--radius); border:1px solid var(--line); box-shadow:0 12px 40px rgba(0,0,0,.45)}
+.feature h3{margin-top:0}
+.feature p{color:var(--muted); max-width:520px}
+
+/* a heading block beside a mood image */
+.split{display:grid; grid-template-columns:1fr minmax(0,440px); gap:32px; align-items:center}
+.split .mood{width:100%; height:auto;
+  -webkit-mask-image:radial-gradient(ellipse at center, #000 50%, transparent 78%);
+          mask-image:radial-gradient(ellipse at center, #000 50%, transparent 78%)}
+
+@media (max-width:720px){
+  .graph-band::before, .graph-band::after{height:300px}
+  .graph-band #how{padding-top:120px}
+  .feature, .split{grid-template-columns:1fr}
+  .feature img{max-width:340px}
+}
