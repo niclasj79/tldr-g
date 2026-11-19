@@ -3,18 +3,18 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>TLDR-G — the knowledge rendering engine</title>
-<meta name="description" content="TLDR-G picks the evidence a question needs from your own documents, shows you what it picked, and signs a receipt anyone can check offline. Runs on your machine. Free engine, open SDK." />
+<title>TLDR-G — answers you can check</title>
+<meta name="description" content="Ask questions of your own documents. Every answer shows the passages it used, where a later decision replaced an earlier one, and a signed receipt anyone can verify offline. Runs on your machine." />
 <link rel="stylesheet" href="style.css" />
 <link rel="icon" type="image/svg+xml" href="favicon.svg" />
 <meta property="og:type" content="website" />
 <meta property="og:url" content="https://tldr-g.ai/" />
-<meta property="og:title" content="TLDR-G — the knowledge rendering engine" />
-<meta property="og:description" content="Render the context an answer needs, and check what every answer was based on. Watch the three-minute demo." />
+<meta property="og:title" content="TLDR-G — answers you can check" />
+<meta property="og:description" content="Ask your own documents. See what each answer was based on, and verify it offline. Watch the three-minute demo." />
 <meta property="og:image" content="https://tldr-g.ai/og.png" />
 <meta property="og:image:width" content="1200" />
 <meta property="og:image:height" content="630" />
-<meta property="og:image:alt" content="The TLDR-G logo, knowledge rendering engine, and the line: Render the context an answer needs." />
+<meta property="og:image:alt" content="The TLDR-G logo." />
 <meta name="twitter:card" content="summary_large_image" />
 <link rel="preload" href="fonts/Geist-latin.woff2" as="font" type="font/woff2" crossorigin />
 </head>
@@ -24,10 +24,7 @@
     <a class="brand" href="./"><img class="lockup" src="brand/tldrg-lockup-dark.svg" alt="TLDR-G" width="112" height="30" /></a>
     <nav>
       <a href="#watch">Watch</a>
-      <a href="#how">How</a>
-      <a href="#proof">Proof</a>
-      <a href="/visual-demo/">Demo</a>
-      <a href="#sovereign">Sovereign</a>
+      <a href="#how">How it works</a>
       <a href="#install">Get it</a>
       <a href="learn/">Learn</a>
       <a class="ghost" href="https://github.com/niclasj79/tldr-g">GitHub</a>
@@ -36,23 +33,25 @@
 </header>
 
 <main>
-  <!-- Hero backdrop: website hero concept 3 (docs/gtm/website/), mood only: the lens ring echoes the mark. -->
+  <!-- The landing page describes ONE complete product generation for a first-time visitor:
+       answers you can check (founder direction 2026-11-19, "a working bicycle, not half a car").
+       What comes next lives in the release notes, not here. Rider: an evaluator with one
+       sensitive-document workflow in mind. -->
   <div class="hero-band">
   <section class="hero wrap">
-    <p class="eyebrow">The knowledge rendering engine</p>
-    <h1>Render the context an answer needs.<br/>Don't just retrieve chunks.</h1>
+    <p class="eyebrow">Ask your own documents</p>
+    <h1>Answers you can check.</h1>
     <p class="lede">
-      Ask a question of your own documents. TLDR-G picks out the evidence the model needs,
-      <em>shows you what it picked</em>, and signs a receipt anyone can check offline. It runs
-      on your machine, with the model you choose.
+      TLDR-G answers questions from your documents and <em>shows its work</em>: the passages each
+      answer used, the later decision that replaced an earlier one, and a signed receipt anyone can
+      verify offline. It runs on your machine.
     </p>
     <p class="tagline">Know what matters. See what changed. Prove why.</p>
     <div class="cta">
-      <a class="btn" href="#watch">Watch the demo</a>
-      <a class="btn ghost" href="#install">Install</a>
-      <a class="btn ghost" href="#updates">Get launch updates</a>
+      <a class="btn" href="#watch">Watch the 3-minute demo</a>
+      <a class="btn ghost" href="#install">Download free (Windows)</a>
     </div>
-    <p class="fineprint">Free engine (closed binary, for now) · Open SDK (Apache-2.0) · On-device · EU-resident by construction</p>
+    <p class="fineprint">Free · Windows 10/11 · Runs on your machine · Local or cloud model, your choice</p>
   </section>
   </div>
 
@@ -61,9 +60,8 @@
        The subtitles are burned into the picture. -->
   <section id="watch" class="wrap">
     <h2>See it in three minutes</h2>
-    <p>Three questions about a made-up lender's documents, and with each answer, one thing you can
-    check: the sources it used, whether the decision still holds, and a signed receipt of what the
-    model was given, verified offline.</p>
+    <p>Three questions about a made-up lender's documents. With each answer, one thing you can
+    check: the sources it used, whether the decision still holds, and a signed receipt.</p>
     <video class="film" controls preload="metadata" playsinline width="1920" height="1080"
            poster="video/tldr-g-demo-film-poster.jpg">
       <source src="video/tldr-g-demo-film.mp4" type="video/mp4" />
@@ -72,42 +70,37 @@
   </section>
 
   <section id="problem" class="wrap band">
-    <h2>Finding the document was never the hard part</h2>
+    <h2>The right document. The wrong decision.</h2>
     <p>
-      Every document was findable. The hard part is knowing which one decides the question: which
-      version applied, what replaced it, where the decision is written down. A pipeline that hands
-      the model the most similar chunks can get you yesterday's decision, quoted perfectly, with
-      nothing to show what the model was given.
+      Finding a document that looks like the question is easy. The hard part is knowing which one
+      decides it. A model can quote yesterday's decision perfectly, and you have nothing to show
+      what it was given.
     </p>
-    <p>
-      TLDR-G picks the evidence a question needs, shows you what it picked, and keeps a signed
-      record of it. So you can check an answer instead of trusting it.
-    </p>
+    <p>TLDR-G gives you the answer and three ways to check it.</p>
   </section>
 
   <!-- Band image: website concept "macro graph zoom-out" (docs/gtm/website/), mood only. -->
   <div class="graph-band">
   <section id="how" class="wrap">
-    <h2>How it works</h2>
+    <h2>Three checks on every answer</h2>
     <div class="grid">
       <div class="card">
         <h3>Know what matters</h3>
-        <p>Your documents become a knowledge graph: passages, and the names and relations in them,
-        each tied to the exact text it came from. For each question the engine selects the
-        evidence and fits it under a hard token budget, a ceiling and never a target.</p>
+        <p>Every answer lists the passages it was given. One click opens each one at its source,
+        in the exact document.</p>
       </div>
       <div class="card">
         <h3>See what changed</h3>
-        <p>Every answer lists the passages it was given and opens each one at its source. When a
-        decision was later reversed, you read the line that reversed it, in the document itself.</p>
+        <p>When a decision was later reversed, you read the line that reversed it, highlighted in
+        the document itself.</p>
       </div>
       <div class="card">
         <h3>Prove why</h3>
-        <p>Each answer gets a signed receipt: the question and fingerprints of the evidence, signed
-        before any model is asked. Anyone can check it offline with a standalone verifier. It
-        proves what went in; whether the answer is right stays your reviewers' call.</p>
+        <p>Each answer gets a signed receipt of the question and its evidence, made before any model
+        is asked. Anyone can verify it offline.</p>
       </div>
     </div>
+
     <!-- A frame from the demo film (draft 5, take 3, 1:37): the decision log opened from the answer. -->
     <figure class="feature">
       <img src="decision-log-line.webp" width="518" height="775" loading="lazy"
@@ -115,139 +108,81 @@
       <figcaption>
         <h3>See what changed, in the document itself</h3>
         <p>The answer said the March decision was reversed in May. Opened from the answer, the
-        decision log shows the line that reverses it, highlighted in place.</p>
+        decision log shows the line that reverses it.</p>
         <p class="fineprint">A frame from the demo film. Hägervik Kredit is a lender we made up.</p>
       </figcaption>
     </figure>
   </section>
   </div>
 
-  <section id="proof" class="wrap band">
-    <h2>Proof, not adjectives</h2>
-    <ul class="proof">
-      <li class="claim">
-        On a small legal set (five public filings, 18 questions, one model, May 2026), the rendered
-        context matched full-context answer quality at about 12K instead of 104K tokens. One corpus:
-        it shows the mechanism works, and it is not a comparison with any product.
-      </li>
-      <li>Runs on your machine. The whole knowledge graph is one local file (SQLite).</li>
-      <li>A signed receipt for every answer, and a verifier that needs no server and no account.</li>
-      <li>The source behind every passage, one click away.</li>
-    </ul>
+  <!-- Receipt diptych: take 3's frames of the standalone verifier (2026-11-18), the same page as verify.html in the SDK repo. -->
+  <section class="wrap band" id="receipt">
+    <h2>Verify the receipt yourself</h2>
+    <p>The receipt proves what went in. Whether the answer is right stays your reviewers' call. The
+    verifier is open source and needs no server and no account, so you can check our work without
+    trusting us.</p>
+    <div class="diptych">
+      <figure>
+        <img src="receipt-valid.png" loading="lazy" alt="The offline verifier showing VALID: this file has not changed since it was signed." />
+        <figcaption class="fineprint">VALID: nothing changed since it was signed.</figcaption>
+      </figure>
+      <figure>
+        <img src="receipt-invalid.png" loading="lazy" alt="The offline verifier showing INVALID after one character of the question was changed." />
+        <figcaption class="fineprint">INVALID: one character changed, and the check fails.</figcaption>
+      </figure>
+    </div>
   </section>
 
-  <section id="sovereign" class="wrap">
+  <section id="yours" class="wrap">
     <div class="split">
       <div>
-        <h2>Sovereign by construction</h2>
+        <h2>Try it on one workflow of your own</h2>
         <p>
-          Your documents, and the index built from them, should not depend on someone else's cloud
-          staying available or keeping its terms.
+          Bring one set of documents you need to get right: contracts, engineering specifications,
+          policies, a case file. TLDR-G is a desktop app for you and your documents.
+        </p>
+        <p>
+          It runs on your hardware, and the app shows on every page where your evidence is sent.
+          Answers come from a local model or a cloud model you choose. Or take just the evidence,
+          with no model at all.
         </p>
       </div>
       <!-- Mood image: docs/gtm/website/sovereign-cube-concept.webp (founder-generated 2026-11-18). -->
       <img class="mood" src="sovereign-cube.webp" width="876" height="656" loading="lazy"
            alt="A small glass cube on a dark desk, holding a miniature city of document stacks lit gold from within">
     </div>
-    <div class="grid">
-      <div class="card">
-        <h3>Local-first</h3>
-        <p>The engine and the knowledge graph run on your hardware. The app shows, on every page,
-        where your evidence is sent.</p>
-      </div>
-      <div class="card">
-        <h3>Your choice of model</h3>
-        <p>Answers can come from a local model or a cloud model you choose. Or take just the context,
-        with no model at all.</p>
-      </div>
-      <div class="card">
-        <h3>Inspectable</h3>
-        <p>The receipt formats and the verifier are open source, so you can check our work without
-        trusting us.</p>
-      </div>
-    </div>
   </section>
 
-  <section id="open" class="wrap band">
-    <h2>Free engine. Open SDK. Not open-core.</h2>
-    <p>
-      The engine is free to run, distributed as a compiled binary. The <strong>SDK</strong> —
-      the integration contracts and the verification surface — is open source under Apache-2.0,
-      so you can build against a stable boundary and verify everything for yourself. We're not
-      open-core: the engine stays closed; the contracts you depend on stay open.
-    </p>
-    <p>
-      And we're building an honest way for it to get better for everyone: an <strong>opt-in</strong>,
-      <strong>content-free</strong> signal about <em>how</em> it rendered — never your data, never one
-      user exposed to another — that improves the shared defaults. It's <strong>off by default</strong>,
-      inspectable, and won't switch on until its privacy guarantee is provable. We apply the
-      transparency we sell to ourselves.
-    </p>
-    <p><a class="btn ghost" href="https://github.com/niclasj79/tldr-g">Read the open contracts</a></p>
-  </section>
-
-  <section id="install" class="wrap">
+  <section id="install" class="wrap band">
     <h2>Get it</h2>
     <div class="grid">
       <div class="card">
-        <h3>Developers: build and verify now</h3>
-        <p>The open SDK: integration contracts and offline verification. Clone, <code>pip install -e .</code>,
-        and run the quickstart (sign, verify, tamper). No engine and no API key needed.</p>
-        <p><a class="btn small" href="https://github.com/niclasj79/tldr-g">Get the SDK</a></p>
+        <h3>Download free (Windows)</h3>
+        <p>The desktop app, plus an MCP server and an HTTP API for your own AI tools.</p>
+        <p class="fineprint"><strong>Requirements (v0.3.2):</strong> Windows 10/11 (64-bit). An NVIDIA GPU with ≥4&nbsp;GB VRAM is strongly recommended (GTX&nbsp;1060&nbsp;6&nbsp;GB or better); it runs on CPU only, but more slowly. 16&nbsp;GB RAM recommended. About 12&nbsp;GB of free disk, including about 4.6&nbsp;GB of models that download once on first launch.</p>
+        <p><a class="btn small" href="https://github.com/niclasj79/tldr-g/releases">Download free</a></p>
       </div>
       <div class="card">
-        <h3>The engine: free download</h3>
-        <p>The Cockpit desktop app, the <code>tldr-g-mcp</code> server for your AI tools, and an HTTP API. Free to use.</p>
-        <p class="fineprint"><strong>Requirements (v0.3.2):</strong> Windows 10/11 (64-bit). An NVIDIA GPU with ≥4&nbsp;GB VRAM is strongly recommended (GTX&nbsp;1060&nbsp;6&nbsp;GB or better); it runs on CPU only, but ingest and questions are substantially slower there. 16&nbsp;GB RAM recommended. About 12&nbsp;GB of free disk: the installer is 1.9&nbsp;GB, it unpacks to about 5&nbsp;GB, and about 4.6&nbsp;GB of models download once on first launch. <em>macOS and Linux: fast-follow.</em></p>
-        <p><a class="btn small" href="https://github.com/niclasj79/tldr-g/releases">Download free (Windows)</a></p>
+        <h3>See it on your documents first</h3>
+        <p>A thirty-minute call: you bring the workflow, we show you the answers and the checks.</p>
+        <p><a class="btn small ghost" href="mailto:niclas@tldr-g.ai?subject=TLDR-G%20demo">Email Niclas</a></p>
       </div>
     </div>
-    <p class="fineprint">Setup guides (agents over MCP, server mode, installing without internet) are on the <a href="learn/">Learn</a> page.</p>
+    <p class="fineprint">Developers: the <a href="https://github.com/niclasj79/tldr-g">open SDK</a> (Apache-2.0) has the receipt formats and the offline verifier. Setup guides are on the <a href="learn/">Learn</a> page.</p>
   </section>
 
-  <section id="updates" class="wrap band">
-    <h2>Get launch updates</h2>
-    <p>
-      New releases and what they change, a few times a year. Leave your email below. Want to see it
-      on your own documents first? <a href="mailto:niclas@tldr-g.ai?subject=TLDR-G%20demo">Email Niclas</a>
-      for a thirty-minute demo.
-    </p>
+  <section id="updates" class="wrap">
+    <h2>Follow the releases</h2>
+    <p>New releases and what they change, a few times a year. Read the
+      <a href="https://github.com/niclasj79/tldr-g/releases">release notes</a>, or leave your email.</p>
     <!-- Email capture (Airtable Waitlist form). -->
     <iframe class="airtable-embed signup-embed"
             src="https://airtable.com/embed/appDSTEUZRTgUVZFL/pagloT2rd7D50c4Jw/form"
-            title="Get launch updates: email signup"
+            title="Release updates: email signup"
             frameborder="0" width="100%" height="533"
             style="background: transparent; border: 1px solid var(--line); border-radius: 12px;"></iframe>
-    <p class="fineprint">No spam: your email is used only for launch updates, and you can
+    <p class="fineprint">No spam: your email is used only for release updates, and you can
       unsubscribe anytime.</p>
-  </section>
-
-  <!-- Receipt diptych: take 3's frames of the standalone verifier (2026-11-18), the same page as verify.html in the SDK repo. -->
-  <section class="wrap demo" id="see-it">
-    <h2>See the receipt</h2>
-    <p>Every answer carries a signed receipt. Anyone can check it offline, without trusting us. Here is what pass and fail look like.</p>
-    <div class="receipt-diptych" style="display:flex;gap:1.25rem;flex-wrap:wrap;justify-content:center;align-items:flex-start;margin-top:1rem;">
-      <figure style="flex:1 1 320px;max-width:520px;margin:0;">
-        <img src="receipt-valid.png" alt="The offline verifier showing VALID: this file has not changed since it was signed." style="width:100%;height:auto;border:1px solid var(--line);border-radius:12px;" />
-        <figcaption class="fineprint" style="margin-top:.5rem;">VALID: the receipt has not changed since it was signed.</figcaption>
-      </figure>
-      <figure style="flex:1 1 320px;max-width:520px;margin:0;">
-        <img src="receipt-invalid.png" alt="The offline verifier showing INVALID after one character of the question was changed." style="width:100%;height:auto;border:1px solid var(--line);border-radius:12px;" />
-        <figcaption class="fineprint" style="margin-top:.5rem;">INVALID: one character changed, and the check fails.</figcaption>
-      </figure>
-    </div>
-    <p class="fineprint" style="text-align:center;margin-top:1rem;">The <a href="#watch">walkthrough</a> shows both, live. The verifier is a single page in the <a href="https://github.com/niclasj79/tldr-g">SDK</a>.</p>
-  </section>
-
-  <!-- Visual demo. The one interactive thing on the site: the architecture with the hood
-       up, on a deliberately synthetic corpus. Framed as a demo of the ARCHITECTURE, not of
-       product usage, and the synthetic-corpus caveat is stated here rather than left for
-       the reader to discover inside — the page it links to sits on this domain, next to
-       grounded benchmark claims, so the frame has to travel with the link. -->
-  <section class="wrap demo" id="visual-demo">
-    <h2>Open the hood</h2>
-    <p>The <a href="/visual-demo/">visual demo</a> draws a corpus as terrain you can descend — continent, island, asset, passage — where brightness is how much of a node the engine actually paid for. The question sits unrun until you press it. Then you watch the budget being spent, and afterwards you get to audit the spend: what was admitted, at what resolution, and what the engine reached and <em>declined</em> to pay for.</p>
-    <p class="fineprint">It runs in the browser — no install, no account, nothing to configure. The corpus in it is <strong>synthetic</strong>, and every figure on screen is a design concept rather than a benchmark; the demo says so on every response it returns. <a href="/visual-demo/">Open it →</a></p>
   </section>
 </main>
 
@@ -255,7 +190,7 @@
   <div class="foot-grid">
     <div>
       <img class="lockup" src="brand/tldrg-lockup-dark.svg" alt="TLDR-G" width="104" height="28" />
-      <p class="muted">The knowledge rendering engine. Built in Sweden 🇸🇪 · EU-resident by construction.</p>
+      <p class="muted">The knowledge rendering engine. Built in Sweden 🇸🇪 · Runs on your machine.</p>
     </div>
     <div>
       <p class="muted">Connect</p>
@@ -264,7 +199,8 @@
     </div>
     <div>
       <p class="muted">Read</p>
-      <a href="learn/">Learn</a>
+      <a href="learn/">Learn</a><br/>
+      <a href="https://github.com/niclasj79/tldr-g/releases">Release notes</a>
     </div>
   </div>
   <p class="muted small">© 2026 · Knowledge that flows without losing truth.</p>

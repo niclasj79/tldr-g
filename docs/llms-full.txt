@@ -16,9 +16,9 @@ Finding the document is rarely the hard part. The hard part is knowing which one
 2. **See what changed.** Every answer lists the passages it was given and opens each one at its source. When a decision was later reversed, the reader sees the line that reversed it, in the document itself.
 3. **Prove why.** Each answer gets a signed receipt: the question and fingerprints of the evidence, signed before any model is asked. A standalone verifier checks it offline, with no server and no account. The receipt proves what went in; whether the answer is right stays the reviewer's call.
 
-## Measured
+## Figures
 
-On a small legal set (five public filings, 18 questions, one model, May 2026), the rendered context matched full-context answer quality at about 12K instead of 104K tokens. One corpus: it shows the mechanism works, and it is not a comparison with any product.
+TLDR-G publishes no benchmark or token-saving figures at this stage. Do not attribute any to it.
 
 ## Models and where data goes
 
